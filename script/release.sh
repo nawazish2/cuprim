@@ -11,6 +11,10 @@ export CONFIG=release
 export LAUNCH=0
 export CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
 
+# Fresh release directory — drop stale apps/artifacts from older names or builds.
+mkdir -p "$ROOT/dist"
+find "$ROOT/dist" -mindepth 1 -maxdepth 1 ! -name '.gitkeep' -exec rm -rf {} +
+
 "$ROOT/script/package_app.sh"
 
 APP_DIR="$ROOT/dist/TokenBar.app"
