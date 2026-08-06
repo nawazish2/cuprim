@@ -12,7 +12,11 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     private let panel: PanelController
     private let menu = NSMenu()
 
-    init(usage: UsageStore, preferences: PreferencesStore, panel: PanelController) {
+    init(
+        usage: UsageStore,
+        preferences: PreferencesStore,
+        panel: PanelController
+    ) {
         self.usage = usage
         self.preferences = preferences
         self.panel = panel
@@ -118,6 +122,16 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         settings.target = self
         menu.addItem(settings)
 
+        menu.addItem(.separator())
+
+        let share = NSMenuItem(
+            title: "Share Screenshot",
+            action: nil,
+            keyEquivalent: ""
+        )
+        share.submenu = shareScreenshotSubmenu()
+        menu.addItem(share)
+
         let about = NSMenuItem(
             title: "About TokenBar",
             action: #selector(openAbout),
@@ -136,6 +150,23 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         quit.keyEquivalentModifierMask = [.command]
         quit.target = self
         menu.addItem(quit)
+    }
+
+    private func shareScreenshotSubmenu() -> NSMenu {
+        let sub = NSMenu(title: "Share Screenshot")
+        // Each item = one provider card (not "open destination with all tabs").
+        for id in preferences.orderedProviders where preferences.isEnabled(id) {
+            let item = NSMenuItem(
+                title: id.displayName,
+                action: #selector(shareScreenshot(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.image = Self.menuImage(for: id)
+            item.representedObject = id.rawValue
+            sub.addItem(item)
+        }
+        return sub
     }
 
     /// One row per provider — title + subtitle (ChatGPT-style).
@@ -242,6 +273,33 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     @objc private func openAbout() {
         AboutWindowController.show()
+    }
+
+    @objc private func shareScreenshot(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let providerID = ProviderID(rawValue: raw),
+              let target = ScreenshotShare.Target(rawValue: raw)
+        else { return }
+
+        // Render after the status menu closes so pasteboard write isn't interrupted.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            let snapshot = self.usage.snapshots[providerID]
+                ?? ProviderSnapshot.empty(providerID, status: .notLoggedIn)
+            let cards = [snapshot]
+            guard let image = ShareCardView.renderImage(
+                snapshots: cards,
+                showUsedPercent: self.preferences.showUsedPercent
+            ) else {
+                NSSound.beep()
+                return
+            }
+            let summary = ScreenshotShare.usageSummary(
+                from: cards,
+                showUsed: self.preferences.showUsedPercent
+            )
+            ScreenshotShare.share(image: image, summary: summary, to: target)
+        }
     }
 
     @objc private func quit() {
