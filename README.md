@@ -32,21 +32,6 @@ This build is ad-hoc signed (not notarized yet). If macOS blocks it:
 
 Credentials stay on your machine. TokenBar only talks to each provider’s own usage API. Nothing is sent to us — there is no backend.
 
-## Dev
-
-```bash
-./script/build_and_run.sh
-```
-
-Ship a release:
-
-```bash
-./script/release.sh
-# → dist/TokenBar.app, .dmg, .app.zip
-```
-
-Notarized public builds: [docs/NOTARIZATION.md](docs/NOTARIZATION.md)
-
 ## License
 
 [MIT](LICENSE)
