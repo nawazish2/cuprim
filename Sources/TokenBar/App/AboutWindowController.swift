@@ -5,6 +5,7 @@ import SwiftUI
 final class AboutWindowController: NSWindowController, NSWindowDelegate {
     private static var shared: AboutWindowController?
     private var didEnterActivation = false
+    private var hosting: NSHostingController<AboutView>?
 
     static func show() {
         if shared == nil {
@@ -43,8 +44,14 @@ final class AboutWindowController: NSWindowController, NSWindowDelegate {
         window.delegate = self
 
         let controller = NSHostingController(rootView: AboutView())
+        // Same sizing pattern as Settings — avoids blank / clipped hosting views.
+        controller.sizingOptions = [.preferredContentSize]
         window.contentViewController = controller
-        window.setContentSize(NSSize(width: 320, height: 360))
+        hosting = controller
+
+        let size = controller.sizeThatFits(in: NSSize(width: 320, height: 2000))
+        let fitted = NSSize(width: 320, height: min(max(size.height, 360), 480))
+        window.setContentSize(fitted)
     }
 
     override func showWindow(_ sender: Any?) {

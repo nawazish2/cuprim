@@ -93,15 +93,20 @@ struct SettingsView: View {
 
             Section {
                 LabeledContent("Requires", value: "macOS 26 · Apple Silicon")
+                LabeledContent("Version", value: OpenSourceInfo.versionString)
                 Button("About TokenBar…") {
                     AboutWindowController.show()
                 }
+                Button("Check for Updates…") {
+                    OpenSourceInfo.openReleases()
+                }
+                Link("Releases on GitHub", destination: OpenSourceInfo.releasesURL)
             } header: {
                 Text("About")
             }
         }
         .formStyle(.grouped)
-        .frame(minWidth: 380, idealWidth: 380, minHeight: 420)
+        .frame(minWidth: 380, idealWidth: 380, minHeight: 480)
         .onAppear {
             preferences.refreshLaunchAtLoginState()
         }

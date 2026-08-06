@@ -140,6 +140,14 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         about.target = self
         menu.addItem(about)
 
+        let updates = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(checkForUpdates),
+            keyEquivalent: ""
+        )
+        updates.target = self
+        menu.addItem(updates)
+
         menu.addItem(.separator())
 
         let quit = NSMenuItem(
@@ -273,6 +281,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     @objc private func openAbout() {
         AboutWindowController.show()
+    }
+
+    @objc private func checkForUpdates() {
+        OpenSourceInfo.openReleases()
     }
 
     @objc private func shareScreenshot(_ sender: NSMenuItem) {

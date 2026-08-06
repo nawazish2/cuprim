@@ -101,7 +101,7 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
+	<string>TokenBarApplication</string>
 </dict>
 </plist>
 PLIST

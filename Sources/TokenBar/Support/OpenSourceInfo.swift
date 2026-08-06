@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// Public project links and credits for the free open-source build.
@@ -16,5 +17,11 @@ enum OpenSourceInfo {
         let v = info?["CFBundleShortVersionString"] as? String ?? "0.1.2"
         let b = info?["CFBundleVersion"] as? String ?? "3"
         return "Version \(v) (\(b))"
+    }
+
+    /// Lightweight updates path — opens GitHub Releases (no Sparkle).
+    @MainActor
+    static func openReleases() {
+        NSWorkspace.shared.open(releasesURL)
     }
 }
