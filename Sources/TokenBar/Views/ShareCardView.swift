@@ -7,19 +7,19 @@ struct ShareCardView: View {
     let snapshots: [ProviderSnapshot]
     var showUsedPercent: Bool = true
 
-    private let cardWidth: CGFloat = 360
+    private let cardWidth: CGFloat = 420
     private let accent = Color(red: 0.22, green: 0.55, blue: 1.0)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 20) {
             ForEach(snapshots) { snapshot in
                 providerBlock(snapshot)
             }
 
             footer
         }
-        .padding(.horizontal, 22)
-        .padding(.vertical, 24)
+        .padding(.horizontal, 28)
+        .padding(.vertical, 28)
         .frame(width: cardWidth)
         .background(Color.black)
         .environment(\.colorScheme, .dark)
@@ -63,15 +63,15 @@ struct ShareCardView: View {
 
     private func header(for snapshot: ProviderSnapshot) -> some View {
         HStack(spacing: 8) {
-            ProviderIconView(id: snapshot.id, size: 18, foreground: .white)
+            ProviderIconView(id: snapshot.id, size: 22, foreground: .white)
 
             Text(snapshot.id.displayName)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.white)
 
             if let plan = snapshot.planName, !plan.isEmpty {
                 Text(plan)
-                    .font(.system(size: 15, weight: .regular))
+                    .font(.system(size: 17, weight: .regular))
                     .foregroundStyle(Color.white.opacity(0.45))
                     .lineLimit(1)
             }
@@ -85,7 +85,7 @@ struct ShareCardView: View {
         if metric.usedFraction != nil {
             VStack(alignment: .leading, spacing: 8) {
                 Text(displayLabel(for: metric))
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
 
                 GeometryReader { geo in
@@ -95,19 +95,19 @@ struct ShareCardView: View {
                             .fill(Color.white.opacity(0.12))
                         Capsule()
                             .fill(accent)
-                            .frame(width: max(used > 0 ? 6 : 0, geo.size.width * used))
+                            .frame(width: max(used > 0 ? 8 : 0, geo.size.width * used))
                     }
                 }
-                .frame(height: 7)
+                .frame(height: 8)
 
                 HStack {
                     Text(percentText(for: metric))
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white)
                     Spacer(minLength: 8)
                     if let reset = resetText(for: metric) {
                         Text(reset)
-                            .font(.system(size: 12))
+                            .font(.system(size: 13))
                             .foregroundStyle(Color.white.opacity(0.45))
                     }
                 }
@@ -133,7 +133,7 @@ struct ShareCardView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(Color.white.opacity(0.4))
             Text("Monitor Your AI Subscriptions with TokenBar")
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(Color.white.opacity(0.4))
             Spacer(minLength: 0)
         }
@@ -162,16 +162,46 @@ struct ShareCardView: View {
 
 extension ShareCardView {
     /// Rasterize the share card for the pasteboard / share targets.
+    /// Uses 3× by default so pasted cards stay sharp in chat apps.
     @MainActor
     static func renderImage(
         snapshots: [ProviderSnapshot],
         showUsedPercent: Bool,
-        scale: CGFloat = 2
+        scale: CGFloat = 3
     ) -> NSImage? {
         guard !snapshots.isEmpty else { return nil }
         let view = ShareCardView(snapshots: snapshots, showUsedPercent: showUsedPercent)
+            .drawingGroup(opaque: true)
         let renderer = ImageRenderer(content: view)
         renderer.scale = scale
-        return renderer.nsImage
+        renderer.isOpaque = true
+
+        guard let cgImage = renderer.cgImage else {
+            return renderer.nsImage
+        }
+
+        // Keep full pixel dimensions so paste targets don't upsample a soft 1× bitmap.
+        let pixelSize = NSSize(width: cgImage.width, height: cgImage.height)
+        let image = NSImage(size: pixelSize)
+        image.addRepresentation(NSBitmapImageRep(cgImage: cgImage))
+        return image
+    }
+
+    /// Lossless PNG bytes for pasteboard (preferred over raw NSImage).
+    @MainActor
+    static func renderPNGData(
+        snapshots: [ProviderSnapshot],
+        showUsedPercent: Bool,
+        scale: CGFloat = 3
+    ) -> Data? {
+        guard let image = renderImage(
+            snapshots: snapshots,
+            showUsedPercent: showUsedPercent,
+            scale: scale
+        ),
+        let tiff = image.tiffRepresentation,
+        let rep = NSBitmapImageRep(data: tiff)
+        else { return nil }
+        return rep.representation(using: .png, properties: [:])
     }
 }

@@ -51,11 +51,20 @@ enum ScreenshotShare {
     static func copyToPasteboard(image: NSImage, summary: String) {
         let pb = NSPasteboard.general
         pb.clearContents()
-        var items: [any NSPasteboardWriting] = [image]
-        if !summary.isEmpty {
-            items.append(summary as NSString)
+
+        // Prefer PNG so chat apps paste a crisp bitmap instead of a soft preview.
+        if let tiff = image.tiffRepresentation,
+           let rep = NSBitmapImageRep(data: tiff),
+           let png = rep.representation(using: .png, properties: [:]) {
+            pb.setData(png, forType: .png)
+            pb.setData(tiff, forType: .tiff)
+        } else {
+            pb.writeObjects([image])
         }
-        pb.writeObjects(items)
+
+        if !summary.isEmpty {
+            pb.setString(summary, forType: .string)
+        }
     }
 
     @MainActor
