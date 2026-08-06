@@ -12,6 +12,7 @@ No paywall. No license server. No telemetry.
 - Liquid Glass popover with per-provider meters and reset countdowns
 - Reuses logins already on your Mac (no token paste)
 - Auto-refresh every **2 minutes** (all providers) + manual refresh
+- Share Screenshot — OpenUsage-style usage card per provider (clipboard + open app)
 - Settings with system glass chrome
 
 ## Requirements
@@ -25,11 +26,13 @@ No paywall. No license server. No telemetry.
   - Cursor app (local session)
   - Grok Build CLI (`grok login` → `~/.grok/auth.json`)
 
-## Install (release)
+## Install (users)
 
-Download the latest `.dmg` or `.app.zip` from [GitHub Releases](https://github.com/nawazish2/tokenbar/releases), then open TokenBar.
+1. Download the latest `.dmg` or `.app.zip` from [GitHub Releases](https://github.com/nawazish2/tokenbar/releases)
+2. Open the DMG and drag **TokenBar** to Applications (or unzip the `.app`)
+3. Launch TokenBar — look for the gauge in the menu bar
 
-Early builds may be ad-hoc signed. Prefer a Developer ID + notarized build when available (see [docs/NOTARIZATION.md](docs/NOTARIZATION.md)).
+Gatekeeper may warn on first open if the build is not notarized. Prefer a Developer ID + notarized release when available.
 
 ## Build & run (dev)
 
@@ -45,7 +48,18 @@ swift build --arch arm64
 swift test --arch arm64
 ```
 
-## Release package
+## Distribute (ship a release)
+
+TokenBar is **not** on the Mac App Store. You ship a signed `.app` / `.dmg` via GitHub Releases.
+
+### 1. Bump the version
+
+Edit `script/package_app.sh` → `Info.plist` keys:
+
+- `CFBundleShortVersionString` (user-facing, e.g. `0.1.3`)
+- `CFBundleVersion` (build number, e.g. `4`)
+
+### 2. Build distributable artifacts
 
 ```bash
 ./script/release.sh
@@ -53,22 +67,66 @@ swift test --arch arm64
 
 Produces:
 
-- `dist/TokenBar.app`
-- `dist/TokenBar-<version>.dmg`
-- `dist/TokenBar-<version>.app.zip`
+| Artifact | Path |
+|---|---|
+| App | `dist/TokenBar.app` |
+| DMG (drag to Applications) | `dist/TokenBar-<version>.dmg` |
+| Zip | `dist/TokenBar-<version>.app.zip` |
 
-Optional Developer ID signing:
+Default signing is **ad-hoc** (`codesign -`). Fine for friends / testing. Gatekeeper will warn strangers.
+
+### 3. Sign with Developer ID (recommended for public downloads)
+
+Requires [Apple Developer Program](https://developer.apple.com/programs/) membership and a **Developer ID Application** certificate in Keychain.
 
 ```bash
-CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/release.sh
+export CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+./script/release.sh
 ```
 
-## App icon (Apple standard)
+### 4. Notarize (so Gatekeeper trusts the download)
 
-Dock / Finder icons use Apple’s **Icon Composer** pipeline (square layers → layered `.icon`):
+See the full steps in [docs/NOTARIZATION.md](docs/NOTARIZATION.md). Short version:
 
 ```bash
-./script/open_icon_composer.sh
+xcrun notarytool submit dist/TokenBar-0.1.2.dmg \
+  --apple-id "you@example.com" \
+  --team-id "TEAMID" \
+  --password "app-specific-password" \
+  --wait
+
+xcrun stapler staple dist/TokenBar-0.1.2.dmg
+```
+
+### 5. Publish on GitHub
+
+```bash
+# Example with GitHub CLI
+gh release create v0.1.2 \
+  dist/TokenBar-0.1.2.dmg \
+  dist/TokenBar-0.1.2.app.zip \
+  --title "TokenBar 0.1.2" \
+  --notes "Release notes here."
+```
+
+Or upload the DMG / zip manually on the [Releases](https://github.com/nawazish2/tokenbar/releases) page.
+
+**Checklist before publishing**
+
+- [ ] Version bumped in `package_app.sh`
+- [ ] `./script/release.sh` succeeded
+- [ ] App opens on a clean Apple Silicon Mac (macOS 26+)
+- [ ] Providers you care about show meters when signed in
+- [ ] Developer ID signed + notarized (for public downloads)
+- [ ] Stapled DMG attached to the GitHub Release
+
+## App icon
+
+Dock / Finder / About use the packaged `AppIcon.icns`. Rebuild from Icon Composer layers:
+
+```bash
+./script/build_app_icon.sh
+./script/open_icon_composer.sh   # optional visual tweak
 ```
 
 See [Design/AppIcon/README.md](Design/AppIcon/README.md).  
@@ -97,10 +155,11 @@ Sources/
     Providers/    Claude · Codex · Cursor · Grok
     Services/     HTTP + snapshot cache
     Stores/       usage + preferences
-    Views/        glass dashboard + settings
-    Support/      glass chrome, platform checks
+    Views/        glass dashboard + share card + settings
+    Support/      glass chrome, screenshot share, platform checks
 Tests/TokenBarTests/
 script/           build, release, icons
+docs/             notarization / distribution
 ```
 
 ## Contributing

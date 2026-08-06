@@ -1,27 +1,62 @@
-# Notarization (optional)
+# Distributing TokenBar
 
-TokenBar can ship as a free open-source `.app` / `.dmg` without the Mac App Store.
+TokenBar ships outside the Mac App Store: build a `.app`, wrap it in a `.dmg` / `.zip`, optionally **Developer ID sign + notarize**, then attach artifacts to a [GitHub Release](https://github.com/nawazish2/tokenbar/releases).
 
-## Ad-hoc (dev / early OSS)
+## Quick path (you, local testing)
 
-`./script/build_and_run.sh` and `./script/release.sh` default to ad-hoc signing (`codesign --sign -`). This is fine for local testing. Gatekeeper may warn first-time downloaders.
+```bash
+./script/release.sh
+open dist/TokenBar.app
+```
 
-## Developer ID + notarization (recommended for public releases)
+Ad-hoc signed. Share the DMG with yourself / testers who know how to right-click → Open past Gatekeeper.
 
-Requirements:
+## Public path (anyone can download cleanly)
 
-- Apple Developer Program membership
-- Developer ID Application certificate in Keychain
-- App-specific password or API key for `notarytool`
+```
+bump version → release.sh with Developer ID → notarize DMG → staple → GitHub Release
+```
 
-### 1. Sign the release
+### Prerequisites
+
+- Apple Silicon Mac + Xcode 26+
+- [Apple Developer Program](https://developer.apple.com/programs/) ($99/year)
+- **Developer ID Application** certificate installed in Keychain  
+  (Xcode → Settings → Accounts → Manage Certificates → **+** → Developer ID Application)
+- App-specific password for your Apple ID ([appleid.apple.com](https://appleid.apple.com)) **or** an App Store Connect API key
+
+### 1. Bump version
+
+In `script/package_app.sh` (`Info.plist` section):
+
+| Key | Meaning | Example |
+|---|---|---|
+| `CFBundleShortVersionString` | Marketing version | `0.1.3` |
+| `CFBundleVersion` | Build number | `4` |
+
+### 2. Sign and package
 
 ```bash
 export CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
 ./script/release.sh
 ```
 
-### 2. Notarize the DMG
+Outputs:
+
+- `dist/TokenBar.app`
+- `dist/TokenBar-<version>.dmg`
+- `dist/TokenBar-<version>.app.zip`
+
+Confirm the app identity:
+
+```bash
+codesign -dv --verbose=4 dist/TokenBar.app
+spctl --assess --verbose dist/TokenBar.app || true   # may fail until notarized
+```
+
+### 3. Notarize the DMG
+
+**Apple ID + app-specific password:**
 
 ```bash
 xcrun notarytool submit dist/TokenBar-0.1.2.dmg \
@@ -29,11 +64,9 @@ xcrun notarytool submit dist/TokenBar-0.1.2.dmg \
   --team-id "TEAMID" \
   --password "app-specific-password" \
   --wait
-
-xcrun stapler staple dist/TokenBar-0.1.2.dmg
 ```
 
-Or use an App Store Connect API key:
+**App Store Connect API key:**
 
 ```bash
 xcrun notarytool submit dist/TokenBar-0.1.2.dmg \
@@ -43,8 +76,71 @@ xcrun notarytool submit dist/TokenBar-0.1.2.dmg \
   --wait
 ```
 
-### 3. Publish
+On success:
 
-Attach the stapled DMG (and/or `.app.zip`) to a GitHub Release.
+```bash
+xcrun stapler staple dist/TokenBar-0.1.2.dmg
+xcrun stapler validate dist/TokenBar-0.1.2.dmg
+```
 
-Hardened Runtime and entitlements can be added later if notarization requires them for your signing setup.
+Optional: also notarize / staple the `.app` inside a zip if you prefer zip-only distribution. DMG + staple is the usual path.
+
+### 4. Publish
+
+```bash
+gh release create v0.1.2 \
+  dist/TokenBar-0.1.2.dmg \
+  dist/TokenBar-0.1.2.app.zip \
+  --title "TokenBar 0.1.2" \
+  --notes "$(cat <<'EOF'
+## What's new
+- …
+
+## Requirements
+- Apple Silicon
+- macOS 26+
+EOF
+)"
+```
+
+### 5. Verify as a new user would
+
+On another Mac (or a clean user account):
+
+1. Download the DMG from the release page
+2. Open it — Gatekeeper should allow without “unidentified developer” after notarization
+3. Drag to Applications and launch
+4. Confirm menu bar gauge + providers
+
+## Ad-hoc vs Developer ID
+
+| | Ad-hoc (`codesign -`) | Developer ID + notarized |
+|---|---|---|
+| Who can run | You / people who bypass Gatekeeper | Anyone |
+| Gatekeeper | Blocks / warns | Trusted |
+| Cost | Free | Apple Developer Program |
+| Command | `./script/release.sh` | `CODESIGN_IDENTITY=… ./script/release.sh` then notarize |
+
+## Troubleshooting
+
+**`notarytool` rejects the app**  
+Often missing Hardened Runtime. `package_app.sh` already passes `--options runtime` when `CODESIGN_IDENTITY` is not `-`. Re-sign and resubmit.
+
+**Users still see “damaged” / can’t open**  
+Quarantine attribute from browsers. Stapled notarization usually fixes this; otherwise:
+
+```bash
+xattr -cr /Applications/TokenBar.app
+```
+
+**Wrong architecture**  
+TokenBar is arm64-only. Intel Macs are not supported (`LSRequiresNativeExecution`).
+
+**Version in DMG name is stale**  
+`release.sh` reads `CFBundleShortVersionString` from the packaged app. Bump it in `package_app.sh` before releasing.
+
+## Related
+
+- Release script: `script/release.sh`
+- App packaging / plist / codesign: `script/package_app.sh`
+- Dev loop: `script/build_and_run.sh`
