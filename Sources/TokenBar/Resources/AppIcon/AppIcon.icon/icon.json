@@ -1,0 +1,70 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.18000,0.19000,0.22000,1.00000",
+      "display-p3:0.08000,0.09000,0.11000,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "blur-material" : 0.08,
+      "layers" : [
+        {
+          "blend-mode" : "plus-darker",
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "Foreground.png",
+          "name" : "Gauge",
+          "opacity" : 1,
+          "position" : {
+            "scale" : 0.82,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "lighting" : "individual",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.45
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.4
+      }
+    },
+    {
+      "layers" : [
+        {
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Background.png",
+          "name" : "Base",
+          "opacity" : 1,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -24.15625,
+              -42.4375
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.25
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : "shared"
+  }
+}

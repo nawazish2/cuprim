@@ -1,0 +1,16 @@
+.build/
+dist/
+.swiftpm/
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+.DS_Store
+*.pem
+*.p8
+*.p12
+*.cer
+AuthKey_*.p8
+.env
+.env.*
+!.env.example
