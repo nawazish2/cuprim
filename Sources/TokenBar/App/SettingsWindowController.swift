@@ -2,28 +2,27 @@ import AppKit
 import SwiftUI
 import TokenBarCore
 
+/// Fallback Settings window when the SwiftUI Settings scene cannot open.
 @MainActor
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private static var shared: SettingsWindowController?
     private let preferences: PreferencesStore
     private var didEnterActivation = false
+    private var hosting: NSHostingController<SettingsView>?
 
     static func show(preferences: PreferencesStore) {
         if shared == nil {
             shared = SettingsWindowController(preferences: preferences)
         } else {
-            // Refresh root view so preference bindings stay live.
             shared?.hosting?.rootView = SettingsView(preferences: preferences)
         }
         shared?.showWindow(nil)
     }
 
-    private var hosting: NSHostingController<SettingsView>?
-
     private init(preferences: PreferencesStore) {
         self.preferences = preferences
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 380, height: 420),
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 460),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -50,10 +49,15 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.center()
         window.delegate = self
 
-        let controller = NSHostingController(rootView: SettingsView(preferences: preferences))
+        let root = SettingsView(preferences: preferences)
+        let controller = NSHostingController(rootView: root)
+        controller.sizingOptions = [.preferredContentSize]
         window.contentViewController = controller
         hosting = controller
-        window.setContentSize(NSSize(width: 380, height: 420))
+
+        let size = controller.sizeThatFits(in: NSSize(width: 400, height: 2000))
+        let fitted = NSSize(width: 400, height: min(max(size.height, 420), 640))
+        window.setContentSize(fitted)
     }
 
     override func showWindow(_ sender: Any?) {

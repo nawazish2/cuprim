@@ -23,9 +23,8 @@ final class AppContainer {
             usage: usage,
             preferences: preferences,
             uiState: uiState,
-            onOpenSettings: { [weak self] in
-                guard let self else { return }
-                SettingsWindowController.show(preferences: self.preferences)
+            onOpenSettings: {
+                SettingsOpener.open()
             },
             onQuit: {
                 NSApp.terminate(nil)

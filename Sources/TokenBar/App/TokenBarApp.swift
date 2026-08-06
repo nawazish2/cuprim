@@ -7,16 +7,15 @@ struct TokenBarApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        // Menu-bar only; no Dock windows from SwiftUI scenes.
         Settings {
-            EmptyView()
+            SettingsView(preferences: appDelegate.container.preferences)
         }
     }
 }
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private let container = AppContainer()
+    let container = AppContainer()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Apple Silicon + macOS 26 only (true Liquid Glass).

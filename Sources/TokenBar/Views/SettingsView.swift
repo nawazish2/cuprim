@@ -101,7 +101,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 380, height: 420)
+        .frame(minWidth: 380, idealWidth: 380, minHeight: 420)
         .onAppear {
             preferences.refreshLaunchAtLoginState()
         }

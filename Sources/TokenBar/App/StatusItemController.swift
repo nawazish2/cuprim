@@ -268,7 +268,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     @objc private func openSettings() {
-        SettingsWindowController.show(preferences: preferences)
+        SettingsOpener.open()
     }
 
     @objc private func openAbout() {
