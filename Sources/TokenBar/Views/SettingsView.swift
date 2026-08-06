@@ -2,117 +2,108 @@ import AppKit
 import SwiftUI
 import TokenBarCore
 
-/// Native-feeling preferences for the SwiftUI Settings scene.
+/// Compact, System Settings–style preferences.
 struct SettingsView: View {
     @Bindable var preferences: PreferencesStore
 
+    private let rowH: CGFloat = 34
+    private let padX: CGFloat = 12
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                settingsGroup(title: "Providers") {
-                    VStack(spacing: 0) {
-                        ForEach(Array(preferences.orderedProviders.enumerated()), id: \.element) { index, id in
-                            providerRow(id: id, index: index)
-                            if index < preferences.orderedProviders.count - 1 {
-                                Divider()
-                                    .padding(.leading, 34)
-                            }
+            VStack(alignment: .leading, spacing: 14) {
+                group("Providers") {
+                    ForEach(Array(preferences.orderedProviders.enumerated()), id: \.element) { index, id in
+                        providerRow(id: id, index: index)
+                        if index < preferences.orderedProviders.count - 1 {
+                            hairline
                         }
                     }
                 } footer: {
-                    Text("Use the arrows to change order in the menu and dashboard.")
+                    Text("Arrows reorder the menu and dashboard.")
                 }
 
-                settingsGroup(title: "Display") {
-                    VStack(spacing: 0) {
-                        toggleRow("Show used %", isOn: $preferences.showUsedPercent)
-                        Divider().padding(.leading, 12)
-                        toggleRow("Absolute reset times", isOn: $preferences.absoluteResetTimes)
-                        Divider().padding(.leading, 12)
-                        toggleRow("Hide logged-out providers", isOn: $preferences.hideLoggedOutProviders)
-                    }
+                group("Display") {
+                    labeledToggle("Show used %", isOn: $preferences.showUsedPercent)
+                    hairline
+                    labeledToggle("Absolute reset times", isOn: $preferences.absoluteResetTimes)
+                    hairline
+                    labeledToggle("Hide logged-out providers", isOn: $preferences.hideLoggedOutProviders)
                 }
 
-                settingsGroup(title: "General") {
-                    VStack(alignment: .leading, spacing: 0) {
-                        toggleRow("Launch at login", isOn: launchAtLoginBinding)
-                            .disabled(preferences.launchAtLoginState == .unavailable)
+                group("General") {
+                    labeledToggle("Launch at login", isOn: launchAtLoginBinding)
+                        .disabled(preferences.launchAtLoginState == .unavailable)
+                    hairline
+                    labeledValue("Auto-refresh", value: "Every 2 min")
 
-                        if preferences.launchAtLoginState == .requiresApproval {
-                            Divider().padding(.leading, 12)
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Allow TokenBar in System Settings → General → Login Items.")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Button("Open Login Items…") {
-                                    openLoginItemsSettings()
-                                }
-                                .controlSize(.small)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                        } else if preferences.launchAtLoginState == .unavailable {
-                            Divider().padding(.leading, 12)
-                            Text("Needs a Developer ID–signed build (ad-hoc / unsigned apps can’t register login items).")
+                    if preferences.launchAtLoginState == .requiresApproval {
+                        hairline
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Allow TokenBar under Login Items in System Settings.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
+                            Button("Open Login Items…") { openLoginItemsSettings() }
+                                .controlSize(.small)
                         }
-
-                        if let error = preferences.launchAtLoginError {
-                            Divider().padding(.leading, 12)
-                            Text(error)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
-                        }
-
-                        Divider().padding(.leading, 12)
-                        infoRow("Auto-refresh", value: "Every 2 min")
+                        .padding(.horizontal, padX)
+                        .padding(.vertical, 8)
+                    }
+                } footer: {
+                    if preferences.launchAtLoginState == .unavailable {
+                        Text("Login items need a Developer ID–signed build.")
+                    } else if let error = preferences.launchAtLoginError {
+                        Text(error).foregroundStyle(.red)
+                    } else {
+                        EmptyView()
                     }
                 }
 
-                settingsGroup(title: "About") {
-                    VStack(spacing: 0) {
-                        infoRow("Version", value: OpenSourceInfo.versionString)
-                        Divider().padding(.leading, 12)
-                        infoRow("Requires", value: "macOS 26 · Apple Silicon")
-                        Divider().padding(.leading, 12)
-                        buttonRow("About TokenBar…") {
-                            AboutWindowController.show()
-                        }
-                        Divider().padding(.leading, 12)
-                        buttonRow("Check for Updates…") {
-                            OpenSourceInfo.openReleases()
-                        }
-                        Divider().padding(.leading, 12)
-                        linkRow("GitHub", url: OpenSourceInfo.repositoryURL)
-                    }
+                group("About") {
+                    labeledValue("Version", value: OpenSourceInfo.versionString)
+                    hairline
+                    labeledValue("Requires", value: "macOS 26 · Apple Silicon")
+                    hairline
+                    actionRow("About TokenBar…") { AboutWindowController.show() }
+                    hairline
+                    actionRow("Check for Updates…") { OpenSourceInfo.openReleases() }
+                    hairline
+                    Link("GitHub", destination: OpenSourceInfo.repositoryURL)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, padX)
+                        .frame(height: rowH)
                 }
             }
-            .padding(20)
+            .padding(16)
         }
-        .frame(width: 420, height: 560)
+        .frame(width: 380, height: 520)
         .background(Color(nsColor: .windowBackgroundColor))
-        .onAppear {
-            preferences.refreshLaunchAtLoginState()
-        }
+        .onAppear { preferences.refreshLaunchAtLoginState() }
     }
 
     // MARK: - Rows
 
     private func providerRow(id: ProviderID, index: Int) -> some View {
-        HStack(spacing: 10) {
-            ProviderIconView(id: id, size: 15)
+        HStack(spacing: 8) {
+            ProviderIconView(id: id, size: 14)
             Text(id.displayName)
                 .font(.body)
             Spacer(minLength: 8)
+
+            HStack(spacing: 0) {
+                reorderButton(systemName: "chevron.up", enabled: index > 0) {
+                    preferences.moveProvider(id, direction: -1)
+                }
+                reorderButton(
+                    systemName: "chevron.down",
+                    enabled: index < preferences.orderedProviders.count - 1
+                ) {
+                    preferences.moveProvider(id, direction: 1)
+                }
+            }
+
             Toggle(
-                "Enabled",
+                "",
                 isOn: Binding(
                     get: { preferences.isEnabled(id) },
                     set: { preferences.setEnabled(id, $0) }
@@ -120,110 +111,104 @@ struct SettingsView: View {
             )
             .labelsHidden()
             .toggleStyle(.switch)
-            .controlSize(.small)
-
-            HStack(spacing: 2) {
-                Button {
-                    preferences.moveProvider(id, direction: -1)
-                } label: {
-                    Image(systemName: "chevron.up")
-                        .font(.system(size: 11, weight: .semibold))
-                        .frame(width: 22, height: 22)
-                }
-                .buttonStyle(.borderless)
-                .disabled(index == 0)
-                .help("Move up")
-
-                Button {
-                    preferences.moveProvider(id, direction: 1)
-                } label: {
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 11, weight: .semibold))
-                        .frame(width: 22, height: 22)
-                }
-                .buttonStyle(.borderless)
-                .disabled(index >= preferences.orderedProviders.count - 1)
-                .help("Move down")
-            }
-            .foregroundStyle(.secondary)
+            .controlSize(.mini)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .contentShape(Rectangle())
+        .padding(.horizontal, padX)
+        .frame(height: rowH)
     }
 
-    private func toggleRow(_ title: String, isOn: Binding<Bool>) -> some View {
-        Toggle(title, isOn: isOn)
-            .toggleStyle(.switch)
-            .controlSize(.small)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+    private func reorderButton(systemName: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 9, weight: .bold))
+                .frame(width: 18, height: 18)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(enabled ? Color.secondary : Color.secondary.opacity(0.25))
+        .disabled(!enabled)
     }
 
-    private func infoRow(_ title: String, value: String) -> some View {
-        HStack {
+    private func labeledToggle(_ title: String, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 8) {
             Text(title)
-            Spacer(minLength: 12)
+                .font(.body)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+        }
+        .padding(.horizontal, padX)
+        .frame(height: rowH)
+    }
+
+    private func labeledValue(_ title: String, value: String) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.body)
+            Spacer(minLength: 8)
             Text(value)
+                .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, padX)
+        .frame(height: rowH)
     }
 
-    private func buttonRow(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(title, action: action)
-            .buttonStyle(.plain)
-            .foregroundStyle(Color.accentColor)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .contentShape(Rectangle())
+    private func actionRow(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.body)
+                .foregroundStyle(Color.accentColor)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, padX)
+        .frame(height: rowH)
     }
 
-    private func linkRow(_ title: String, url: URL) -> some View {
-        Link(title, destination: url)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+    private var hairline: some View {
+        Divider()
+            .padding(.leading, padX)
     }
 
-    // MARK: - Chrome
+    // MARK: - Group chrome
 
-    private func settingsGroup<Content: View, Footer: View>(
-        title: String,
+    private func group<Content: View, Footer: View>(
+        _ title: String,
         @ViewBuilder content: () -> Content,
         @ViewBuilder footer: () -> Footer
     ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title.uppercased())
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-                .padding(.leading, 4)
+                .tracking(0.4)
+                .padding(.leading, 2)
 
-            content()
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.5)
-                )
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color(nsColor: .controlBackgroundColor))
+            )
 
             footer()
                 .font(.caption)
                 .foregroundStyle(.tertiary)
-                .padding(.leading, 4)
+                .padding(.leading, 2)
         }
     }
 
-    private func settingsGroup<Content: View>(
-        title: String,
+    private func group<Content: View>(
+        _ title: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        settingsGroup(title: title, content: content, footer: { EmptyView() })
+        group(title, content: content, footer: { EmptyView() })
     }
 
     private var launchAtLoginBinding: Binding<Bool> {
