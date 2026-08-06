@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Release build: package TokenBar.app + DMG + zip for GitHub Releases.
+# Release build: package TokenBar.app + branded DMG + zip for GitHub Releases.
 # Optional:
 #   CODESIGN_IDENTITY="Developer ID Application: Name (TEAMID)" ./script/release.sh
 set -euo pipefail
@@ -21,24 +21,14 @@ APP_DIR="$ROOT/dist/TokenBar.app"
 VERSION="$(
   /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "0.1.3"
 )"
-STAGE="$ROOT/dist/dmg-stage"
 DMG="$ROOT/dist/TokenBar-${VERSION}.dmg"
 ZIP="$ROOT/dist/TokenBar-${VERSION}.app.zip"
 
-rm -rf "$STAGE" "$DMG" "$ZIP"
-mkdir -p "$STAGE"
-cp -R "$APP_DIR" "$STAGE/TokenBar.app"
-ln -s /Applications "$STAGE/Applications"
+rm -f "$DMG" "$ZIP"
 
-echo "→ Creating DMG…"
-hdiutil create \
-  -volname "TokenBar" \
-  -srcfolder "$STAGE" \
-  -ov \
-  -format UDZO \
-  "$DMG" >/dev/null
-
-rm -rf "$STAGE"
+echo "→ Creating branded DMG…"
+chmod +x "$ROOT/script/create_dmg.sh" "$ROOT/script/generate_dmg_background.py"
+"$ROOT/script/create_dmg.sh" "$APP_DIR" "$DMG"
 
 echo "→ Creating zip…"
 (
