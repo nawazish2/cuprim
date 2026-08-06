@@ -16,7 +16,7 @@ struct TokenBarApp: App {
                     AboutWindowController.show()
                 }
                 Button("Check for Updates…") {
-                    OpenSourceInfo.openReleases()
+                    OpenSourceInfo.checkForUpdates()
                 }
             }
         }
@@ -103,6 +103,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func checkForUpdates(_ sender: Any?) {
-        OpenSourceInfo.openReleases()
+        OpenSourceInfo.checkForUpdates()
     }
 }

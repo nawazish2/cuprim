@@ -19,7 +19,12 @@ enum OpenSourceInfo {
         return "Version \(v) (\(b))"
     }
 
-    /// Lightweight updates path — opens GitHub Releases (no Sparkle).
+    /// Check GitHub Releases and install if a newer build exists.
+    @MainActor
+    static func checkForUpdates() {
+        AppUpdater.checkForUpdates(interactive: true)
+    }
+
     @MainActor
     static func openReleases() {
         NSWorkspace.shared.open(releasesURL)

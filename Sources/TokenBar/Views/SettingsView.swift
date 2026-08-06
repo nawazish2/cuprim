@@ -66,7 +66,7 @@ struct SettingsView: View {
                     hairline
                     actionRow("About TokenBar…") { AboutWindowController.show() }
                     hairline
-                    actionRow("Check for Updates…") { OpenSourceInfo.openReleases() }
+                    actionRow("Check for Updates…") { OpenSourceInfo.checkForUpdates() }
                     hairline
                     Link("GitHub", destination: OpenSourceInfo.repositoryURL)
                         .frame(maxWidth: .infinity, alignment: .leading)

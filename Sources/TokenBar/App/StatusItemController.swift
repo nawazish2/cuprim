@@ -284,7 +284,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     @objc private func checkForUpdates() {
-        OpenSourceInfo.openReleases()
+        OpenSourceInfo.checkForUpdates()
     }
 
     @objc private func shareScreenshot(_ sender: NSMenuItem) {
