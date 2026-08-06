@@ -5,7 +5,7 @@ import SwiftUI
 struct AboutView: View {
     var body: some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 28)
+            Spacer(minLength: 36)
 
             appIcon
                 .frame(width: 96, height: 96)
@@ -13,33 +13,32 @@ struct AboutView: View {
 
             Text("TokenBar")
                 .font(.system(size: 28, weight: .semibold))
-                .padding(.top, 18)
+                .padding(.top, 20)
 
             Text(OpenSourceInfo.versionString)
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
-                .padding(.top, 4)
+                .padding(.top, 6)
 
-            VStack(spacing: 6) {
+            VStack(spacing: 8) {
                 HStack(spacing: 4) {
                     Text("Created by")
                         .foregroundStyle(.secondary)
                     Link(OpenSourceInfo.authorName, destination: OpenSourceInfo.authorURL)
                 }
-                .font(.system(size: 13))
 
                 HStack(spacing: 4) {
                     Text("Open source on")
                         .foregroundStyle(.secondary)
                     Link("GitHub", destination: OpenSourceInfo.repositoryURL)
                 }
-                .font(.system(size: 13))
             }
-            .padding(.top, 18)
+            .font(.system(size: 13))
+            .padding(.top, 22)
 
-            Spacer(minLength: 28)
+            Spacer(minLength: 36)
         }
-        .frame(width: 320, height: 340)
+        .frame(width: 320, height: 360)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
@@ -50,9 +49,10 @@ struct AboutView: View {
                 .resizable()
                 .interpolation(.high)
                 .aspectRatio(contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         } else {
             ZStack {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
@@ -73,7 +73,7 @@ struct AboutView: View {
                         )
                     )
             }
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
 }

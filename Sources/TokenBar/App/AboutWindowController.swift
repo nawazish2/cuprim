@@ -15,7 +15,7 @@ final class AboutWindowController: NSWindowController, NSWindowDelegate {
 
     private init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 320, height: 340),
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 360),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -44,7 +44,7 @@ final class AboutWindowController: NSWindowController, NSWindowDelegate {
 
         let controller = NSHostingController(rootView: AboutView())
         window.contentViewController = controller
-        window.setContentSize(NSSize(width: 320, height: 340))
+        window.setContentSize(NSSize(width: 320, height: 360))
     }
 
     override func showWindow(_ sender: Any?) {
