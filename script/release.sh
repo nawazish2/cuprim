@@ -19,7 +19,7 @@ find "$ROOT/dist" -mindepth 1 -maxdepth 1 ! -name '.gitkeep' -exec rm -rf {} +
 
 APP_DIR="$ROOT/dist/TokenBar.app"
 VERSION="$(
-  /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "0.1.2"
+  /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "0.1.3"
 )"
 STAGE="$ROOT/dist/dmg-stage"
 DMG="$ROOT/dist/TokenBar-${VERSION}.dmg"
