@@ -22,6 +22,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Apple Silicon + macOS 26 only (true Liquid Glass).
         guard PlatformRequirements.enforceOrQuit() else { return }
 
+        if let icon = AppIconImage.aboutImage() {
+            NSApp.applicationIconImage = icon
+        }
+
         // Defer one tick so NSStatusBar is ready under SwiftUI App lifecycle.
         DispatchQueue.main.async { [weak self] in
             self?.container.start()

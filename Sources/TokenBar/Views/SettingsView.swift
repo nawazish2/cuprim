@@ -92,29 +92,16 @@ struct SettingsView: View {
             }
 
             Section {
-                LabeledContent("Version", value: versionString)
-                LabeledContent("License", value: OpenSourceInfo.displayName)
                 LabeledContent("Requires", value: "macOS 26 · Apple Silicon")
-                Text("Free forever. No telemetry. No license server.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Button("View Source on GitHub") {
-                    NSWorkspace.shared.open(OpenSourceInfo.repositoryURL)
-                }
-                Button("Releases") {
-                    NSWorkspace.shared.open(OpenSourceInfo.releasesURL)
-                }
-                if let sponsorsURL = OpenSourceInfo.sponsorsURL {
-                    Button("Sponsor") {
-                        NSWorkspace.shared.open(sponsorsURL)
-                    }
+                Button("About TokenBar…") {
+                    AboutWindowController.show()
                 }
             } header: {
                 Text("About")
             }
         }
         .formStyle(.grouped)
-        .frame(width: 380, height: 480)
+        .frame(width: 380, height: 420)
         .onAppear {
             preferences.refreshLaunchAtLoginState()
         }
@@ -125,12 +112,6 @@ struct SettingsView: View {
             get: { preferences.launchAtLogin },
             set: { preferences.launchAtLogin = $0 }
         )
-    }
-
-    private var versionString: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.2"
-        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "3"
-        return "\(v) (\(b))"
     }
 
     private func openLoginItemsSettings() {

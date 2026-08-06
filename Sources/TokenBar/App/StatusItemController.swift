@@ -118,6 +118,14 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         settings.target = self
         menu.addItem(settings)
 
+        let about = NSMenuItem(
+            title: "About TokenBar",
+            action: #selector(openAbout),
+            keyEquivalent: ""
+        )
+        about.target = self
+        menu.addItem(about)
+
         menu.addItem(.separator())
 
         let quit = NSMenuItem(
@@ -230,6 +238,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     @objc private func openSettings() {
         SettingsWindowController.show(preferences: preferences)
+    }
+
+    @objc private func openAbout() {
+        AboutWindowController.show()
     }
 
     @objc private func quit() {

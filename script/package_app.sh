@@ -54,6 +54,11 @@ fi
 if [ -f "Sources/TokenBar/Resources/AppIcon/AppIcon-1024.png" ]; then
   cp "Sources/TokenBar/Resources/AppIcon/AppIcon-1024.png" "$RES/AppIcon-1024.png"
 fi
+if [ -f "Sources/TokenBar/Resources/AppIcon/AppIcon-About.png" ]; then
+  mkdir -p "$RES/AppIcon"
+  cp "Sources/TokenBar/Resources/AppIcon/AppIcon-About.png" "$RES/AppIcon/AppIcon-About.png"
+  cp "Sources/TokenBar/Resources/AppIcon/AppIcon-1024.png" "$RES/AppIcon/AppIcon-1024.png" 2>/dev/null || true
+fi
 
 if command -v lipo >/dev/null 2>&1; then
   ARCHS="$(lipo -archs "$MACOS/TokenBar" 2>/dev/null || true)"
