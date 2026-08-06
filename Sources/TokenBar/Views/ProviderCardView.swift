@@ -5,7 +5,7 @@ import TokenBarCore
 struct ProviderCardView: View {
     let snapshot: ProviderSnapshot
     var showUsedPercent: Bool = true
-    var absoluteResets: Bool = true
+    var absoluteResets: Bool = false
     var isStale: Bool = false
     var showDivider: Bool = true
 
@@ -15,10 +15,10 @@ struct ProviderCardView: View {
                 Rectangle()
                     .fill(Color.primary.opacity(0.08))
                     .frame(height: 0.5)
-                    .padding(.bottom, 10)
+                    .padding(.bottom, 14)
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 header
 
                 switch snapshot.status {
@@ -28,7 +28,7 @@ struct ProviderCardView: View {
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     } else {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 11) {
                             ForEach(snapshot.metrics) { metric in
                                 MetricRowView(
                                     metric: metric,

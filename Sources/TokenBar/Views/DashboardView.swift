@@ -39,8 +39,8 @@ struct DashboardView: View {
         VStack(spacing: 0) {
             header
                 .padding(.horizontal, GlassChrome.inset)
-                .padding(.top, 11)
-                .padding(.bottom, 8)
+                .padding(.top, 12)
+                .padding(.bottom, 10)
 
             if !tabProviders.isEmpty || usage.isRefreshing {
                 ProviderTabBar(
@@ -64,7 +64,9 @@ struct DashboardView: View {
                             ProviderCardView(
                                 snapshot: snapshot,
                                 showUsedPercent: preferences.showUsedPercent,
-                                absoluteResets: preferences.absoluteResetTimes,
+                                // Panel prefers short relative countdowns; Settings toggle still
+                                // drives the status-item menu subtitles.
+                                absoluteResets: false,
                                 isStale: usage.isSnapshotStale(snapshot),
                                 showDivider: index > 0
                             )
@@ -73,8 +75,8 @@ struct DashboardView: View {
                     }
                 }
                 .padding(.horizontal, GlassChrome.inset)
-                .padding(.top, 6)
-                .padding(.bottom, 8)
+                .padding(.top, 8)
+                .padding(.bottom, 10)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .layoutPriority(-1)

@@ -1,19 +1,21 @@
 import SwiftUI
 import TokenBarCore
 
-/// Compact meter row (ChatGPT-menu density):
+/// Compact meter row:
 ///   Label
 ///   ████████░░
 ///   12% used · Resets …
 struct MetricRowView: View {
     let metric: Metric
     var showUsedPercent: Bool = true
-    var absoluteResets: Bool = true
+    var absoluteResets: Bool = false
 
     @State private var showRemaining = false
 
+    private let meterHeight: CGFloat = 5
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(metric.label)
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
@@ -26,12 +28,14 @@ struct MetricRowView: View {
                     .font(.caption.monospacedDigit().weight(.semibold))
                     .foregroundStyle(QuotaFormatting.meterColor(usedFraction: metric.usedFraction))
                     .contentTransition(.numericText())
+                    .layoutPriority(1)
                     .onTapGesture {
+                        guard metric.usedFraction != nil else { return }
                         withAnimation(.snappy(duration: 0.12)) {
                             showRemaining.toggle()
                         }
                     }
-                    .help("Toggle used / remaining")
+                    .help(metric.usedFraction == nil ? "" : "Toggle used / remaining")
 
                 Spacer(minLength: 4)
 
@@ -40,7 +44,7 @@ struct MetricRowView: View {
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.85)
+                        .minimumScaleFactor(0.8)
                 }
             }
         }
@@ -51,6 +55,10 @@ struct MetricRowView: View {
     }
 
     private var primaryPercentText: String {
+        // Always show a percent (or em dash) when we have a meter row.
+        if metric.usedFraction == nil {
+            return metric.detail ?? "—"
+        }
         if showRemaining {
             return QuotaFormatting.remainingLabel(usedFraction: metric.usedFraction) + " left"
         }
@@ -64,20 +72,25 @@ struct MetricRowView: View {
 
     private var meter: some View {
         GeometryReader { geo in
-            let used = max(0, min(1, metric.usedFraction ?? 0))
-            let w = used > 0 ? max(6, geo.size.width * used) : 0
+            let fraction = metric.usedFraction.map { Utilization.clamp01($0) }
+            let used = fraction ?? 0
+            // Exact proportional width — no min stub that fattens high-usage bars.
+            let w = geo.size.width * used
             let color = QuotaFormatting.meterColor(usedFraction: metric.usedFraction)
 
             ZStack(alignment: .leading) {
                 Capsule()
                     .fill(Color.primary.opacity(0.10))
-                Capsule()
-                    .fill(color.opacity(0.92))
-                    .frame(width: w)
+                    .frame(height: meterHeight)
+                if used > 0 {
+                    Capsule()
+                        .fill(color.opacity(0.92))
+                        .frame(width: w, height: meterHeight)
+                }
             }
+            .frame(width: geo.size.width, height: meterHeight, alignment: .leading)
         }
-        .frame(height: 4)
-        .clipShape(Capsule())
+        .frame(height: meterHeight)
         .accessibilityLabel(primaryPercentText)
     }
 }
