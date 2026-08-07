@@ -5,9 +5,11 @@ Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, and **Grok
 **Local only** · no accounts · no telemetry · no cloud sync · light on RAM  
 **Apple Silicon** · **macOS 26+** · MIT
 
+**Website:** [cuprim.vercel.app](https://cuprim.vercel.app) · **Download:** [Releases](https://github.com/nawazish2/cuprim/releases/latest)
+
 ## Install
 
-1. Download the latest **`.dmg`** from [Releases](https://github.com/nawazish2/cuprim/releases)
+1. Download the latest **`.dmg`** from [Releases](https://github.com/nawazish2/cuprim/releases/latest)
 2. Drag **Cuprim** into Applications
 3. Open it — look for the gauge in the menu bar
 
