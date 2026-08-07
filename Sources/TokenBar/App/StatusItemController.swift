@@ -208,18 +208,17 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             guard let worst = snap.metrics.compactMap(\.usedFraction).max() else {
                 return "No metrics"
             }
-            let used = QuotaFormatting.usedPercentLabel(usedFraction: worst) + " used"
-            // Prefer nearest reset among metrics. Always relative so the menu stays narrow.
+            // Keep the status menu narrow: short % + relative reset only (no absolute dates).
+            let used = QuotaFormatting.usedPercentLabel(usedFraction: worst)
             let nextReset = snap.metrics.compactMap(\.resetsAt).sorted().first
             let label = QuotaFormatting.resetLabel(for: nextReset, absolute: false)
             if !label.isEmpty {
-                // Compact: "100% used · 27d 19h" style
                 let short = label
                     .replacingOccurrences(of: "Resets in ", with: "")
                     .replacingOccurrences(of: "Resets ", with: "")
                 return "\(used) · \(short)"
             }
-            return used
+            return "\(used) used"
         }
     }
 
