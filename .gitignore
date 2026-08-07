@@ -19,3 +19,4 @@ AuthKey_*.p8
 .cursor/skills/verify-cuprim/evidence/**
 !.cursor/skills/verify-cuprim/evidence/README.md
 .cursor/hooks/
+.cursor/hooks/
