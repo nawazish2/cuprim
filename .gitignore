@@ -14,3 +14,7 @@ AuthKey_*.p8
 .env
 .env.*
 !.env.example
+
+# Agent verification artifacts (keep README)
+.cursor/skills/verify-tokenbar/evidence/**
+!.cursor/skills/verify-tokenbar/evidence/README.md

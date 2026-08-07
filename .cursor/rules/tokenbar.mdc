@@ -1,0 +1,17 @@
+---
+description: TokenBar macOS app — local-only Swift menu-bar agent guardrails
+globs:
+  - "Sources/**/*.swift"
+  - "Tests/**/*.swift"
+  - "script/**/*.sh"
+  - "Package.swift"
+alwaysApply: false
+---
+
+# TokenBar
+
+- Apple Silicon + macOS 26+ only; no Linux/Intel build path
+- Local-only product: no backend, telemetry, cloud sync, or Polar/paywall work
+- Prefer `./script/build_and_run.sh` / `swift test` for verification; see `AGENTS.md` and `.cursor/skills/verify-tokenbar/`
+- Version lives in `script/package_app.sh` — do not bump unless asked
+- Menu-bar UI is mostly manual to verify; don’t invent automation that isn’t there
