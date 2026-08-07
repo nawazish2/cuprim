@@ -1,29 +1,10 @@
-# Design assets — Cuprim
-
-## Shipped
+# Design assets — Cuprim website
 
 | Asset | Path |
 |-------|------|
-| Icon Default | `Design/AppIcon/Exports/Cuprim-Default-1024.png` |
-| Icon Dark | `Design/AppIcon/Exports/Cuprim-Dark-1024.png` |
-| Icon About | `Design/AppIcon/Exports/Cuprim-About-1024.png` |
-| Icon TintedDark | `Design/AppIcon/Exports/Cuprim-TintedDark-1024.png` |
-| DMG background (Cuprim wordmark) | `Design/DMG/background.png` — regenerate: `python3 script/generate_dmg_background.py` |
-| App bundle icons | `Sources/Cuprim/Resources/AppIcon/` |
+| Favicon / icons | `website/public/favicon.png`, `icon-192.png`, `icon-512.png` |
+| OG image | `website/public/og.png` |
+| Hero Mac mock | CSS/Vue component `MacMock.vue` (interactive) |
+| Cup mark | `CupLogo.vue` |
 
-## Website (generated under `website/public/`)
-
-| Asset | Notes |
-|-------|-------|
-| `favicon.png` / `icon-192.png` | From Cuprim-Default-1024 |
-| `og.png` | Static 1200×630 — brand + tagline |
-| Hero Mac mock | CSS/SVG component in site (v1); optional PNG later |
-
-## Screenshots still needed (manual on Mac)
-
-1. Menu bar with Cuprim gauge visible
-2. Dashboard panel open
-3. Share card
-4. Settings / About (optional)
-
-Until captured, landing uses the Mac mock component + app icon.
+Stack: Nuxt 4 + Tailwind static → Vercel (`cuprim.vercel.app`).

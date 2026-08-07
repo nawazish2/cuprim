@@ -1,6 +1,5 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "outputDirectory": "out",
-  "installCommand": "npm install"
+  "framework": "nuxtjs",
+  "buildCommand": "npm run generate",
+  "outputDirectory": ".output/public"
 }

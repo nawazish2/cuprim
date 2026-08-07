@@ -1,14 +1,11 @@
 # Cuprim website
 
-Static Next.js marketing site for [Cuprim](https://github.com/nawazish2/cuprim).
+Nuxt 4 + Tailwind static landing page for [Cuprim](https://github.com/nawazish2/cuprim).
 
 ```bash
-cd website
 npm install
-npm run dev    # local
-npm run build  # writes out/ (static export)
+npm run dev      # local
+npm run generate # static output → .output/public
 ```
 
-Deploy `out/` (or the `website/` project root with Vercel Root Directory = `website`).
-
-Design source: `docs/website/`.
+Deploy: Vercel project rooted at `website/` with `npm run generate` and output `.output/public`.
