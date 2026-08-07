@@ -1,29 +1,29 @@
 #!/usr/bin/env python3
 """
-Cuprim DMG art — “Quota Stream”
+Cuprim DMG art — “Paper Pour”
 
-A luminous usage curve that flows from the app into Applications.
+Quiet paper/ink field with a soft cup watermark and a blue pour-chevron
+guiding Cuprim.app → Applications. Matches the cup mark (#0073eb lid) without
+Raycast neon, keyboard photos, or purple-AI tropes.
+
 Finder window: 660×400pt · art @2x (1320×800).
 Icon centers (pt): Cuprim.app (150, 185) · Applications (510, 185)
 """
 from __future__ import annotations
 
 import math
-import random
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 W, H = 660 * 2, 400 * 2
 
-# Quiet night sky + signal cyan/blue (Cuprim, not purple-AI)
-VOID = (4, 6, 10)
-MIST = (16, 22, 32)
-CYAN = (72, 196, 220)
-BLUE = (56, 140, 255)
-HOT = (180, 230, 255)
-INK = (242, 246, 250)
-SOFT = (160, 176, 196)
+# Purge paper/ink + brand blue
+PAPER = (244, 246, 243)  # #f4f6f3
+INK = (24, 27, 23)  # #181b17
+BLUE = (0, 115, 235)  # #0073eb
+MIST = (228, 232, 226)
+WASH = (252, 253, 251)
 
 ICON_L = (150 * 2, 185 * 2)
 ICON_R = (510 * 2, 185 * 2)
@@ -47,81 +47,51 @@ def lerp(a: float, b: float, t: float) -> float:
     return a + (b - a) * t
 
 
-def bezier(p0, p1, p2, p3, t: float):
-    u = 1 - t
-    x = u**3 * p0[0] + 3 * u**2 * t * p1[0] + 3 * u * t**2 * p2[0] + t**3 * p3[0]
-    y = u**3 * p0[1] + 3 * u**2 * t * p1[1] + 3 * u * t**2 * p2[1] + t**3 * p3[1]
-    return x, y
-
-
-def bezier_tangent(p0, p1, p2, p3, t: float):
-    u = 1 - t
-    dx = (
-        3 * u**2 * (p1[0] - p0[0])
-        + 6 * u * t * (p2[0] - p1[0])
-        + 3 * t**2 * (p3[0] - p2[0])
-    )
-    dy = (
-        3 * u**2 * (p1[1] - p0[1])
-        + 6 * u * t * (p2[1] - p1[1])
-        + 3 * t**2 * (p3[1] - p2[1])
-    )
-    return dx, dy
-
-
-def stream_control_points():
-    """Graceful S-curve between the two icon docks."""
-    lx, ly = ICON_L
-    rx, ry = ICON_R
-    p0 = (lx + 100, ly)
-    p3 = (rx - 100, ry)
-    p1 = (lerp(p0[0], p3[0], 0.35), ly - 95)
-    p2 = (lerp(p0[0], p3[0], 0.65), ry + 85)
-    return p0, p1, p2, p3
-
-
-def paint_sky() -> Image.Image:
-    img = Image.new("RGB", (W, H), VOID)
+def paint_paper() -> Image.Image:
+    """Soft paper field with cool wash and gentle vignette — not flat gray."""
+    img = Image.new("RGB", (W, H), PAPER)
     px = img.load()
     assert px is not None
-    # Soft vertical wash + twin aurora blooms under icon docks
-    blooms = [
-        (ICON_L[0], ICON_L[1], 0.55, BLUE),
-        (ICON_R[0], ICON_R[1], 0.45, CYAN),
-        (W // 2, int(H * 0.55), 0.35, BLUE),
-    ]
+    cx, cy = W / 2, H * 0.42
     for y in range(H):
         vt = y / (H - 1)
-        base_r = int(lerp(VOID[0], MIST[0], vt * 0.7))
-        base_g = int(lerp(VOID[1], MIST[1], vt * 0.7))
-        base_b = int(lerp(VOID[2], MIST[2], vt * 0.7))
         for x in range(W):
-            r, g, b = base_r, base_g, base_b
-            # Edge vignette
-            edge = min(x, W - 1 - x, y, H - 1 - y) / 160.0
+            ht = x / (W - 1)
+            # Vertical cool→warm paper drift
+            r = int(lerp(WASH[0], PAPER[0], vt * 0.85))
+            g = int(lerp(WASH[1], PAPER[1], vt * 0.85))
+            b = int(lerp(WASH[2], MIST[2], vt * 0.55 + ht * 0.1))
+            # Soft central lift (room for icons)
+            dx = (x - cx) / (W * 0.55)
+            dy = (y - cy) / (H * 0.55)
+            lift = max(0.0, 1.0 - math.sqrt(dx * dx + dy * dy)) ** 2
+            r = min(255, int(r + 8 * lift))
+            g = min(255, int(g + 8 * lift))
+            b = min(255, int(b + 6 * lift))
+            # Quiet brand-blue bloom between docks (very soft)
+            mx = (ICON_L[0] + ICON_R[0]) / 2
+            my = ICON_L[1]
+            d = math.hypot((x - mx) / 320, (y - my) / 140)
+            w = max(0.0, 1.0 - d) ** 2 * 0.07
+            r = min(255, int(r + BLUE[0] * w * 0.35))
+            g = min(255, int(g + BLUE[1] * w * 0.35))
+            b = min(255, int(b + BLUE[2] * w * 0.55))
+            # Edge vignette toward ink mist
+            edge = min(x, W - 1 - x, y, H - 1 - y) / 200.0
             edge = max(0.0, min(1.0, edge))
-            k = 0.78 + 0.22 * edge
-            r, g, b = int(r * k), int(g * k), int(b * k)
-            for bx, by, strength, col in blooms:
-                dx = (x - bx) / 280
-                dy = (y - by) / 200
-                d = math.sqrt(dx * dx + dy * dy)
-                w = max(0.0, 1.0 - d) ** 2 * strength
-                r = min(255, int(r + col[0] * w * 0.22))
-                g = min(255, int(g + col[1] * w * 0.22))
-                b = min(255, int(b + col[2] * w * 0.28))
-            px[x, y] = (r, g, b)
+            k = 0.92 + 0.08 * edge
+            px[x, y] = (int(r * k), int(g * k), int(b * k))
     return img
 
 
-def add_film_grain(img: Image.Image) -> Image.Image:
+def add_paper_grain(img: Image.Image) -> Image.Image:
     out = img.copy()
     px = out.load()
     assert px is not None
     for y in range(0, H, 2):
         for x in range(0, W, 2):
-            n = ((x * 91 + y * 157) % 13) - 6
-            if abs(n) < 3:
+            n = ((x * 73 + y * 149) % 11) - 5
+            if abs(n) < 2:
                 continue
             r, g, b = px[x, y]
             px[x, y] = (
@@ -129,210 +99,201 @@ def add_film_grain(img: Image.Image) -> Image.Image:
                 max(0, min(255, g + n)),
                 max(0, min(255, b + n)),
             )
-    return out.filter(ImageFilter.GaussianBlur(0.3))
+    return out.filter(ImageFilter.GaussianBlur(0.35))
 
 
-def draw_starfield(layer: Image.Image, rng: random.Random) -> None:
-    d = ImageDraw.Draw(layer)
-    for _ in range(55):
-        x = rng.randint(20, W - 20)
-        y = rng.randint(20, H - 20)
-        # Keep stars out of the icon/stream corridor a bit
-        if abs(y - ICON_L[1]) < 90 and 220 < x < 1100:
-            continue
-        r = rng.choice([1, 1, 1, 2, 2, 3])
-        a = rng.randint(25, 90)
-        col = HOT if rng.random() > 0.7 else CYAN
-        d.ellipse([x - r, y - r, x + r, y + r], fill=(*col, a))
+def draw_cup_mark(
+    size: int,
+    *,
+    body=(255, 255, 255, 255),
+    lid=(*BLUE, 255),
+) -> Image.Image:
+    """Cup geometry aligned with script/generate_icons.py (simplified)."""
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    s = float(size)
+
+    cup_left = s * 0.30
+    cup_right = s * 0.62
+    cup_top = s * 0.378
+    cup_bottom = s * 0.78
+    radius = (cup_right - cup_left) * 0.42
+    draw.rounded_rectangle(
+        [cup_left, cup_top, cup_right, cup_bottom],
+        radius=radius,
+        fill=body,
+    )
+
+    hx0 = cup_right - s * 0.045
+    hx1 = s * 0.80
+    hy0 = s * 0.43
+    hy1 = s * 0.70
+    outer = Image.new("L", (size, size), 0)
+    inner = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(outer).ellipse([hx0, hy0, hx1, hy1], fill=255)
+    inset = s * 0.055
+    ImageDraw.Draw(inner).ellipse(
+        [hx0 + inset, hy0 + inset, hx1 - inset, hy1 - inset],
+        fill=255,
+    )
+    handle_mask = ImageChops.subtract(outer, inner)
+    clip = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(clip).rectangle([cup_right - s * 0.02, 0, size, size], fill=255)
+    handle_mask = ImageChops.multiply(handle_mask, clip)
+    handle_layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    handle_layer.paste(body, mask=handle_mask)
+    img.alpha_composite(handle_layer)
+
+    lid_left = s * 0.272
+    lid_right = s * 0.648
+    lid_top = s * 0.318
+    lid_bottom = s * 0.390
+    lid_r = max(2.0, (lid_bottom - lid_top) * 0.48)
+    draw.rounded_rectangle(
+        [lid_left, lid_top, lid_right, lid_bottom],
+        radius=lid_r,
+        fill=lid,
+    )
+    return img
+
+
+def draw_cup_watermark(layer: Image.Image) -> None:
+    """Large faint cup — atmosphere, not competing with Finder icons."""
+    size = 520
+    cup = draw_cup_mark(
+        size,
+        body=(INK[0], INK[1], INK[2], 18),
+        lid=(*BLUE, 28),
+    )
+    # Place lower-right, partly cropped — a quiet brand ghost
+    ox = W - size + 40
+    oy = H - size + 80
+    layer.alpha_composite(cup, (ox, oy))
 
 
 def draw_menu_bar_wink(layer: Image.Image) -> None:
-    """Whisper of a menu bar — where Cuprim actually lives."""
+    """Whisper of a menu bar — where Cuprim lives."""
     d = ImageDraw.Draw(layer)
-    y = 26
-    # Ultra-thin menubar strip
+    y = 36
+    left, right = W // 2 - 130, W // 2 + 130
     d.rounded_rectangle(
-        [W // 2 - 110, y, W // 2 + 110, y + 8],
-        radius=4,
-        fill=(255, 255, 255, 12),
+        [left, y, right, y + 10],
+        radius=5,
+        fill=(INK[0], INK[1], INK[2], 18),
     )
-    # Fake status items: wifi · clock · Cuprim glow
-    for ox, a in ((-70, 50), (-42, 50), (70, 50)):
-        d.ellipse([W // 2 + ox - 2, y + 2, W // 2 + ox + 2, y + 6], fill=(255, 255, 255, a))
-    # Cuprim status item — the bright one
-    d.ellipse([W // 2 - 5, y, W // 2 + 5, y + 8], fill=(*BLUE, 200))
-    d.ellipse([W // 2 - 2, y + 2, W // 2 + 2, y + 6], fill=(*HOT, 240))
+    # Status dots
+    for ox, a in ((-78, 55), (-52, 55), (78, 55)):
+        d.ellipse(
+            [W // 2 + ox - 2, y + 3, W // 2 + ox + 2, y + 7],
+            fill=(INK[0], INK[1], INK[2], a),
+        )
+    # Cuprim status — blue lid wink
+    d.ellipse([W // 2 - 6, y + 1, W // 2 + 6, y + 9], fill=(*BLUE, 200))
+    d.ellipse([W // 2 - 3, y + 3, W // 2 + 3, y + 7], fill=(255, 255, 255, 220))
 
 
-def draw_glass_docks(layer: Image.Image) -> None:
-    """Frosted landing pads under Finder icons."""
-    for cx, cy, tint in ((ICON_L[0], ICON_L[1], BLUE), (ICON_R[0], ICON_R[1], CYAN)):
+def draw_landing_pads(layer: Image.Image) -> None:
+    """Soft elliptical docks under Finder icons — paper shadow, not neon glow."""
+    for cx, cy in (ICON_L, ICON_R):
         pad = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         d = ImageDraw.Draw(pad)
-        # Outer bloom
-        d.ellipse([cx - 130, cy - 70, cx + 130, cy + 150], fill=(*tint, 40))
-        pad = pad.filter(ImageFilter.GaussianBlur(28))
-        layer.alpha_composite(pad)
-
-        glass = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        gd = ImageDraw.Draw(glass)
-        # Soft disc
-        gd.ellipse([cx - 88, cy + 40, cx + 88, cy + 100], fill=(255, 255, 255, 22))
-        # Rim highlight
-        gd.arc([cx - 88, cy + 40, cx + 88, cy + 100], 200, 340, fill=(255, 255, 255, 55), width=2)
-        layer.alpha_composite(glass.filter(ImageFilter.GaussianBlur(2)))
-
-
-def draw_quota_stream(layer: Image.Image, rng: random.Random) -> None:
-    p0, p1, p2, p3 = stream_control_points()
-    samples = [bezier(p0, p1, p2, p3, t / 80) for t in range(81)]
-
-    # Wide soft ribbon glow
-    ribbon = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    rd = ImageDraw.Draw(ribbon)
-    for i, (x, y) in enumerate(samples):
-        t = i / 80
-        r = int(lerp(28, 18, t))
-        a = int(lerp(50, 90, t))
-        col = (
-            int(lerp(BLUE[0], CYAN[0], t)),
-            int(lerp(BLUE[1], CYAN[1], t)),
-            int(lerp(BLUE[2], CYAN[2], t)),
-            a,
+        d.ellipse(
+            [cx - 100, cy + 52, cx + 100, cy + 108],
+            fill=(INK[0], INK[1], INK[2], 22),
         )
-        rd.ellipse([x - r, y - r, x + r, y + r], fill=col)
-    layer.alpha_composite(ribbon.filter(ImageFilter.GaussianBlur(16)))
+        layer.alpha_composite(pad.filter(ImageFilter.GaussianBlur(10)))
 
-    # Crisp luminous core stroke
-    core = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    cd = ImageDraw.Draw(core)
-    for width, alpha in ((14, 40), (7, 110), (3, 230)):
-        pts = [(x, y) for x, y in samples]
-        cd.line(pts, fill=(*HOT, alpha), width=width)
-    layer.alpha_composite(core.filter(ImageFilter.GaussianBlur(0.6)))
-
-    # Floating “token” beads along the stream
-    beads = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    bd = ImageDraw.Draw(beads)
-    for t in (0.12, 0.28, 0.44, 0.58, 0.72, 0.86):
-        x, y = bezier(p0, p1, p2, p3, t)
-        size = 5 + int(3 * math.sin(t * math.pi))
-        # Outer glow
-        bd.ellipse([x - size - 4, y - size - 4, x + size + 4, y + size + 4], fill=(*CYAN, 50))
-        bd.ellipse([x - size, y - size, x + size, y + size], fill=(*HOT, 230))
-        # Tiny specular
-        bd.ellipse([x - size // 2, y - size // 2 - 1, x, y], fill=(255, 255, 255, 180))
-    layer.alpha_composite(beads.filter(ImageFilter.GaussianBlur(0.4)))
-
-    # Mini glass quota meters — each a different “provider” vibe
-    meters = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    md = ImageDraw.Draw(meters)
-    accents = (
-        (0.22, 0.72, -48, (64, 156, 255)),   # blue
-        (0.52, 0.45, 52, (72, 196, 180)),    # teal
-        (0.78, 0.88, -40, (120, 170, 255)),  # soft indigo-blue
-    )
-    for t, pct, offset, accent in accents:
-        x, y = bezier(p0, p1, p2, p3, t)
-        y += offset
-        rad = 24
-        # Glass disc
-        md.ellipse([x - rad, y - rad, x + rad, y + rad], fill=(10, 14, 22, 170))
-        md.ellipse(
-            [x - rad, y - rad, x + rad, y + rad],
-            outline=(255, 255, 255, 35),
-            width=2,
+        rim = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        rd = ImageDraw.Draw(rim)
+        rd.ellipse(
+            [cx - 92, cy + 58, cx + 92, cy + 100],
+            fill=(255, 255, 255, 40),
+            outline=(INK[0], INK[1], INK[2], 28),
+            width=1,
         )
-        bbox = [x - rad + 4, y - rad + 4, x + rad - 4, y + rad - 4]
-        md.arc(bbox, start=-90, end=-90 + int(360 * pct), fill=(*accent, 240), width=4)
-        font = load_font(14)
-        label = f"{int(pct * 100)}"
-        bb = md.textbbox((0, 0), label, font=font)
-        md.text(
-            (x - (bb[2] - bb[0]) / 2, y - (bb[3] - bb[1]) / 2 - 1),
-            label,
-            font=font,
-            fill=(*INK, 220),
-        )
-    layer.alpha_composite(meters)
+        layer.alpha_composite(rim.filter(ImageFilter.GaussianBlur(1.2)))
 
-    # Comet tip — stream condenses into a directional flare
-    tip = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    td = ImageDraw.Draw(tip)
-    ex, ey = bezier(p0, p1, p2, p3, 0.96)
-    dx, dy = bezier_tangent(p0, p1, p2, p3, 0.96)
-    length = math.hypot(dx, dy) or 1
-    ux, uy = dx / length, dy / length
-    px, py = -uy, ux
-    # Soft elongated glow pointing at Applications
-    for i in range(8):
-        t = i / 7
-        cx = ex + ux * (10 + t * 48)
-        cy = ey + uy * (10 + t * 48)
-        rr = int(lerp(16, 3, t))
-        a = int(lerp(90, 20, t))
-        td.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=(*CYAN, a))
-    # Crisp arrowhead nested in the flare
-    tip_len, tip_w = 46, 26
-    apex = (ex + ux * tip_len, ey + uy * tip_len)
-    left = (ex + ux * 4 + px * tip_w, ey + uy * 4 + py * tip_w)
-    right = (ex + ux * 4 - px * tip_w, ey + uy * 4 - py * tip_w)
-    td.polygon([apex, left, right], fill=(*HOT, 245))
-    # Core spark
-    td.ellipse([apex[0] - 4, apex[1] - 4, apex[0] + 4, apex[1] + 4], fill=(255, 255, 255, 200))
-    layer.alpha_composite(tip.filter(ImageFilter.GaussianBlur(0.8)))
 
-    # Soft particle dust near stream (creative atmosphere)
-    dust = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    dd = ImageDraw.Draw(dust)
-    for _ in range(40):
-        t = rng.random()
-        x, y = bezier(p0, p1, p2, p3, t)
-        x += rng.uniform(-40, 40)
-        y += rng.uniform(-50, 50)
-        r = rng.choice([1, 1, 2])
-        dd.ellipse([x - r, y - r, x + r, y + r], fill=(*HOT, rng.randint(20, 70)))
-    layer.alpha_composite(dust)
+def draw_pour_chevrons(layer: Image.Image) -> None:
+    """Three blue chevrons pointing right — install direction, Cuprim blue."""
+    mid_x = (ICON_L[0] + ICON_R[0]) / 2
+    mid_y = ICON_L[1] - 4
+    # Soft connecting wash (pour trail)
+    trail = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    td = ImageDraw.Draw(trail)
+    span = ICON_R[0] - ICON_L[0] - 220
+    for i in range(18):
+        t = i / 17
+        x = ICON_L[0] + 110 + span * t
+        # Gentle arc — pour dip
+        y = mid_y + math.sin(t * math.pi) * 18
+        r = int(lerp(10, 6, abs(t - 0.5) * 2))
+        a = int(lerp(18, 36, 1 - abs(t - 0.5) * 2))
+        td.ellipse([x - r, y - r, x + r, y + r], fill=(*BLUE, a))
+    layer.alpha_composite(trail.filter(ImageFilter.GaussianBlur(8)))
+
+    chevs = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    cd = ImageDraw.Draw(chevs)
+    # Three chevrons, increasing emphasis toward Applications
+    positions = (-56, 0, 56)
+    alphas = (110, 160, 210)
+    for ox, alpha in zip(positions, alphas):
+        cx = mid_x + ox
+        cy = mid_y
+        # Chevron as thick ">" made of two strokes (readable, not neon)
+        tip = (cx + 22, cy)
+        top = (cx - 14, cy - 22)
+        bot = (cx - 14, cy + 22)
+        # Soft underglow in brand blue only
+        cd.line([top, tip], fill=(*BLUE, alpha // 3), width=14)
+        cd.line([bot, tip], fill=(*BLUE, alpha // 3), width=14)
+        cd.line([top, tip], fill=(*BLUE, alpha), width=6)
+        cd.line([bot, tip], fill=(*BLUE, alpha), width=6)
+        # Ink core for crispness on paper
+        cd.line([top, tip], fill=(INK[0], INK[1], INK[2], alpha // 4), width=2)
+        cd.line([bot, tip], fill=(INK[0], INK[1], INK[2], alpha // 4), width=2)
+    layer.alpha_composite(chevs.filter(ImageFilter.GaussianBlur(0.4)))
 
 
 def draw_typography(layer: Image.Image) -> None:
     d = ImageDraw.Draw(layer)
 
-    # Wordmark with slight letter spacing via manual draw
     title = "Cuprim"
-    font = load_font(44)
-    # Measure total with tracking
-    tracking = 4
+    font = load_font(46)
+    tracking = 5
     widths = []
     for ch in title:
         bb = d.textbbox((0, 0), ch, font=font)
         widths.append(bb[2] - bb[0])
     total = sum(widths) + tracking * (len(title) - 1)
     x = (W - total) / 2
-    y = 48
+    y = 58
     for ch, w in zip(title, widths):
-        d.text((x, y), ch, font=font, fill=(*INK, 245))
+        d.text((x, y), ch, font=font, fill=(INK[0], INK[1], INK[2], 235))
         x += w + tracking
 
     sub = "Your AI quotas, always in sight"
     sf = load_font(20)
     sb = d.textbbox((0, 0), sub, font=sf)
-    d.text(((W - (sb[2] - sb[0])) / 2, 104), sub, font=sf, fill=(*SOFT, 210))
+    d.text(
+        ((W - (sb[2] - sb[0])) / 2, 118),
+        sub,
+        font=sf,
+        fill=(INK[0], INK[1], INK[2], 130),
+    )
 
-    # Quiet install hint — typography only, no fake button
     hint = "Drag into Applications to install"
     hf = load_font(18)
     hb = d.textbbox((0, 0), hint, font=hf)
     hw = hb[2] - hb[0]
     hx = (W - hw) / 2
-    hy = H - 56
-    d.text((hx, hy), hint, font=hf, fill=(*SOFT, 195))
-    # Soft accent dash centered under the line
-    dash_w = 36
+    hy = H - 58
+    d.text((hx, hy), hint, font=hf, fill=(INK[0], INK[1], INK[2], 140))
+    dash_w = 40
     d.rounded_rectangle(
-        [W // 2 - dash_w // 2, hy + 28, W // 2 + dash_w // 2, hy + 31],
+        [W // 2 - dash_w // 2, hy + 28, W // 2 + dash_w // 2, hy + 32],
         radius=2,
-        fill=(*CYAN, 140),
+        fill=(*BLUE, 180),
     )
 
 
@@ -340,13 +301,12 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     out = root / "Design" / "DMG" / "background.png"
     out.parent.mkdir(parents=True, exist_ok=True)
-    rng = random.Random(42)
 
-    base = add_film_grain(paint_sky()).convert("RGBA")
-    draw_starfield(base, rng)
+    base = add_paper_grain(paint_paper()).convert("RGBA")
+    draw_cup_watermark(base)
     draw_menu_bar_wink(base)
-    draw_glass_docks(base)
-    draw_quota_stream(base, rng)
+    draw_landing_pads(base)
+    draw_pour_chevrons(base)
     draw_typography(base)
 
     base.convert("RGB").save(out, format="PNG", optimize=True)

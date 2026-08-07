@@ -16,7 +16,7 @@ square layers (unmasked)
 | Full-bleed **square** layers (1024×1024) | Pre-rounded squircles |
 | Separate **background** + **foreground** | One flat baked icon only |
 | Let **system mask** corners | Bake drop shadows outside the icon |
-| Simple gauge silhouette | Tiny text / busy detail |
+| Simple cup silhouette (white + blue lid) | Tiny text / busy detail |
 
 Official:
 
@@ -29,10 +29,15 @@ Official:
 ```
 Design/AppIcon/
   Layers/
-    Background.png   # full-bleed dark fill (square)
-    Foreground.png   # gauge on transparent (square)
+    Background.png   # full-bleed black fill (square)
+    Foreground.png   # cup mark on transparent (square)
+  cup-mark.svg
   Preview-Composite-1024.png   # rough preview only
   README.md
+
+Design/MenuBar/
+  gauge-template.svg           # menu bar template source
+  preview-on-dark.png
 
 Sources/Cuprim/Resources/AppIcon/
   AppIcon.icon/      # package for Icon Composer + app
@@ -40,12 +45,18 @@ Sources/Cuprim/Resources/AppIcon/
     Assets/
   AppIcon.icns       # fallback for older tooling
   AppIcon-1024.png   # fallback flat master
+
+Sources/Cuprim/Resources/MenuBar/
+  MenuBarIcon.png / @2x / @3x  # template gauge (isTemplate)
+  MenuBarIcon-master.png
 ```
 
 ## Automated (already done for Cuprim)
 
 ```bash
-cd ~/Developer/cuprim
+cd ~/Developer/tokenbar
+# Flat cup layers + menu bar templates + website favicons
+python3 script/generate_icons.py
 # Rebuild layered icon + exports + AppIcon.icns via Apple ictool
 ./script/build_app_icon.sh
 # Package & launch
@@ -60,6 +71,7 @@ What the automation produces:
 | `Exports/Cuprim-Default-1024.png` | Liquid Glass render (Default) |
 | `Exports/Cuprim-Dark-1024.png` | Dark appearance export |
 | `AppIcon.icns` | Dock/Finder sizes from Default export |
+| `MenuBar/MenuBarIcon*.png` | Status item template (gauge) |
 
 ## Optional: open in Icon Composer to tweak
 
@@ -77,4 +89,4 @@ Save back to `Sources/Cuprim/Resources/AppIcon/AppIcon.icon`, then:
 
 ## Menu bar icon (separate)
 
-Menu bar stays **SF Symbol / template** — not the Dock icon. That is also Apple’s utility pattern.
+Menu bar uses a **custom gauge template** (`MenuBarIcon*.png`, `isTemplate = true`) — not the Dock cup icon. That matches Apple’s utility pattern (distinct status glyph).

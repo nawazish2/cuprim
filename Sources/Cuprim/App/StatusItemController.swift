@@ -38,7 +38,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             return
         }
 
-        let image = Self.menuBarSymbolImage()
+        let image = Self.menuBarTemplateImage()
         button.image = image
         button.imagePosition = .imageOnly
         button.isEnabled = true
@@ -238,7 +238,27 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         return nil
     }
 
-    private static func menuBarSymbolImage() -> NSImage {
+    /// Custom gauge template (black on transparent). Falls back to SF Symbol if assets missing.
+    private static func menuBarTemplateImage() -> NSImage {
+        if let custom = loadMenuBarTemplate() {
+            return custom
+        }
+        return menuBarSymbolFallback()
+    }
+
+    private static func loadMenuBarTemplate() -> NSImage? {
+        // Prefer @2x / @3x via AppResources; representations keep correct pixel density.
+        guard let base = AppResources.image(name: "MenuBarIcon", subdirectory: "MenuBar")
+            ?? AppResources.image(name: "MenuBarIcon-16", subdirectory: "MenuBar")
+        else { return nil }
+
+        let image = base.copy() as? NSImage ?? base
+        image.isTemplate = true
+        image.size = NSSize(width: 18, height: 18)
+        return image
+    }
+
+    private static func menuBarSymbolFallback() -> NSImage {
         let names = [AppSymbols.app, AppSymbols.appFallback, "chart.bar.fill", "circle.fill"]
         for name in names {
             if let image = NSImage(systemSymbolName: name, accessibilityDescription: "Cuprim") {
@@ -320,7 +340,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     func reloadTitle() {
         guard let button = statusItem.button else { return }
         if button.image == nil {
-            button.image = Self.menuBarSymbolImage()
+            button.image = Self.menuBarTemplateImage()
         }
         button.isEnabled = true
         button.appearsDisabled = false

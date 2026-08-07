@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Rebuild Cuprim app icon via Apple Icon Composer (ictool) → Finder/Dock/About.
+# Prefer regenerating flat layers first: python3 script/generate_icons.py
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ICON="$ROOT/Sources/Cuprim/Resources/AppIcon/AppIcon.icon"
@@ -38,11 +39,11 @@ cp "$EXPORTS/Cuprim-Default-1024.png" "$RES/AppIcon-About.png"
 
 ICONSET="$RES/AppIcon.iconset"
 rm -rf "$ICONSET" && mkdir -p "$ICONSET"
-python3 <<'PY'
+python3 <<PY
 from PIL import Image
 from pathlib import Path
-master = Image.open("/Users/nawazish/Developer/cuprim/Sources/Cuprim/Resources/AppIcon/AppIcon-1024.png").convert("RGBA")
-out = Path("/Users/nawazish/Developer/cuprim/Sources/Cuprim/Resources/AppIcon/AppIcon.iconset")
+master = Image.open("$RES/AppIcon-1024.png").convert("RGBA")
+out = Path("$ICONSET")
 for name, size in [
     ("icon_16x16.png", 16), ("icon_16x16@2x.png", 32),
     ("icon_32x32.png", 32), ("icon_32x32@2x.png", 64),
@@ -56,5 +57,6 @@ xcrun iconutil -c icns "$ICONSET" -o "$RES/AppIcon.icns"
 rm -rf "$ICONSET"
 
 echo "✓ Icon Composer export → AppIcon.icns + AppIcon.icon"
+echo "  Layers/SVG: python3 script/generate_icons.py"
 echo "  Tweak visually: ./script/open_icon_composer.sh"
 echo "  Then re-run this script and ./script/build_and_run.sh"

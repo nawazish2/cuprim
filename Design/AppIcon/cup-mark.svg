@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <!-- Cuprim brand mark foreground: white cup + blue lid (no background). -->
+  <path
+    d="M307 387h328v292c0 90-73 163-164 163h0c-91 0-164-73-164-163V387Z"
+    fill="#FFFFFF"
+  />
+  <!-- Handle as thick C (stroke) -->
+  <path
+    d="M620 440c92 0 150 58 150 130s-58 130-150 130"
+    stroke="#FFFFFF"
+    stroke-width="72"
+    stroke-linecap="round"
+    fill="none"
+  />
+  <rect x="278" y="326" width="386" height="74" rx="37" fill="#0073EB"/>
+</svg>

@@ -63,11 +63,14 @@ struct AboutView: View {
                             endPoint: .bottom
                         )
                     )
-                Image(systemName: "gauge.with.needle.fill")
+                Image(systemName: "cup.and.saucer.fill")
                     .font(.system(size: 42, weight: .medium))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color.cyan, Color.blue],
+                            colors: [
+                                Color(red: 0.0, green: 0.45, blue: 0.92),
+                                Color(red: 0.0, green: 0.35, blue: 0.85)
+                            ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
