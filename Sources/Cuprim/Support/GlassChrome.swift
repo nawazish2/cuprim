@@ -7,10 +7,11 @@ enum GlassChrome {
     static let cardCorner: CGFloat = 14
     static let tabBarCorner: CGFloat = 11
     static let tabPillCorner: CGFloat = 10
-    static let panelWidth: CGFloat = 336
-    static let panelHeight: CGFloat = 404
+    static let panelWidth: CGFloat = 300
+    /// Tall enough for several providers + pinned footer.
+    static let panelHeight: CGFloat = 420
     static let outerPad: CGFloat = 0
-    static let inset: CGFloat = 16
+    static let inset: CGFloat = 12
     static let cardPad: CGFloat = 10
     static let cardGap: CGFloat = 10
     static let scrollBottomPad: CGFloat = 12

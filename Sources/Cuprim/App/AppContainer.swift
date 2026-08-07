@@ -18,14 +18,12 @@ final class AppContainer {
     func start() {
         // Regular policy → Dock icon (AppIcon) is visible. Menu bar item still works.
         NSApp.setActivationPolicy(.regular)
+        SettingsOpener.configure(preferences: preferences, usage: usage)
 
         let panel = PanelController(
             usage: usage,
             preferences: preferences,
             uiState: uiState,
-            onOpenSettings: {
-                SettingsOpener.open()
-            },
             onQuit: {
                 NSApp.terminate(nil)
             }
@@ -48,6 +46,13 @@ final class AppContainer {
         }
         if let titleTimer {
             RunLoop.main.add(titleTimer, forMode: .common)
+        }
+
+        // Dev-only: prove Settings presentation path without status-menu tracking.
+        if ProcessInfo.processInfo.environment["CUPRIM_OPEN_SETTINGS"] == "1" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                SettingsOpener.open()
+            }
         }
 
         NSLog("[Cuprim] menu bar status item started")

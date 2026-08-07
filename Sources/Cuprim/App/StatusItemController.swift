@@ -90,12 +90,11 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     private func rebuildMenu() {
         menu.removeAllItems()
-        // Wide enough that right-tab status (13%, Limit Reached) clears the name.
-        menu.minimumWidth = 248
 
-        let section = NSMenuItem(title: "Status", action: nil, keyEquivalent: "")
-        section.isEnabled = false
-        menu.addItem(section)
+        // Pre–status-chip layout: “Usage” block, title + subtitle per provider.
+        let usageHeader = NSMenuItem(title: "Usage", action: nil, keyEquivalent: "")
+        usageHeader.isEnabled = false
+        menu.addItem(usageHeader)
 
         let snapshots = usage.visibleSnapshots
         if snapshots.isEmpty {
@@ -117,9 +116,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let show = NSMenuItem(
             title: "Show Cuprim",
             action: #selector(showOverviewDashboard),
-            keyEquivalent: "o"
+            keyEquivalent: ""
         )
-        show.keyEquivalentModifierMask = [.command]
         show.target = self
         menu.addItem(show)
 
@@ -140,7 +138,18 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         )
         settings.keyEquivalentModifierMask = [.command]
         settings.target = self
+        settings.image = nil
         menu.addItem(settings)
+
+        menu.addItem(.separator())
+
+        let updates = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(checkForUpdates),
+            keyEquivalent: ""
+        )
+        updates.target = self
+        menu.addItem(updates)
 
         menu.addItem(.separator())
 
@@ -154,48 +163,51 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(quit)
     }
 
-    /// Provider name · plan subtitle · monochrome status tabbed to the trailing edge.
+    /// ChatGPT-style row (pre–color-dot chips): title + monochrome subtitle.
     private func usageItem(for snap: ProviderSnapshot) -> NSMenuItem {
         let item = NSMenuItem(
-            title: "",
+            title: usageTitle(for: snap),
             action: #selector(showProviderDashboard(_:)),
             keyEquivalent: ""
         )
         item.target = self
-        item.attributedTitle = Self.attributedProviderTitle(
-            name: ProviderGlanceStatus.menuTitle(for: snap),
-            status: ProviderGlanceStatus.line(for: snap)
-        )
-        if let plan = ProviderGlanceStatus.menuSubtitle(for: snap) {
-            item.subtitle = plan
-        }
+        item.subtitle = usageSubtitle(for: snap)
         item.image = Self.menuImage(for: snap.id)
         item.representedObject = snap.id.rawValue
         return item
     }
 
-    /// `Claude` … right `13%` — monochrome label colors, trailing tab (no chips/dots).
-    private static func attributedProviderTitle(name: String, status: String) -> NSAttributedString {
-        let style = NSMutableParagraphStyle()
-        // Tab near trailing edge of typical status menu width (minimumWidth 248 − image/insets).
-        style.tabStops = [
-            NSTextTab(textAlignment: .right, location: 196, options: [:])
-        ]
-        style.lineBreakMode = .byTruncatingTail
+    private func usageTitle(for snap: ProviderSnapshot) -> String {
+        if let plan = snap.planName, !plan.isEmpty {
+            return "\(snap.id.displayName) · \(plan)"
+        }
+        return snap.id.displayName
+    }
 
-        let font = NSFont.menuFont(ofSize: 0)
-        let result = NSMutableAttributedString()
-        result.append(NSAttributedString(string: name, attributes: [
-            .font: font,
-            .foregroundColor: NSColor.labelColor,
-            .paragraphStyle: style
-        ]))
-        result.append(NSAttributedString(string: "\t\(status)", attributes: [
-            .font: font,
-            .foregroundColor: NSColor.secondaryLabelColor,
-            .paragraphStyle: style
-        ]))
-        return result
+    private func usageSubtitle(for snap: ProviderSnapshot) -> String {
+        switch snap.status {
+        case .notLoggedIn:
+            return "Not signed in"
+        case .error(let message):
+            return message.isEmpty ? "Unavailable" : message
+        case .ok:
+            guard let worst = snap.worstUsedFraction else {
+                return "No metrics"
+            }
+            if worst >= 0.95 {
+                return "Limit Reached"
+            }
+            let used = QuotaFormatting.usedPercentLabel(usedFraction: worst)
+            let nextReset = snap.metrics.compactMap(\.resetsAt).sorted().first
+            let label = QuotaFormatting.resetLabel(for: nextReset, absolute: false)
+            if !label.isEmpty {
+                let short = label
+                    .replacingOccurrences(of: "Resets in ", with: "")
+                    .replacingOccurrences(of: "Resets ", with: "")
+                return "\(used) · \(short)"
+            }
+            return "\(used) used"
+        }
     }
 
     private static func menuImage(for id: ProviderID) -> NSImage? {
@@ -243,7 +255,14 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     @objc private func openSettings() {
-        SettingsOpener.open()
+        panel.hide()
+        NSLog("[Cuprim] Settings menu action")
+        // Pass preferences directly — don't rely only on static configure.
+        SettingsOpener.open(preferences: preferences)
+    }
+
+    @objc private func checkForUpdates() {
+        OpenSourceInfo.checkForUpdates()
     }
 
     @objc private func quit() {

@@ -12,7 +12,7 @@ enum MenuBarIconKind: Equatable {
     case refreshing
 }
 
-/// Builds the status-item image (template cup + optional badge / refresh arc).
+/// Builds the status-item image (template gauge + optional refresh arc).
 @MainActor
 enum MenuBarIcon {
     static let pointSize = NSSize(width: 18, height: 18)
@@ -69,15 +69,20 @@ enum MenuBarIcon {
     static func image(kind: MenuBarIconKind, refreshPhase: CGFloat = 0) -> NSImage {
         switch kind {
         case .idle, .warning, .critical, .error:
-            return templateCupImage() ?? symbolFallback()
+            return templateGaugeImage() ?? symbolFallback()
         case .refreshing:
             return composed(refreshPhase: refreshPhase)
         }
     }
 
-    // MARK: - Template cup asset
+    // MARK: - Template gauge asset
 
     static func templateCupImage() -> NSImage? {
+        // Alias kept for any leftover call sites.
+        templateGaugeImage()
+    }
+
+    static func templateGaugeImage() -> NSImage? {
         let point = pointSize
         let image = NSImage(size: point)
         image.isTemplate = true
@@ -130,7 +135,7 @@ enum MenuBarIcon {
             bytesPerRow: 0,
             bitsPerPixel: 0
         ) else {
-            return templateCupImage() ?? symbolFallback()
+            return templateGaugeImage() ?? symbolFallback()
         }
 
         rep.size = size
@@ -144,10 +149,10 @@ enum MenuBarIcon {
             NSColor.clear.setFill()
             rect.fill()
 
-            if let cup = templateCupImage() {
-                let cupRect = rect.insetBy(dx: 0.5, dy: 0.5)
-                let tinted = tintedTemplate(cup, color: .labelColor, size: cupRect.size)
-                tinted.draw(in: cupRect, from: .zero, operation: .sourceOver, fraction: 1.0)
+            if let gauge = templateGaugeImage() {
+                let gaugeRect = rect.insetBy(dx: 0.5, dy: 0.5)
+                let tinted = tintedTemplate(gauge, color: .labelColor, size: gaugeRect.size)
+                tinted.draw(in: gaugeRect, from: .zero, operation: .sourceOver, fraction: 1.0)
             }
 
             drawRefreshArc(in: rect, phase: refreshPhase)

@@ -9,8 +9,7 @@ struct CuprimApp: App {
     var body: some Scene {
         Settings {
             SettingsView(
-                preferences: appDelegate.container.preferences,
-                usage: appDelegate.container.usage
+                preferences: appDelegate.container.preferences
             )
         }
         .commands {
@@ -28,9 +27,14 @@ struct CuprimApp: App {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Available without casting `NSApp.delegate` (SwiftUI wraps the adaptor).
+    static private(set) var shared: AppDelegate?
+
     let container = AppContainer()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppDelegate.shared = self
+
         // Apple Silicon + macOS 26 only (true Liquid Glass).
         guard PlatformRequirements.enforceOrQuit() else { return }
 

@@ -5,14 +5,9 @@ import CuprimCore
 /// Compact, System Settings–style preferences.
 struct SettingsView: View {
     @Bindable var preferences: PreferencesStore
-    var usage: UsageStore?
 
     private let rowH: CGFloat = 34
     private let padX: CGFloat = 12
-
-    private var shareProviders: [ProviderID] {
-        preferences.orderedProviders.filter { preferences.isEnabled($0) }
-    }
 
     var body: some View {
         ScrollView {
@@ -73,8 +68,6 @@ struct SettingsView: View {
                     hairline
                     actionRow("Check for Updates…") { OpenSourceInfo.checkForUpdates() }
                     hairline
-                    shareScreenshotRow
-                    hairline
                     Link("GitHub", destination: OpenSourceInfo.repositoryURL)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, padX)
@@ -83,42 +76,9 @@ struct SettingsView: View {
             }
             .padding(16)
         }
-        .frame(width: 380, height: 520)
+        .frame(width: 380, height: 480)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear { preferences.refreshLaunchAtLoginState() }
-    }
-
-    private var shareScreenshotRow: some View {
-        HStack(spacing: 8) {
-            Text("Share Screenshot")
-                .font(.body)
-                .foregroundStyle(Color.accentColor)
-            Spacer(minLength: 8)
-            Menu {
-                ForEach(shareProviders) { id in
-                    Button(id.displayName) {
-                        shareScreenshot(for: id)
-                    }
-                }
-            } label: {
-                Text("Choose…")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-            }
-            .menuStyle(.borderlessButton)
-            .fixedSize()
-        }
-        .padding(.horizontal, padX)
-        .frame(height: rowH)
-    }
-
-    private func shareScreenshot(for id: ProviderID) {
-        let snap = usage?.snapshots[id]
-        ScreenshotShare.shareProvider(
-            id,
-            snapshot: snap,
-            showUsedPercent: preferences.showUsedPercent
-        )
     }
 
     // MARK: - Rows

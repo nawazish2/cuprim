@@ -60,10 +60,10 @@ public extension ProviderSnapshot {
     }
 }
 
-/// Glance status phrases for the status menu (no multi-metric dump).
-/// Layout: provider name (title) · plan (subtitle) · status trailing right. Monochrome only.
+/// Glance status for the status menu (mock layout).
+/// Name (title) · plan (subtitle) · status trailing right. Monochrome only.
 public enum ProviderGlanceStatus {
-    /// Trailing / primary status label (no emoji, no color markers).
+    /// Trailing status (`13%`, `Limit Reached`, `Unavailable`).
     public static func line(for snapshot: ProviderSnapshot) -> String {
         switch snapshot.status {
         case .notLoggedIn:
@@ -74,33 +74,42 @@ public enum ProviderGlanceStatus {
             guard let worst = snapshot.worstUsedFraction else {
                 return "—"
             }
-            let pct = Utilization.usedPercent(usedFraction: worst)
             if worst >= 0.95 {
                 return "Limit Reached"
             }
-            return "\(pct)%"
+            return "\(Utilization.usedPercent(usedFraction: worst))%"
         }
     }
 
-    /// @available — same as `line` (kept for call sites that used statusChip).
     public static func statusChip(for snapshot: ProviderSnapshot) -> String {
         line(for: snapshot)
     }
 
+    /// Bold title — provider name only.
     public static func menuTitle(for snapshot: ProviderSnapshot) -> String {
         snapshot.id.displayName
     }
 
-    /// Plan only under the name (right-side status is composed separately).
-    public static func menuSubtitle(for snapshot: ProviderSnapshot) -> String? {
-        if let plan = snapshot.planName, !plan.isEmpty {
-            return plan
-        }
-        return nil
+    /// Plan under the name (when using a two-line row).
+    public static func menuPlan(for snapshot: ProviderSnapshot) -> String? {
+        guard let plan = snapshot.planName, !plan.isEmpty else { return nil }
+        return plan
     }
 
-    /// Plan string for subtitle, or empty when absent (keeps row heights when set as "").
-    public static func menuPlanLabel(for snapshot: ProviderSnapshot) -> String {
-        menuSubtitle(for: snapshot) ?? ""
+    /// Compact left label: `Claude · Free` (one line with plan).
+    public static func compactTitle(for snapshot: ProviderSnapshot) -> String {
+        if let plan = menuPlan(for: snapshot) {
+            return "\(menuTitle(for: snapshot)) · \(plan)"
+        }
+        return menuTitle(for: snapshot)
+    }
+
+    public static func menuStatus(for snapshot: ProviderSnapshot) -> String {
+        line(for: snapshot)
+    }
+
+    /// Single-line fallback without columns.
+    public static func menuRow(for snapshot: ProviderSnapshot) -> String {
+        "\(compactTitle(for: snapshot)) · \(line(for: snapshot))"
     }
 }
