@@ -36,7 +36,7 @@ Design/AppIcon/
   README.md
 
 Design/MenuBar/
-  gauge-template.svg           # menu bar template source
+  gauge-template.svg           # menu bar monochrome cup (template)
   preview-on-dark.png
 
 Sources/Cuprim/Resources/AppIcon/
@@ -47,7 +47,7 @@ Sources/Cuprim/Resources/AppIcon/
   AppIcon-1024.png   # fallback flat master
 
 Sources/Cuprim/Resources/MenuBar/
-  MenuBarIcon.png / @2x / @3x  # template gauge (isTemplate)
+  MenuBarIcon.png / @2x / @3x  # monochrome template cup (isTemplate)
   MenuBarIcon-master.png
 ```
 
@@ -55,7 +55,7 @@ Sources/Cuprim/Resources/MenuBar/
 
 ```bash
 cd ~/Developer/tokenbar
-# Flat cup layers + menu bar templates + website favicons
+# Flat cup layers + monochrome menu bar template + website favicons
 python3 script/generate_icons.py
 # Rebuild layered icon + exports + AppIcon.icns via Apple ictool
 ./script/build_app_icon.sh
@@ -71,7 +71,7 @@ What the automation produces:
 | `Exports/Cuprim-Default-1024.png` | Liquid Glass render (Default) |
 | `Exports/Cuprim-Dark-1024.png` | Dark appearance export |
 | `AppIcon.icns` | Dock/Finder sizes from Default export |
-| `MenuBar/MenuBarIcon*.png` | Status item template (gauge) |
+| `MenuBar/MenuBarIcon*.png` | Status item monochrome cup (template) |
 
 ## Optional: open in Icon Composer to tweak
 
@@ -89,4 +89,4 @@ Save back to `Sources/Cuprim/Resources/AppIcon/AppIcon.icon`, then:
 
 ## Menu bar icon (separate)
 
-Menu bar uses a **custom gauge template** (`MenuBarIcon*.png`, `isTemplate = true`) — not the Dock cup icon. That matches Apple’s utility pattern (distinct status glyph).
+Menu bar uses a **monochrome template cup** (`MenuBarIcon*.png`, `isTemplate = true`) — calm by default, system-tinted. Runtime composition (`MenuBarIcon.swift`) adds a small **warning/critical/error badge** only when needed, and a thin **rotating arc only while refreshing**. No permanent progress ring or multi-color brand mark in the menu bar (branding stays in the popover).

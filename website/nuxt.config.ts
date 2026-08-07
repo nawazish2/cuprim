@@ -29,7 +29,7 @@ export default defineNuxtConfig({
           content: "Menu-bar AI quota for Claude, Codex, Cursor, and Grok. Local only.",
         },
         { name: "twitter:image", content: "https://cuprim.vercel.app/og.png" },
-        { name: "theme-color", content: "#0a0908" },
+        { name: "theme-color", content: "#f4f6f3" },
       ],
       link: [
         { rel: "icon", type: "image/png", href: "/favicon.png" },

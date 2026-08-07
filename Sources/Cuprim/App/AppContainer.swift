@@ -35,6 +35,7 @@ final class AppContainer {
         statusItem = StatusItemController(
             usage: usage,
             preferences: preferences,
+            uiState: uiState,
             panel: panel
         )
 

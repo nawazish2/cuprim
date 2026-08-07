@@ -1,43 +1,50 @@
 <template>
-  <section class="relative px-6 pb-10 pt-[170px] text-center max-md:pt-[140px]">
-    <div class="mx-auto max-w-[1120px]">
-      <div
-        class="reveal in mb-6 inline-flex items-center gap-2 rounded-full border border-[rgba(224,138,76,0.28)] bg-[rgba(224,138,76,0.08)] px-4 py-1.5 font-mono text-[11.5px] font-medium uppercase tracking-[0.16em] text-[var(--copper)]"
-      >
-        <i class="animate-pulse-dot size-1.5 rounded-full bg-[var(--copper)] shadow-[0_0_10px_var(--copper)]" />
-        Free · Open source · macOS menu bar
+  <header class="hero relative overflow-hidden pb-[72px] pt-[112px]">
+    <div
+      class="pointer-events-none absolute inset-x-[-10%] top-[-10%] z-0 h-[520px]"
+      aria-hidden="true"
+      style="
+        background:
+          radial-gradient(620px 360px at 72% 8%, #0093ff14, transparent 70%),
+          radial-gradient(520px 320px at 8% 0, #181b1709, transparent 70%);
+      "
+    />
+    <div class="wrap relative z-[1] text-center">
+      <div class="reveal d2 mx-auto mb-7 flex justify-center">
+        <CupLogo :size="120" class="rounded-[28px] shadow-[0_18px_50px_-24px_rgba(24,27,23,0.45)]" />
       </div>
-
       <h1
-        class="reveal in d1 text-[clamp(44px,7.2vw,84px)] font-extrabold leading-[1.02] tracking-[-0.035em]"
+        class="reveal d2 mx-auto mb-[22px] max-w-[22ch] text-[clamp(2.5rem,5vw,5rem)] font-bold leading-[1.02] tracking-tight"
       >
         Every AI quota,<br />
-        right at the <span class="font-serif-accent pr-[0.06em] tracking-[-0.01em]">rim</span>.
+        right at the <span class="text-[var(--accent)]">rim</span>.
       </h1>
-
-      <p class="reveal in d2 mx-auto mt-6 max-w-[640px] text-[clamp(16px,1.6vw,18.5px)] text-[var(--mut)]">
-        Cuprim is a tiny, open-source menu-bar app for macOS that watches your
-        <strong class="font-semibold text-[var(--text)]">Claude, Codex, Cursor, and Grok</strong>
-        usage — remaining quota and resets — so you never burn a limit by surprise.
+      <p
+        class="reveal d3 mx-auto mb-[34px] max-w-[46ch] text-[clamp(1.0625rem,2.5vw,1.3125rem)] font-medium leading-[1.45] text-[var(--muted)]"
+      >
+        Cuprim watches Claude, Codex, Cursor, and Grok in your Mac menu bar — local only, no telemetry.
       </p>
-
-      <div class="reveal in d3 mt-9 flex flex-wrap justify-center gap-3.5 max-[560px]:flex-col">
-        <a :href="SITE.releasesLatest" class="btn-primary btn-lg max-[560px]:w-full max-[560px]:justify-center" target="_blank" rel="noopener noreferrer">
+      <div class="reveal d4 mb-4 flex flex-wrap justify-center gap-3">
+        <a :href="SITE.releasesLatest" class="btn btn-lg" target="_blank" rel="noopener noreferrer">
           Download for Mac
         </a>
-        <a :href="SITE.github" class="btn-ghost btn-lg max-[560px]:w-full max-[560px]:justify-center" target="_blank" rel="noopener noreferrer">
-          Star on GitHub
+        <a :href="SITE.github" class="btn btn-lg btn-secondary" target="_blank" rel="noopener noreferrer">
+          View on GitHub
         </a>
       </div>
-
-      <p class="reveal in d3 mt-5 font-mono text-xs tracking-wide text-[var(--dim)]">
-        <b class="font-medium text-[var(--mut)]">{{ SITE.version }}</b>
-        <span class="mx-1.5 text-[var(--line2)]">·</span>macOS 26+
-        <span class="mx-1.5 text-[var(--line2)]">·</span>Apple Silicon
-        <span class="mx-1.5 text-[var(--line2)]">·</span>MIT License
+      <p
+        class="reveal d4 flex flex-wrap items-center justify-center gap-1 pt-4 font-mono text-[0.82rem] font-medium text-[color-mix(in_srgb,var(--muted)_65%,transparent)]"
+      >
+        <span>{{ SITE.version }}</span>
+        <span class="opacity-65">·</span>
+        <span>macOS 26+</span>
+        <span class="opacity-65">·</span>
+        <span>Apple Silicon</span>
+        <span class="opacity-65">·</span>
+        <span>MIT</span>
       </p>
     </div>
-  </section>
+  </header>
 </template>
 
 <script setup lang="ts">

@@ -2,34 +2,47 @@ import AppKit
 import SwiftUI
 import CuprimCore
 
-/// Menu-bar extra with a **native NSMenu** (ChatGPT / SuperCmd style).
-/// Click the gauge → system menu. Full glass dashboard via “Show Cuprim”.
+/// Menu-bar extra with a **native NSMenu**.
+/// Template cup by default; badges for exceptional status; temporary refresh arc.
 @MainActor
 final class StatusItemController: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem
     private let usage: UsageStore
     private let preferences: PreferencesStore
+    private let uiState: DashboardUIState
     private let panel: PanelController
     private let menu = NSMenu()
+
+    private var refreshTimer: Timer?
+    private var refreshPhase: CGFloat = 0
+    private var appearanceObserver: NSObjectProtocol?
 
     init(
         usage: UsageStore,
         preferences: PreferencesStore,
+        uiState: DashboardUIState,
         panel: PanelController
     ) {
         self.usage = usage
         self.preferences = preferences
+        self.uiState = uiState
         self.panel = panel
 
-        self.statusItem = NSStatusBar.system.statusItem(withLength: 28)
+        self.statusItem = NSStatusBar.system.statusItem(withLength: 26)
         self.statusItem.isVisible = true
 
         super.init()
 
         configureButton()
         configureMenu()
+        observeAppearance()
         reloadTitle()
-        NSLog("[Cuprim] status item created (native menu)")
+        NSLog("[Cuprim] status item created (native menu · template icon)")
+    }
+
+    deinit {
+        // Timer / observer cleanup via stopRefreshAnimation + removeObserver is done on main;
+        // NSStatusItem is released with the controller.
     }
 
     private func configureButton() {
@@ -38,14 +51,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             return
         }
 
-        let image = Self.menuBarTemplateImage()
-        button.image = image
+        button.image = MenuBarIcon.image(kind: .idle)
         button.imagePosition = .imageOnly
         button.isEnabled = true
         button.appearsDisabled = false
         button.toolTip = "Cuprim"
         button.title = ""
-        // Native menu owns clicks — same pattern as ChatGPT / SuperCmd.
         statusItem.menu = menu
     }
 
@@ -54,28 +65,37 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.delegate = self
     }
 
-    // MARK: - NSMenuDelegate
+    private func observeAppearance() {
+        // Rebuild composed badge glyphs when light/dark flips (labelColor changes).
+        appearanceObserver = DistributedNotificationCenter.default.addObserver(
+            forName: Notification.Name("AppleInterfaceThemeChangedNotification"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.reloadTitle()
+            }
+        }
+    }
 
     func menuWillOpen(_ menu: NSMenu) {
-        // Close glass panel if open so only one surface is visible.
         if panel.isVisible {
             panel.hide()
         }
     }
 
-    /// Single rebuild site — avoid double rebuild with `menuWillOpen`.
     func menuNeedsUpdate(_ menu: NSMenu) {
         rebuildMenu()
     }
 
-    /// Rebuild menu contents (usage + actions) every open.
     private func rebuildMenu() {
         menu.removeAllItems()
+        // Wide enough that right-tab status (13%, Limit Reached) clears the name.
+        menu.minimumWidth = 248
 
-        // —— Usage (like ChatGPT “Usage” block) ——
-        let usageHeader = NSMenuItem(title: "Usage", action: nil, keyEquivalent: "")
-        usageHeader.isEnabled = false
-        menu.addItem(usageHeader)
+        let section = NSMenuItem(title: "Status", action: nil, keyEquivalent: "")
+        section.isEnabled = false
+        menu.addItem(section)
 
         let snapshots = usage.visibleSnapshots
         if snapshots.isEmpty {
@@ -94,12 +114,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        // —— Actions (SuperCmd style) ——
         let show = NSMenuItem(
             title: "Show Cuprim",
-            action: #selector(showDashboard),
-            keyEquivalent: ""
+            action: #selector(showOverviewDashboard),
+            keyEquivalent: "o"
         )
+        show.keyEquivalentModifierMask = [.command]
         show.target = self
         menu.addItem(show)
 
@@ -124,32 +144,6 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        let share = NSMenuItem(
-            title: "Share Screenshot",
-            action: nil,
-            keyEquivalent: ""
-        )
-        share.submenu = shareScreenshotSubmenu()
-        menu.addItem(share)
-
-        let about = NSMenuItem(
-            title: "About Cuprim",
-            action: #selector(openAbout),
-            keyEquivalent: ""
-        )
-        about.target = self
-        menu.addItem(about)
-
-        let updates = NSMenuItem(
-            title: "Check for Updates…",
-            action: #selector(checkForUpdates),
-            keyEquivalent: ""
-        )
-        updates.target = self
-        menu.addItem(updates)
-
-        menu.addItem(.separator())
-
         let quit = NSMenuItem(
             title: "Quit Cuprim",
             action: #selector(quit),
@@ -160,66 +154,48 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(quit)
     }
 
-    private func shareScreenshotSubmenu() -> NSMenu {
-        let sub = NSMenu(title: "Share Screenshot")
-        // Each item = one provider card (not "open destination with all tabs").
-        for id in preferences.orderedProviders where preferences.isEnabled(id) {
-            let item = NSMenuItem(
-                title: id.displayName,
-                action: #selector(shareScreenshot(_:)),
-                keyEquivalent: ""
-            )
-            item.target = self
-            item.image = Self.menuImage(for: id)
-            item.representedObject = id.rawValue
-            sub.addItem(item)
-        }
-        return sub
-    }
-
-    /// One row per provider — title + subtitle (ChatGPT-style).
+    /// Provider name · plan subtitle · monochrome status tabbed to the trailing edge.
     private func usageItem(for snap: ProviderSnapshot) -> NSMenuItem {
         let item = NSMenuItem(
-            title: usageTitle(for: snap),
-            action: #selector(showDashboard),
+            title: "",
+            action: #selector(showProviderDashboard(_:)),
             keyEquivalent: ""
         )
         item.target = self
-        item.subtitle = usageSubtitle(for: snap)
+        item.attributedTitle = Self.attributedProviderTitle(
+            name: ProviderGlanceStatus.menuTitle(for: snap),
+            status: ProviderGlanceStatus.line(for: snap)
+        )
+        if let plan = ProviderGlanceStatus.menuSubtitle(for: snap) {
+            item.subtitle = plan
+        }
         item.image = Self.menuImage(for: snap.id)
         item.representedObject = snap.id.rawValue
         return item
     }
 
-    private func usageTitle(for snap: ProviderSnapshot) -> String {
-        if let plan = snap.planName, !plan.isEmpty {
-            return "\(snap.id.displayName) · \(plan)"
-        }
-        return snap.id.displayName
-    }
+    /// `Claude` … right `13%` — monochrome label colors, trailing tab (no chips/dots).
+    private static func attributedProviderTitle(name: String, status: String) -> NSAttributedString {
+        let style = NSMutableParagraphStyle()
+        // Tab near trailing edge of typical status menu width (minimumWidth 248 − image/insets).
+        style.tabStops = [
+            NSTextTab(textAlignment: .right, location: 196, options: [:])
+        ]
+        style.lineBreakMode = .byTruncatingTail
 
-    private func usageSubtitle(for snap: ProviderSnapshot) -> String {
-        switch snap.status {
-        case .notLoggedIn:
-            return "Not signed in"
-        case .error(let message):
-            return message
-        case .ok:
-            guard let worst = snap.metrics.compactMap(\.usedFraction).max() else {
-                return "No metrics"
-            }
-            // Keep the status menu narrow: short % + relative reset only (no absolute dates).
-            let used = QuotaFormatting.usedPercentLabel(usedFraction: worst)
-            let nextReset = snap.metrics.compactMap(\.resetsAt).sorted().first
-            let label = QuotaFormatting.resetLabel(for: nextReset, absolute: false)
-            if !label.isEmpty {
-                let short = label
-                    .replacingOccurrences(of: "Resets in ", with: "")
-                    .replacingOccurrences(of: "Resets ", with: "")
-                return "\(used) · \(short)"
-            }
-            return "\(used) used"
-        }
+        let font = NSFont.menuFont(ofSize: 0)
+        let result = NSMutableAttributedString()
+        result.append(NSAttributedString(string: name, attributes: [
+            .font: font,
+            .foregroundColor: NSColor.labelColor,
+            .paragraphStyle: style
+        ]))
+        result.append(NSAttributedString(string: "\t\(status)", attributes: [
+            .font: font,
+            .foregroundColor: NSColor.secondaryLabelColor,
+            .paragraphStyle: style
+        ]))
+        return result
     }
 
     private static func menuImage(for id: ProviderID) -> NSImage? {
@@ -238,52 +214,24 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         return nil
     }
 
-    /// Custom gauge template (black on transparent). Falls back to SF Symbol if assets missing.
-    private static func menuBarTemplateImage() -> NSImage {
-        if let custom = loadMenuBarTemplate() {
-            return custom
-        }
-        return menuBarSymbolFallback()
-    }
-
-    private static func loadMenuBarTemplate() -> NSImage? {
-        // Prefer @2x / @3x via AppResources; representations keep correct pixel density.
-        guard let base = AppResources.image(name: "MenuBarIcon", subdirectory: "MenuBar")
-            ?? AppResources.image(name: "MenuBarIcon-16", subdirectory: "MenuBar")
-        else { return nil }
-
-        let image = base.copy() as? NSImage ?? base
-        image.isTemplate = true
-        image.size = NSSize(width: 18, height: 18)
-        return image
-    }
-
-    private static func menuBarSymbolFallback() -> NSImage {
-        let names = [AppSymbols.app, AppSymbols.appFallback, "chart.bar.fill", "circle.fill"]
-        for name in names {
-            if let image = NSImage(systemSymbolName: name, accessibilityDescription: "Cuprim") {
-                let config = NSImage.SymbolConfiguration(pointSize: 15, weight: .medium)
-                let configured = image.withSymbolConfiguration(config) ?? image
-                configured.isTemplate = true
-                configured.size = NSSize(width: 18, height: 18)
-                return configured
-            }
-        }
-        let size = NSSize(width: 16, height: 16)
-        let image = NSImage(size: size)
-        image.lockFocus()
-        NSColor.black.setFill()
-        NSBezierPath(roundedRect: NSRect(x: 1, y: 1, width: 14, height: 14), xRadius: 3, yRadius: 3).fill()
-        image.unlockFocus()
-        image.isTemplate = true
-        return image
-    }
-
     // MARK: - Actions
 
-    @objc private func showDashboard() {
+    @objc private func showOverviewDashboard() {
+        openDashboard(tab: .overview)
+    }
+
+    @objc private func showProviderDashboard(_ sender: NSMenuItem) {
+        if let raw = sender.representedObject as? String,
+           let id = ProviderID(rawValue: raw) {
+            openDashboard(tab: .provider(id))
+        } else {
+            openDashboard(tab: .overview)
+        }
+    }
+
+    private func openDashboard(tab: ProviderTab) {
         guard let button = statusItem.button else { return }
-        // Clear menu briefly so the panel can take focus (menu dismisses first).
+        uiState.selectedTab = tab
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.panel.show(relativeTo: button)
@@ -298,60 +246,78 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         SettingsOpener.open()
     }
 
-    @objc private func openAbout() {
-        AboutWindowController.show()
-    }
-
-    @objc private func checkForUpdates() {
-        OpenSourceInfo.checkForUpdates()
-    }
-
-    @objc private func shareScreenshot(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String,
-              let providerID = ProviderID(rawValue: raw),
-              let target = ScreenshotShare.Target(rawValue: raw)
-        else { return }
-
-        // Render after the status menu closes so pasteboard write isn't interrupted.
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            let snapshot = self.usage.snapshots[providerID]
-                ?? ProviderSnapshot.empty(providerID, status: .notLoggedIn)
-            let cards = [snapshot]
-            guard let image = ShareCardView.renderImage(
-                snapshots: cards,
-                showUsedPercent: self.preferences.showUsedPercent
-            ) else {
-                NSSound.beep()
-                return
-            }
-            let summary = ScreenshotShare.usageSummary(
-                from: cards,
-                showUsed: self.preferences.showUsedPercent
-            )
-            ScreenshotShare.share(image: image, summary: summary, to: target)
-        }
-    }
-
     @objc private func quit() {
         NSApp.terminate(nil)
     }
 
+    // MARK: - Status item image
+
     func reloadTitle() {
         guard let button = statusItem.button else { return }
-        if button.image == nil {
-            button.image = Self.menuBarTemplateImage()
+
+        let kind = MenuBarIcon.resolve(usage: usage)
+        syncRefreshAnimation(isRefreshing: kind == .refreshing)
+
+        let image: NSImage
+        if kind == .refreshing {
+            image = MenuBarIcon.image(kind: .refreshing, refreshPhase: refreshPhase)
+        } else {
+            image = MenuBarIcon.image(kind: kind)
         }
+
+        button.image = image
         button.isEnabled = true
         button.appearsDisabled = false
         statusItem.isVisible = true
         button.imagePosition = .imageOnly
         button.title = ""
-        statusItem.length = 28
-        if let remaining = usage.worstRemainingPercent {
-            button.toolTip = "Cuprim · \(remaining)% remaining"
-        } else {
-            button.toolTip = "Cuprim"
+        statusItem.length = 26
+
+        var tip = "Cuprim"
+        if kind == .refreshing {
+            if let remaining = usage.worstRemainingPercent {
+                tip = "Cuprim · \(remaining)% remaining · Refreshing"
+            } else {
+                tip = "Cuprim · Refreshing"
+            }
+        } else if let remaining = usage.worstRemainingPercent {
+            tip = "Cuprim · \(remaining)% remaining"
+            if let suffix = MenuBarIcon.tooltipSuffix(for: kind) {
+                tip += " · \(suffix)"
+            }
+        } else if let suffix = MenuBarIcon.tooltipSuffix(for: kind) {
+            tip = "Cuprim · \(suffix)"
         }
+        button.toolTip = tip
+    }
+
+    private func syncRefreshAnimation(isRefreshing: Bool) {
+        if isRefreshing {
+            guard refreshTimer == nil else { return }
+            refreshPhase = 0
+            let timer = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    // ~0.45s per full turn: 0.05 * 20 ≈ 1.0 → map to 1.0 phase
+                    self.refreshPhase = (self.refreshPhase + 0.05 / 0.45).truncatingRemainder(dividingBy: 1.0)
+                    guard let button = self.statusItem.button, self.usage.isRefreshing else {
+                        self.stopRefreshAnimation()
+                        self.reloadTitle()
+                        return
+                    }
+                    button.image = MenuBarIcon.image(kind: .refreshing, refreshPhase: self.refreshPhase)
+                }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            refreshTimer = timer
+        } else {
+            stopRefreshAnimation()
+        }
+    }
+
+    private func stopRefreshAnimation() {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+        refreshPhase = 0
     }
 }

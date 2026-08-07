@@ -10,7 +10,8 @@ enum SettingsOpener {
         if !opened {
             // Fallback if the Settings scene is unavailable for any reason.
             if let prefs = (NSApp.delegate as? AppDelegate)?.container.preferences {
-                SettingsWindowController.show(preferences: prefs)
+                let usage = (NSApp.delegate as? AppDelegate)?.container.usage
+                SettingsWindowController.show(preferences: prefs, usage: usage)
             }
         }
     }

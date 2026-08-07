@@ -8,7 +8,10 @@ struct CuprimApp: App {
 
     var body: some Scene {
         Settings {
-            SettingsView(preferences: appDelegate.container.preferences)
+            SettingsView(
+                preferences: appDelegate.container.preferences,
+                usage: appDelegate.container.usage
+            )
         }
         .commands {
             CommandGroup(replacing: .appInfo) {

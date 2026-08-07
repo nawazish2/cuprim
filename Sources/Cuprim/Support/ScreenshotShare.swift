@@ -117,6 +117,30 @@ enum ScreenshotShare {
         }
         return lines.joined(separator: "\n")
     }
+
+    /// Render and share a single provider’s usage card (menu / Settings).
+    @MainActor
+    static func shareProvider(
+        _ providerID: ProviderID,
+        snapshot: ProviderSnapshot?,
+        showUsedPercent: Bool
+    ) {
+        guard let target = Target(rawValue: providerID.rawValue) else {
+            NSSound.beep()
+            return
+        }
+        let snap = snapshot ?? ProviderSnapshot.empty(providerID, status: .notLoggedIn)
+        let cards = [snap]
+        guard let image = ShareCardView.renderImage(
+            snapshots: cards,
+            showUsedPercent: showUsedPercent
+        ) else {
+            NSSound.beep()
+            return
+        }
+        let summary = usageSummary(from: cards, showUsed: showUsedPercent)
+        share(image: image, summary: summary, to: target)
+    }
 }
 
 extension NSView {

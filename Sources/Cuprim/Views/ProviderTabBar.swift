@@ -13,22 +13,55 @@ enum ProviderTab: Hashable, Identifiable {
     }
 }
 
-/// Compact text tabs — clean menu density, not tall icon grid.
+/// Native-feeling segmented chips — soft track, rounded active pill.
 struct ProviderTabBar: View {
     @Binding var selection: ProviderTab
     let available: [ProviderID]
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    var body: some View {
-        HStack(spacing: 2) {
-            chip(tab: .overview, title: "All")
+    /// Prefer system segmented when All + providers fit (~4 segments).
+    private var useNativeSegmented: Bool {
+        available.count <= 3
+    }
 
-            ForEach(available) { id in
-                chip(tab: .provider(id), title: shortName(id))
+    private var selectionSpring: Animation? {
+        reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.86)
+    }
+
+    var body: some View {
+        Group {
+            if useNativeSegmented {
+                nativePicker
+            } else {
+                scrollingChips
             }
         }
-        .padding(3)
+        .animation(selectionSpring, value: selection)
+    }
+
+    private var nativePicker: some View {
+        Picker("", selection: $selection) {
+            Text("All").tag(ProviderTab.overview)
+            ForEach(available) { id in
+                Text(shortName(id)).tag(ProviderTab.provider(id))
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .controlSize(.small)
+    }
+
+    private var scrollingChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 4) {
+                chip(tab: .overview, title: "All")
+                ForEach(available) { id in
+                    chip(tab: .provider(id), title: shortName(id))
+                }
+            }
+            .padding(3)
+        }
         .agentGlassTabBar()
     }
 
@@ -39,23 +72,21 @@ struct ProviderTabBar: View {
             if reduceMotion {
                 selection = tab
             } else {
-                withAnimation(.easeOut(duration: 0.15)) {
+                withAnimation(selectionSpring) {
                     selection = tab
                 }
             }
         } label: {
             Text(title)
                 .font(.caption.weight(selected ? .semibold : .medium))
-                .foregroundStyle(selected ? Color.primary.opacity(0.95) : Color.primary.opacity(0.42))
+                .foregroundStyle(selected ? GlassChrome.textTabActive : GlassChrome.textTabIdle)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 11)
                 .padding(.vertical, 5)
-                .frame(maxWidth: .infinity)
                 .background {
                     if selected {
                         RoundedRectangle(cornerRadius: GlassChrome.tabPillCorner, style: .continuous)
-                            .fill(Color.primary.opacity(0.12))
+                            .fill(Color.primary.opacity(0.15))
                     }
                 }
                 .contentShape(Rectangle())

@@ -80,3 +80,26 @@ docs/                         # Notarization / distribution
 ## Privacy stance (product)
 
 Keep the product local-only. Do not add analytics SDKs, remote config, or “sync to our servers” features.
+
+## Learned User Preferences
+
+- Prefers free and open source; do not reopen Polar, paywall, or monetization work
+- For this solo repo, prefer pushing to `main` over branch-and-PR workflows unless asked otherwise
+- Prefers compact, premium, native macOS UI (Liquid Glass / HIG, glanceable and readable) over custom web-dashboard glassmorphism; rejects heavy or overworked icon treatments and often prefers earlier simpler icon versions when iterating
+- About and shipping surfaces should credit the author (Created by Nawazish)
+- README and product copy should stay short and local-only focused (private, low RAM); strip unnecessary detail
+- Share screenshots/cards should show only the selected provider, not every provider’s usage
+- Check for Updates should install automatically when an update exists and clearly say when already on the latest
+- Prefers reviewing the app or site locally before cloud/remote work
+- Marketing site visual direction: mac-utility landings like Purge/Alcove/Klack; unique cup mark, not Raycast-style
+- Do not push the marketing website when releasing the macOS app unless explicitly asked
+- Menu bar should stay a quick status overview; detailed usage and analysis belong in the dashboard—do not duplicate detail across surfaces
+
+## Learned Workspace Facts
+
+- Product renamed from TokenBar to Cuprim (name collision in the same niche); GitHub remote/product name is Cuprim
+- Marketing site is a Nuxt + Tailwind app under `website/`
+- App icon and menu bar assets live under `Design/AppIcon`, `Design/MenuBar`, and `Sources/Cuprim/Resources/`; DMG/installer background should stay in sync with the current icon
+- Menu bar brand mark is a cup-with-ring silhouette (high-quality monochrome/template glyph at small sizes)
+- Version strings live in `script/package_app.sh`; do not bump version or cut a GitHub Release unless asked
+- Apple Silicon + macOS 26+ only; cloud/Linux agents cannot compile or run the `.app`

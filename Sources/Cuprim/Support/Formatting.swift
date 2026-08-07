@@ -2,19 +2,36 @@ import Foundation
 import SwiftUI
 import CuprimCore
 
-// Re-export pure formatting for app code; add UI colors here.
-
 extension QuotaFormatting {
-    /// Status colors for meters — high contrast on dark glass.
+    /// 4-band semantic meter colors using system semantic hues.
     static func meterColor(usedFraction: Double?) -> Color {
-        guard let usedFraction else { return .secondary }
+        guard let usedFraction else { return GlassChrome.textSecondary }
         switch Utilization.clamp01(usedFraction) {
         case ..<0.55:
-            return Color(red: 0.42, green: 0.86, blue: 0.55)
+            return Color.green
         case ..<0.80:
-            return Color(red: 1.0, green: 0.78, blue: 0.28)
+            return Color.yellow
+        case ..<0.95:
+            return Color.orange
         default:
-            return Color(red: 1.0, green: 0.48, blue: 0.44)
+            return Color.red
         }
+    }
+
+    /// Short whisper label for last panel refresh (e.g. "just now").
+    static func updatedLabel(for date: Date?, relativeTo now: Date = .now) -> String? {
+        guard let date else { return nil }
+        let seconds = now.timeIntervalSince(date)
+        if seconds < 8 { return "Just now" }
+        if seconds < 60 { return "\(Int(seconds))s ago" }
+        if seconds < 3600 {
+            let m = max(1, Int(seconds / 60))
+            return "\(m)m ago"
+        }
+        if seconds < 86_400 {
+            let h = max(1, Int(seconds / 3600))
+            return "\(h)h ago"
+        }
+        return "Earlier"
     }
 }

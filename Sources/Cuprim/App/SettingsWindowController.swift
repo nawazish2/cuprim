@@ -7,20 +7,22 @@ import CuprimCore
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private static var shared: SettingsWindowController?
     private let preferences: PreferencesStore
+    private let usage: UsageStore?
     private var didEnterActivation = false
     private var hosting: NSHostingController<SettingsView>?
 
-    static func show(preferences: PreferencesStore) {
+    static func show(preferences: PreferencesStore, usage: UsageStore? = nil) {
         if shared == nil {
-            shared = SettingsWindowController(preferences: preferences)
+            shared = SettingsWindowController(preferences: preferences, usage: usage)
         } else {
-            shared?.hosting?.rootView = SettingsView(preferences: preferences)
+            shared?.hosting?.rootView = SettingsView(preferences: preferences, usage: usage)
         }
         shared?.showWindow(nil)
     }
 
-    private init(preferences: PreferencesStore) {
+    private init(preferences: PreferencesStore, usage: UsageStore?) {
         self.preferences = preferences
+        self.usage = usage
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 400, height: 460),
             styleMask: [.titled, .closable],
@@ -49,7 +51,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.center()
         window.delegate = self
 
-        let root = SettingsView(preferences: preferences)
+        let root = SettingsView(preferences: preferences, usage: usage)
         let controller = NSHostingController(rootView: root)
         controller.sizingOptions = [.preferredContentSize]
         window.contentViewController = controller
