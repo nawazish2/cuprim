@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared TokenBar.app packaging. Sourced or invoked by build_and_run.sh / release.sh.
+# Shared Cuprim.app packaging. Sourced or invoked by build_and_run.sh / release.sh.
 # Env:
 #   CONFIG=debug|release   (default: debug)
 #   CODESIGN_IDENTITY=...  (default: "-" ad-hoc)
@@ -11,7 +11,7 @@ cd "$ROOT"
 
 ARCH="$(uname -m)"
 if [[ "$ARCH" != "arm64" ]]; then
-  echo "error: TokenBar requires Apple Silicon (arm64). This Mac is $ARCH." >&2
+  echo "error: Cuprim requires Apple Silicon (arm64). This Mac is $ARCH." >&2
   exit 1
 fi
 
@@ -23,8 +23,8 @@ echo "→ Building ($CONFIG, arm64)…"
 swift build -c "$CONFIG" --arch arm64
 
 BIN_DIR="$(swift build -c "$CONFIG" --arch arm64 --show-bin-path)"
-BIN="$BIN_DIR/TokenBar"
-APP_DIR="$ROOT/dist/TokenBar.app"
+BIN="$BIN_DIR/Cuprim"
+APP_DIR="$ROOT/dist/Cuprim.app"
 CONTENTS="$APP_DIR/Contents"
 MACOS="$CONTENTS/MacOS"
 RES="$CONTENTS/Resources"
@@ -32,36 +32,36 @@ RES="$CONTENTS/Resources"
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS" "$RES"
 
-cp "$BIN" "$MACOS/TokenBar"
-chmod +x "$MACOS/TokenBar"
+cp "$BIN" "$MACOS/Cuprim"
+chmod +x "$MACOS/Cuprim"
 
 # Resource fallbacks for Bundle.main
-if [ -d "Sources/TokenBar/Resources/ProviderIcons" ]; then
+if [ -d "Sources/Cuprim/Resources/ProviderIcons" ]; then
   mkdir -p "$RES/ProviderIcons"
-  cp -R Sources/TokenBar/Resources/ProviderIcons/* "$RES/ProviderIcons/" 2>/dev/null || true
+  cp -R Sources/Cuprim/Resources/ProviderIcons/* "$RES/ProviderIcons/" 2>/dev/null || true
 fi
-if [ -d "Sources/TokenBar/Resources/MenuBar" ]; then
+if [ -d "Sources/Cuprim/Resources/MenuBar" ]; then
   mkdir -p "$RES/MenuBar"
-  cp -R Sources/TokenBar/Resources/MenuBar/* "$RES/MenuBar/" 2>/dev/null || true
+  cp -R Sources/Cuprim/Resources/MenuBar/* "$RES/MenuBar/" 2>/dev/null || true
 fi
-if [ -d "Sources/TokenBar/Resources/AppIcon/AppIcon.icon" ]; then
+if [ -d "Sources/Cuprim/Resources/AppIcon/AppIcon.icon" ]; then
   rm -rf "$RES/AppIcon.icon"
-  cp -R "Sources/TokenBar/Resources/AppIcon/AppIcon.icon" "$RES/AppIcon.icon"
+  cp -R "Sources/Cuprim/Resources/AppIcon/AppIcon.icon" "$RES/AppIcon.icon"
 fi
-if [ -f "Sources/TokenBar/Resources/AppIcon/AppIcon.icns" ]; then
-  cp "Sources/TokenBar/Resources/AppIcon/AppIcon.icns" "$RES/AppIcon.icns"
+if [ -f "Sources/Cuprim/Resources/AppIcon/AppIcon.icns" ]; then
+  cp "Sources/Cuprim/Resources/AppIcon/AppIcon.icns" "$RES/AppIcon.icns"
 fi
-if [ -f "Sources/TokenBar/Resources/AppIcon/AppIcon-1024.png" ]; then
-  cp "Sources/TokenBar/Resources/AppIcon/AppIcon-1024.png" "$RES/AppIcon-1024.png"
+if [ -f "Sources/Cuprim/Resources/AppIcon/AppIcon-1024.png" ]; then
+  cp "Sources/Cuprim/Resources/AppIcon/AppIcon-1024.png" "$RES/AppIcon-1024.png"
 fi
-if [ -f "Sources/TokenBar/Resources/AppIcon/AppIcon-About.png" ]; then
+if [ -f "Sources/Cuprim/Resources/AppIcon/AppIcon-About.png" ]; then
   mkdir -p "$RES/AppIcon"
-  cp "Sources/TokenBar/Resources/AppIcon/AppIcon-About.png" "$RES/AppIcon/AppIcon-About.png"
-  cp "Sources/TokenBar/Resources/AppIcon/AppIcon-1024.png" "$RES/AppIcon/AppIcon-1024.png" 2>/dev/null || true
+  cp "Sources/Cuprim/Resources/AppIcon/AppIcon-About.png" "$RES/AppIcon/AppIcon-About.png"
+  cp "Sources/Cuprim/Resources/AppIcon/AppIcon-1024.png" "$RES/AppIcon/AppIcon-1024.png" 2>/dev/null || true
 fi
 
 if command -v lipo >/dev/null 2>&1; then
-  ARCHS="$(lipo -archs "$MACOS/TokenBar" 2>/dev/null || true)"
+  ARCHS="$(lipo -archs "$MACOS/Cuprim" 2>/dev/null || true)"
   if [[ -n "$ARCHS" && "$ARCHS" != *arm64* ]]; then
     echo "error: binary is not arm64 (got: $ARCHS)" >&2
     exit 1
@@ -74,11 +74,11 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>TokenBar</string>
+	<string>Cuprim</string>
 	<key>CFBundleDisplayName</key>
-	<string>TokenBar</string>
+	<string>Cuprim</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.nawazish.tokenbar</string>
+	<string>com.nawazish.cuprim</string>
 	<key>CFBundleVersion</key>
 	<string>4</string>
 	<key>CFBundleShortVersionString</key>
@@ -86,7 +86,7 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleExecutable</key>
-	<string>TokenBar</string>
+	<string>Cuprim</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIconName</key>
@@ -101,7 +101,7 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSPrincipalClass</key>
-	<string>TokenBarApplication</string>
+	<string>CuprimApplication</string>
 </dict>
 </plist>
 PLIST

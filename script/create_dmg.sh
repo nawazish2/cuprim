@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Build a branded drag-to-Applications DMG (VS Code–style layout).
-# Usage: ./script/create_dmg.sh /path/to/TokenBar.app /path/to/out.dmg
+# Usage: ./script/create_dmg.sh /path/to/Cuprim.app /path/to/out.dmg
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_SRC="${1:?app path required}"
 DMG_OUT="${2:?output dmg path required}"
-VOL_NAME="TokenBar"
+VOL_NAME="Cuprim"
 STAGE="$ROOT/dist/dmg-stage"
-RW_DMG="$ROOT/dist/.TokenBar-rw.dmg"
+RW_DMG="$ROOT/dist/.Cuprim-rw.dmg"
 VOL_PATH="/Volumes/${VOL_NAME}"
 BG_SRC="$ROOT/Design/DMG/background.png"
 
@@ -29,7 +29,7 @@ rm -rf "$STAGE" "$RW_DMG"
 rm -f "$DMG_OUT"
 mkdir -p "$STAGE/.background"
 
-cp -R "$APP_SRC" "$STAGE/TokenBar.app"
+cp -R "$APP_SRC" "$STAGE/Cuprim.app"
 ln -s /Applications "$STAGE/Applications"
 cp "$BG_SRC" "$STAGE/.background/background.png"
 
@@ -54,12 +54,12 @@ trap cleanup EXIT
 
 # Wait until the volume is visible to Finder.
 for _ in $(seq 1 30); do
-  if [[ -d "$VOL_PATH/TokenBar.app" ]]; then
+  if [[ -d "$VOL_PATH/Cuprim.app" ]]; then
     break
   fi
   sleep 0.2
 done
-if [[ ! -d "$VOL_PATH/TokenBar.app" ]]; then
+if [[ ! -d "$VOL_PATH/Cuprim.app" ]]; then
   echo "error: volume did not mount at $VOL_PATH" >&2
   exit 1
 fi
@@ -80,7 +80,7 @@ tell application "Finder"
     set icon size of opts to 128
     set background picture of opts to file ".background:background.png"
     -- Leave a clear center lane for the meter→arrow graphic
-    set position of item "TokenBar.app" of container window to {150, 185}
+    set position of item "Cuprim.app" of container window to {150, 185}
     set position of item "Applications" of container window to {510, 185}
     update without registering applications
     delay 1

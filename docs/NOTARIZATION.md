@@ -1,12 +1,12 @@
-# Distributing TokenBar
+# Distributing Cuprim
 
-TokenBar ships outside the Mac App Store: build a `.app`, wrap it in a `.dmg` / `.zip`, optionally **Developer ID sign + notarize**, then attach artifacts to a [GitHub Release](https://github.com/nawazish2/tokenbar/releases).
+Cuprim ships outside the Mac App Store: build a `.app`, wrap it in a `.dmg` / `.zip`, optionally **Developer ID sign + notarize**, then attach artifacts to a [GitHub Release](https://github.com/nawazish2/cuprim/releases).
 
 ## Quick path (you, local testing)
 
 ```bash
 ./script/release.sh
-open dist/TokenBar.app
+open dist/Cuprim.app
 ```
 
 Ad-hoc signed. Share the DMG with yourself / testers who know how to right-click → Open past Gatekeeper.
@@ -43,15 +43,15 @@ export CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
 
 Outputs:
 
-- `dist/TokenBar.app`
-- `dist/TokenBar-<version>.dmg`
-- `dist/TokenBar-<version>.app.zip`
+- `dist/Cuprim.app`
+- `dist/Cuprim-<version>.dmg`
+- `dist/Cuprim-<version>.app.zip`
 
 Confirm the app identity:
 
 ```bash
-codesign -dv --verbose=4 dist/TokenBar.app
-spctl --assess --verbose dist/TokenBar.app || true   # may fail until notarized
+codesign -dv --verbose=4 dist/Cuprim.app
+spctl --assess --verbose dist/Cuprim.app || true   # may fail until notarized
 ```
 
 ### 3. Notarize the DMG
@@ -59,7 +59,7 @@ spctl --assess --verbose dist/TokenBar.app || true   # may fail until notarized
 **Apple ID + app-specific password:**
 
 ```bash
-xcrun notarytool submit dist/TokenBar-0.1.2.dmg \
+xcrun notarytool submit dist/Cuprim-0.1.2.dmg \
   --apple-id "you@example.com" \
   --team-id "TEAMID" \
   --password "app-specific-password" \
@@ -69,7 +69,7 @@ xcrun notarytool submit dist/TokenBar-0.1.2.dmg \
 **App Store Connect API key:**
 
 ```bash
-xcrun notarytool submit dist/TokenBar-0.1.2.dmg \
+xcrun notarytool submit dist/Cuprim-0.1.2.dmg \
   --key ~/AuthKey_XXXXXX.p8 \
   --key-id XXXXXX \
   --issuer YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY \
@@ -79,8 +79,8 @@ xcrun notarytool submit dist/TokenBar-0.1.2.dmg \
 On success:
 
 ```bash
-xcrun stapler staple dist/TokenBar-0.1.2.dmg
-xcrun stapler validate dist/TokenBar-0.1.2.dmg
+xcrun stapler staple dist/Cuprim-0.1.2.dmg
+xcrun stapler validate dist/Cuprim-0.1.2.dmg
 ```
 
 Optional: also notarize / staple the `.app` inside a zip if you prefer zip-only distribution. DMG + staple is the usual path.
@@ -89,9 +89,9 @@ Optional: also notarize / staple the `.app` inside a zip if you prefer zip-only 
 
 ```bash
 gh release create v0.1.2 \
-  dist/TokenBar-0.1.2.dmg \
-  dist/TokenBar-0.1.2.app.zip \
-  --title "TokenBar 0.1.2" \
+  dist/Cuprim-0.1.2.dmg \
+  dist/Cuprim-0.1.2.app.zip \
+  --title "Cuprim 0.1.2" \
   --notes "$(cat <<'EOF'
 ## What's new
 - …
@@ -130,11 +130,11 @@ Often missing Hardened Runtime. `package_app.sh` already passes `--options runti
 Quarantine attribute from browsers. Stapled notarization usually fixes this; otherwise:
 
 ```bash
-xattr -cr /Applications/TokenBar.app
+xattr -cr /Applications/Cuprim.app
 ```
 
 **Wrong architecture**  
-TokenBar is arm64-only. Intel Macs are not supported (`LSRequiresNativeExecution`).
+Cuprim is arm64-only. Intel Macs are not supported (`LSRequiresNativeExecution`).
 
 **Version in DMG name is stale**  
 `release.sh` reads `CFBundleShortVersionString` from the packaged app. Bump it in `package_app.sh` before releasing.

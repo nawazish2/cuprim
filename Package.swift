@@ -1,32 +1,32 @@
 // swift-tools-version: 6.2
 import PackageDescription
 
-// TokenBar: macOS 26+ only (Liquid Glass). Build for Apple Silicon (arm64).
+// Cuprim: macOS 26+ only (Liquid Glass). Build for Apple Silicon (arm64).
 let package = Package(
-    name: "TokenBar",
+    name: "Cuprim",
     platforms: [
         .macOS(.v26)
     ],
     products: [
-        .library(name: "TokenBarCore", targets: ["TokenBarCore"]),
-        .executable(name: "TokenBar", targets: ["TokenBar"])
+        .library(name: "CuprimCore", targets: ["CuprimCore"]),
+        .executable(name: "Cuprim", targets: ["Cuprim"])
     ],
     targets: [
         .target(
-            name: "TokenBarCore",
-            path: "Sources/TokenBarCore"
+            name: "CuprimCore",
+            path: "Sources/CuprimCore"
         ),
         .executableTarget(
-            name: "TokenBar",
-            dependencies: ["TokenBarCore"],
-            path: "Sources/TokenBar",
+            name: "Cuprim",
+            dependencies: ["CuprimCore"],
+            path: "Sources/Cuprim",
             // Resources are copied into the .app by script/build_and_run.sh (Bundle.main).
             exclude: ["Resources"]
         ),
         .testTarget(
-            name: "TokenBarTests",
-            dependencies: ["TokenBarCore"],
-            path: "Tests/TokenBarTests"
+            name: "CuprimTests",
+            dependencies: ["CuprimCore"],
+            path: "Tests/CuprimTests"
         )
     ]
 )

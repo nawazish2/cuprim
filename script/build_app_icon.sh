@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Rebuild TokenBar app icon via Apple Icon Composer (ictool) → Finder/Dock/About.
+# Rebuild Cuprim app icon via Apple Icon Composer (ictool) → Finder/Dock/About.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ICON="$ROOT/Sources/TokenBar/Resources/AppIcon/AppIcon.icon"
+ICON="$ROOT/Sources/Cuprim/Resources/AppIcon/AppIcon.icon"
 LAYERS="$ROOT/Design/AppIcon/Layers"
 ASSETS="$ICON/Assets"
 EXPORTS="$ROOT/Design/AppIcon/Exports"
-RES="$ROOT/Sources/TokenBar/Resources/AppIcon"
+RES="$ROOT/Sources/Cuprim/Resources/AppIcon"
 
 ICTOOL=""
 for c in \
@@ -28,21 +28,21 @@ if [ -f "$LAYERS/Background.png" ] && [ -f "$LAYERS/Foreground.png" ]; then
 fi
 
 echo "→ Exporting Liquid Glass renders with Icon Composer…"
-"$ICTOOL" "$ICON" --export-image --output-file "$EXPORTS/TokenBar-Default-1024.png" \
+"$ICTOOL" "$ICON" --export-image --output-file "$EXPORTS/Cuprim-Default-1024.png" \
   --platform macOS --rendition Default --width 1024 --height 1024 --scale 1 --design-generation 26
-"$ICTOOL" "$ICON" --export-image --output-file "$EXPORTS/TokenBar-Dark-1024.png" \
+"$ICTOOL" "$ICON" --export-image --output-file "$EXPORTS/Cuprim-Dark-1024.png" \
   --platform macOS --rendition Dark --width 1024 --height 1024 --scale 1 --design-generation 26
 
-cp "$EXPORTS/TokenBar-Default-1024.png" "$RES/AppIcon-1024.png"
-cp "$EXPORTS/TokenBar-Default-1024.png" "$RES/AppIcon-About.png"
+cp "$EXPORTS/Cuprim-Default-1024.png" "$RES/AppIcon-1024.png"
+cp "$EXPORTS/Cuprim-Default-1024.png" "$RES/AppIcon-About.png"
 
 ICONSET="$RES/AppIcon.iconset"
 rm -rf "$ICONSET" && mkdir -p "$ICONSET"
 python3 <<'PY'
 from PIL import Image
 from pathlib import Path
-master = Image.open("/Users/nawazish/Developer/tokenbar/Sources/TokenBar/Resources/AppIcon/AppIcon-1024.png").convert("RGBA")
-out = Path("/Users/nawazish/Developer/tokenbar/Sources/TokenBar/Resources/AppIcon/AppIcon.iconset")
+master = Image.open("/Users/nawazish/Developer/cuprim/Sources/Cuprim/Resources/AppIcon/AppIcon-1024.png").convert("RGBA")
+out = Path("/Users/nawazish/Developer/cuprim/Sources/Cuprim/Resources/AppIcon/AppIcon.iconset")
 for name, size in [
     ("icon_16x16.png", 16), ("icon_16x16@2x.png", 32),
     ("icon_32x32.png", 32), ("icon_32x32@2x.png", 64),

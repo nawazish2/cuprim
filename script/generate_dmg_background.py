@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-TokenBar DMG art — “Quota Stream”
+Cuprim DMG art — “Quota Stream”
 
 A luminous usage curve that flows from the app into Applications.
 Finder window: 660×400pt · art @2x (1320×800).
-Icon centers (pt): TokenBar.app (150, 185) · Applications (510, 185)
+Icon centers (pt): Cuprim.app (150, 185) · Applications (510, 185)
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 W, H = 660 * 2, 400 * 2
 
-# Quiet night sky + signal cyan/blue (TokenBar, not purple-AI)
+# Quiet night sky + signal cyan/blue (Cuprim, not purple-AI)
 VOID = (4, 6, 10)
 MIST = (16, 22, 32)
 CYAN = (72, 196, 220)
@@ -147,7 +147,7 @@ def draw_starfield(layer: Image.Image, rng: random.Random) -> None:
 
 
 def draw_menu_bar_wink(layer: Image.Image) -> None:
-    """Whisper of a menu bar — where TokenBar actually lives."""
+    """Whisper of a menu bar — where Cuprim actually lives."""
     d = ImageDraw.Draw(layer)
     y = 26
     # Ultra-thin menubar strip
@@ -156,10 +156,10 @@ def draw_menu_bar_wink(layer: Image.Image) -> None:
         radius=4,
         fill=(255, 255, 255, 12),
     )
-    # Fake status items: wifi · clock · TokenBar glow
+    # Fake status items: wifi · clock · Cuprim glow
     for ox, a in ((-70, 50), (-42, 50), (70, 50)):
         d.ellipse([W // 2 + ox - 2, y + 2, W // 2 + ox + 2, y + 6], fill=(255, 255, 255, a))
-    # TokenBar status item — the bright one
+    # Cuprim status item — the bright one
     d.ellipse([W // 2 - 5, y, W // 2 + 5, y + 8], fill=(*BLUE, 200))
     d.ellipse([W // 2 - 2, y + 2, W // 2 + 2, y + 6], fill=(*HOT, 240))
 
@@ -299,7 +299,7 @@ def draw_typography(layer: Image.Image) -> None:
     d = ImageDraw.Draw(layer)
 
     # Wordmark with slight letter spacing via manual draw
-    title = "TokenBar"
+    title = "Cuprim"
     font = load_font(44)
     # Measure total with tracking
     tracking = 4

@@ -1,4 +1,4 @@
-# TokenBar App Icon — Apple standard (Icon Composer)
+# Cuprim App Icon — Apple standard (Icon Composer)
 
 Apple’s pipeline for macOS 26+ utility Dock icons:
 
@@ -34,7 +34,7 @@ Design/AppIcon/
   Preview-Composite-1024.png   # rough preview only
   README.md
 
-Sources/TokenBar/Resources/AppIcon/
+Sources/Cuprim/Resources/AppIcon/
   AppIcon.icon/      # package for Icon Composer + app
     icon.json
     Assets/
@@ -42,10 +42,10 @@ Sources/TokenBar/Resources/AppIcon/
   AppIcon-1024.png   # fallback flat master
 ```
 
-## Automated (already done for TokenBar)
+## Automated (already done for Cuprim)
 
 ```bash
-cd ~/Developer/tokenbar
+cd ~/Developer/cuprim
 # Rebuild layered icon + exports + AppIcon.icns via Apple ictool
 ./script/build_app_icon.sh
 # Package & launch
@@ -57,8 +57,8 @@ What the automation produces:
 | Artifact | Purpose |
 |----------|---------|
 | `AppIcon.icon/` | Layered Icon Composer document (fill + groups + Assets) |
-| `Exports/TokenBar-Default-1024.png` | Liquid Glass render (Default) |
-| `Exports/TokenBar-Dark-1024.png` | Dark appearance export |
+| `Exports/Cuprim-Default-1024.png` | Liquid Glass render (Default) |
+| `Exports/Cuprim-Dark-1024.png` | Dark appearance export |
 | `AppIcon.icns` | Dock/Finder sizes from Default export |
 
 ## Optional: open in Icon Composer to tweak
@@ -67,13 +67,13 @@ What the automation produces:
 ./script/open_icon_composer.sh
 ```
 
-Save back to `Sources/TokenBar/Resources/AppIcon/AppIcon.icon`, then:
+Save back to `Sources/Cuprim/Resources/AppIcon/AppIcon.icon`, then:
 
 ```bash
 ./script/build_app_icon.sh && ./script/build_and_run.sh
 ```
 
-`build_and_run.sh` copies `AppIcon.icon` into `TokenBar.app` and sets `CFBundleIconName`.
+`build_and_run.sh` copies `AppIcon.icon` into `Cuprim.app` and sets `CFBundleIconName`.
 
 ## Menu bar icon (separate)
 

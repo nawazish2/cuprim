@@ -1,4 +1,4 @@
-# TokenBar
+# Cuprim
 
 Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, and **Grok** quota usage.
 
@@ -7,16 +7,16 @@ Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, and **Grok
 
 ## Install
 
-1. Download the latest **`.dmg`** from [Releases](https://github.com/nawazish2/tokenbar/releases)
-2. Drag **TokenBar** into Applications
+1. Download the latest **`.dmg`** from [Releases](https://github.com/nawazish2/cuprim/releases)
+2. Drag **Cuprim** into Applications
 3. Open it — look for the gauge in the menu bar
 
 ### First open (Gatekeeper)
 
 This build is ad-hoc signed (not notarized yet). If macOS blocks it:
 
-- Right-click TokenBar → **Open**, or
-- `xattr -cr /Applications/TokenBar.app`
+- Right-click Cuprim → **Open**, or
+- `xattr -cr /Applications/Cuprim.app`
 
 ### Requirements
 
@@ -30,7 +30,7 @@ This build is ad-hoc signed (not notarized yet). If macOS blocks it:
 
 ## Privacy
 
-Credentials stay on your machine. TokenBar only talks to each provider’s own usage API. Nothing is sent to us — there is no backend.
+Credentials stay on your machine. Cuprim only talks to each provider’s own usage API. Nothing is sent to us — there is no backend.
 
 ## License
 

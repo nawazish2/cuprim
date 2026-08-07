@@ -16,5 +16,6 @@ AuthKey_*.p8
 !.env.example
 
 # Agent verification artifacts (keep README)
-.cursor/skills/verify-tokenbar/evidence/**
-!.cursor/skills/verify-tokenbar/evidence/README.md
+.cursor/skills/verify-cuprim/evidence/**
+!.cursor/skills/verify-cuprim/evidence/README.md
+.cursor/hooks/

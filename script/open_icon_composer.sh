@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Open Apple Icon Composer with TokenBar square layers (macOS 26 standard workflow).
+# Open Apple Icon Composer with Cuprim square layers (macOS 26 standard workflow).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LAYERS="$ROOT/Design/AppIcon/Layers"
-ICON="$ROOT/Sources/TokenBar/Resources/AppIcon/AppIcon.icon"
+ICON="$ROOT/Sources/Cuprim/Resources/AppIcon/AppIcon.icon"
 
 ICON_COMPOSER=""
 for c in \
@@ -20,7 +20,7 @@ if [ -z "$ICON_COMPOSER" ]; then
   exit 1
 fi
 
-echo "=== TokenBar → Icon Composer (Apple standard) ==="
+echo "=== Cuprim → Icon Composer (Apple standard) ==="
 echo ""
 echo "Layers (square, unmasked — do NOT round corners yourself):"
 echo "  Background: $LAYERS/Background.png"
@@ -49,4 +49,4 @@ open "$LAYERS"
 open -R "$ICON"
 
 echo "Opened Icon Composer + Layers folder."
-echo "After saving AppIcon.icon, rebuild TokenBar."
+echo "After saving AppIcon.icon, rebuild Cuprim."

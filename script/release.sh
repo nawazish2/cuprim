@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Release build: package TokenBar.app + branded DMG + zip for GitHub Releases.
+# Release build: package Cuprim.app + branded DMG + zip for GitHub Releases.
 # Optional:
 #   CODESIGN_IDENTITY="Developer ID Application: Name (TEAMID)" ./script/release.sh
 set -euo pipefail
@@ -17,12 +17,12 @@ find "$ROOT/dist" -mindepth 1 -maxdepth 1 ! -name '.gitkeep' -exec rm -rf {} +
 
 "$ROOT/script/package_app.sh"
 
-APP_DIR="$ROOT/dist/TokenBar.app"
+APP_DIR="$ROOT/dist/Cuprim.app"
 VERSION="$(
   /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "0.1.3"
 )"
-DMG="$ROOT/dist/TokenBar-${VERSION}.dmg"
-ZIP="$ROOT/dist/TokenBar-${VERSION}.app.zip"
+DMG="$ROOT/dist/Cuprim-${VERSION}.dmg"
+ZIP="$ROOT/dist/Cuprim-${VERSION}.app.zip"
 
 rm -f "$DMG" "$ZIP"
 
@@ -33,7 +33,7 @@ chmod +x "$ROOT/script/create_dmg.sh" "$ROOT/script/generate_dmg_background.py"
 echo "→ Creating zip…"
 (
   cd "$ROOT/dist"
-  ditto -c -k --keepParent "TokenBar.app" "TokenBar-${VERSION}.app.zip"
+  ditto -c -k --keepParent "Cuprim.app" "Cuprim-${VERSION}.app.zip"
 )
 
 if [[ "$CODESIGN_IDENTITY" != "-" ]]; then
