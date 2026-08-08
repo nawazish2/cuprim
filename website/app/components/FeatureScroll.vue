@@ -24,20 +24,20 @@
 <script setup lang="ts">
 const features = [
   {
-    title: "Live quota bars",
-    body: "Remaining usage as honest bars — refreshed when you spend. One glance replaces three browser tabs.",
+    title: "Status at a glance",
+    body: "Provider plan and remaining quota in the menu bar menu — monochrome, fast, no tabs to open just to check a number.",
   },
   {
-    title: "Reset countdowns",
-    body: "Know when Claude’s 5-hour window or a weekly pool refreshes. Timers sit in the panel.",
+    title: "Detail when you need it",
+    body: "Open the dashboard panel for honest meters, reset countdowns, and per-provider breakdowns.",
   },
   {
     title: "Four providers, one rim",
-    body: "Claude, Codex, Cursor, and Grok side by side. Cuprim reads sessions already on this Mac.",
+    body: "Claude, Codex, Cursor, and Grok side by side. Cuprim reads sessions already signed in on this Mac.",
   },
   {
     title: "Native Swift, local only",
-    body: "No Cuprim backend, no telemetry. Share a clean usage snapshot when you need it.",
+    body: "No Cuprim backend, no telemetry, no account with us. Credentials never leave your machine.",
   },
 ]
 </script>

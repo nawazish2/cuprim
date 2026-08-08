@@ -88,7 +88,6 @@ const faqs = [
   },
   {
     q: "How do updates work?",
-    a: "Cuprim can check GitHub Releases and point you at the newest DMG. Downloads stay manual and verifiable.",
+    a: "Check for Updates downloads and installs from GitHub Releases when a new build exists, and says when you’re already on the latest.",
   },
-]
-</script>
+]</script>

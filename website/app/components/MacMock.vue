@@ -16,6 +16,7 @@
               linear-gradient(160deg, #121820, #080a0e 60%);
           "
         >
+          <!-- Menu bar -->
           <div
             class="absolute inset-x-0 top-0 z-[5] flex h-8 items-center justify-between bg-black/40 px-3.5 text-[12.5px] font-medium text-white/90 backdrop-blur-md"
           >
@@ -26,67 +27,75 @@
               <span class="hidden text-white/70 sm:inline">Edit</span>
             </div>
             <div class="flex items-center gap-3">
-              <span class="relative flex items-center" title="Cuprim">
-                <svg class="absolute -inset-[3px]" viewBox="0 0 22 22" aria-hidden="true">
-                  <circle cx="11" cy="11" r="9" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2" />
-                  <circle
-                    cx="11"
-                    cy="11"
-                    r="9"
-                    fill="none"
-                    stroke="#88c0ff"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-dasharray="56.5"
-                    stroke-dashoffset="18.1"
-                    transform="rotate(-90 11 11)"
-                  />
-                </svg>
-                <CupLogo :size="14" class="relative !rounded-[4px]" />
+              <span
+                class="flex items-center justify-center rounded-[5px] bg-white/15 px-1 py-0.5 text-white"
+                title="Cuprim"
+              >
+                <MenuGauge :size="14" stroke="#fff" />
               </span>
               <span class="font-semibold tracking-wide">{{ clock }}</span>
             </div>
           </div>
 
+          <!-- Native-style status menu (Usage · title + subtitle · actions) -->
           <div
-            class="animate-pop-in absolute right-3 top-10 z-[6] w-[min(308px,calc(100%-24px))] overflow-hidden rounded-[14px] border border-white/15 bg-[rgba(28,28,30,0.88)] shadow-2xl backdrop-blur-xl sm:right-16"
+            class="animate-pop-in absolute right-3 top-10 z-[6] w-[min(248px,calc(100%-24px))] overflow-hidden rounded-[12px] border border-white/12 bg-[rgba(36,36,38,0.92)] shadow-2xl backdrop-blur-xl sm:right-14"
             role="dialog"
             aria-label="Cuprim status menu"
           >
-            <div class="flex items-center gap-2 border-b border-white/10 px-3.5 py-3">
-              <CupLogo :size="17" class="!rounded-[5px]" />
-              <span class="text-[13px] font-bold text-white">Cuprim</span>
-              <span class="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] text-white/70">
-                {{ SITE.version }}
-              </span>
-            </div>
+            <div class="px-3.5 pb-1 pt-2.5 text-[11px] font-medium text-white/45">Usage</div>
 
-            <div
-              v-for="p in PROVIDERS"
-              :key="p.name"
-              class="flex flex-col gap-1.5 border-t border-white/5 px-3.5 py-3 first:border-t-0"
-            >
-              <div class="flex items-center gap-2 text-[12.5px] text-white/90">
-                <span class="size-2 shrink-0 rounded-full" :style="{ background: p.color }" />
-                <span class="font-semibold">{{ p.name }}</span>
-                <span class="text-[11px] text-white/45">{{ p.plan }}</span>
-                <span class="ml-auto font-mono text-[11.5px] font-semibold text-[#9ecbff]">
-                  {{ animated ? p.pct : 0 }}%
+            <ul class="pb-1">
+              <li
+                v-for="p in MENU_PROVIDERS"
+                :key="p.name"
+                class="flex items-start gap-2.5 px-3.5 py-[7px]"
+              >
+                <span
+                  class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-[4px] bg-white/10 text-[10px] font-bold text-white/80"
+                  aria-hidden="true"
+                >{{ p.name.charAt(0) }}</span>
+                <span class="min-w-0 flex-1 leading-tight">
+                  <span class="block text-[13px] font-semibold text-white/95">
+                    {{ p.name }} · {{ p.plan }}
+                  </span>
+                  <span class="mt-0.5 block text-[11.5px] text-white/50">
+                    {{ p.status }}
+                  </span>
                 </span>
-              </div>
-              <div class="h-[5px] overflow-hidden rounded-full bg-white/10">
-                <div
-                  class="h-full rounded-full transition-[width] duration-[1400ms] ease-out"
-                  :style="{
-                    width: animated ? `${p.pct}%` : '0%',
-                    background: `linear-gradient(90deg, ${p.color}, #88c0ff)`,
-                  }"
-                />
-              </div>
-              <div class="font-mono text-[10.5px] text-white/45">
-                resets in <b class="font-medium text-white/80">{{ p.reset }}</b>
-              </div>
-            </div>
+              </li>
+            </ul>
+
+            <div class="mx-2 h-px bg-white/10" />
+
+            <ul class="py-1 text-[13px] text-white/90">
+              <li class="flex items-center justify-between px-3.5 py-[6px]">
+                <span>Show Cuprim</span>
+              </li>
+              <li class="flex items-center justify-between px-3.5 py-[6px]">
+                <span>Refresh</span>
+                <span class="font-mono text-[11px] text-white/40">⌘R</span>
+              </li>
+              <li class="flex items-center justify-between px-3.5 py-[6px]">
+                <span>Settings…</span>
+                <span class="font-mono text-[11px] text-white/40">⌘,</span>
+              </li>
+            </ul>
+
+            <div class="mx-2 h-px bg-white/10" />
+
+            <ul class="py-1 text-[13px] text-white/90">
+              <li class="px-3.5 py-[6px]">Check for Updates…</li>
+            </ul>
+
+            <div class="mx-2 h-px bg-white/10" />
+
+            <ul class="pb-1.5 pt-1 text-[13px] text-white/90">
+              <li class="flex items-center justify-between px-3.5 py-[6px]">
+                <span>Quit Cuprim</span>
+                <span class="font-mono text-[11px] text-white/40">⌘Q</span>
+              </li>
+            </ul>
           </div>
 
           <div
@@ -104,16 +113,15 @@
       </div>
     </div>
     <p class="mt-6 text-center font-mono text-[0.82rem] text-[var(--muted)]">
-      One icon at the rim of your screen. Zero tabs open to check a number.
+      One glance in the menu bar. Details open when you need them.
     </p>
   </section>
 </template>
 
 <script setup lang="ts">
-import { PROVIDERS, SITE } from "~/utils/site"
+import { MENU_PROVIDERS } from "~/utils/site"
 
 const macWrap = ref<HTMLElement | null>(null)
-const animated = ref(false)
 const clock = ref("")
 const dock = [
   "linear-gradient(150deg,#88c0ff,#1d4f8a)",
@@ -136,26 +144,10 @@ function tickClock() {
 }
 
 let clockTimer: ReturnType<typeof setInterval> | undefined
-let io: IntersectionObserver | undefined
 
 onMounted(() => {
   tickClock()
   clockTimer = setInterval(tickClock, 1000)
-
-  if (macWrap.value) {
-    io = new IntersectionObserver(
-      (entries) => {
-        for (const en of entries) {
-          if (en.isIntersecting) {
-            animated.value = true
-            io?.unobserve(en.target)
-          }
-        }
-      },
-      { threshold: 0.35 },
-    )
-    io.observe(macWrap.value)
-  }
 
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
   const fine = window.matchMedia("(pointer: fine)").matches
@@ -181,6 +173,5 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (clockTimer) clearInterval(clockTimer)
-  io?.disconnect()
 })
 </script>
