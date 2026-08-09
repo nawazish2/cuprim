@@ -16,6 +16,6 @@
 | Display font | SF / system UI |
 | Mono | Geist Mono |
 
-Pill CTAs, sticky light nav, centered hero + logo, trust cards, line FAQ, dark Mac mock as product proof.
+Floating pill dock nav with stronger frosted glass (blur + specular edge), soft blue gradient CTAs with Apple mark, version chip, centered hero + logo, sparse statement rows, line FAQ, dark Mac mock as product proof. No analytics / Clarity.
 
 Product facts unchanged: Claude / Codex / Cursor / Grok · macOS 26+ · Apple Silicon · Gatekeeper ad-hoc.
