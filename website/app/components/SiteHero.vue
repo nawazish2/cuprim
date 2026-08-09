@@ -1,5 +1,5 @@
 <template>
-  <header class="hero relative overflow-x-hidden pb-12 pt-[88px] sm:pb-16 sm:pt-[112px]">
+  <header class="hero relative overflow-x-clip pb-12 pt-[88px] sm:pb-16 sm:pt-[112px]">
     <div
       class="pointer-events-none absolute inset-x-0 top-0 z-0 h-[420px]"
       aria-hidden="true"
@@ -39,8 +39,8 @@
         Free · {{ SITE.version }} · macOS 26+ · Apple Silicon · MIT
       </p>
 
-      <!-- Always visible — product proof should never wait on scroll reveal -->
-      <MacMock embedded />
+      <!-- Product proof starts as a complete static composition and gains motion on desktop. -->
+      <MacBookDemo />
     </div>
   </header>
 </template>

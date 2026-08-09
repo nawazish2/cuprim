@@ -16,6 +16,6 @@
 | Display font | SF / system UI |
 | Mono | Geist Mono |
 
-Floating pill dock nav with stronger frosted glass (blur + specular edge), soft blue gradient CTAs with Apple mark, version chip, centered hero + logo, sparse statement rows, line FAQ, dark Mac mock as product proof. No analytics / Clarity.
+Floating pill dock nav with stronger frosted glass, soft blue gradient CTAs with Apple mark, version chip, centered hero + logo. Hero product proof: **CSS MacBook frame** with Cuprim’s real status-menu screenshot on a quiet desktop (not a competitor UI). Dashboard tab uses compact glass panel until a panel capture exists. Sparse feature/trust sections, line FAQ. No analytics / Clarity.
 
 Product facts unchanged: Claude / Codex / Cursor / Grok · macOS 26+ · Apple Silicon · Gatekeeper ad-hoc.
