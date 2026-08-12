@@ -7,17 +7,19 @@ final class AppContainer {
     let preferences = PreferencesStore()
     let uiState = DashboardUIState()
     let usage: UsageStore
+    private let notifications: NotificationCoordinator
     private var statusItem: StatusItemController?
     private var panel: PanelController?
-    private var titleTimer: Timer?
 
     init() {
-        usage = UsageStore(preferences: preferences)
+        notifications = NotificationCoordinator()
+        usage = UsageStore(notifications: notifications, preferences: preferences)
     }
 
     func start() {
-        // Regular policy → Dock icon (AppIcon) is visible. Menu bar item still works.
-        NSApp.setActivationPolicy(.regular)
+        // Cuprim is a menu-bar utility. A Dock icon appears only while a real
+        // Settings/About window is open.
+        NSApp.setActivationPolicy(.accessory)
         SettingsOpener.configure(preferences: preferences, usage: usage)
 
         let panel = PanelController(
@@ -37,16 +39,15 @@ final class AppContainer {
             panel: panel
         )
 
-        usage.start()
+        notifications.onOpen = { [weak self] in
+            self?.statusItem?.showDashboardFromNotification()
+        }
 
-        titleTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.statusItem?.reloadTitle()
-            }
+        usage.onStateChange = { [weak self] in
+            self?.statusItem?.reloadTitle()
         }
-        if let titleTimer {
-            RunLoop.main.add(titleTimer, forMode: .common)
-        }
+
+        usage.start()
 
         // Dev-only: prove Settings presentation path without status-menu tracking.
         if ProcessInfo.processInfo.environment["CUPRIM_OPEN_SETTINGS"] == "1" {

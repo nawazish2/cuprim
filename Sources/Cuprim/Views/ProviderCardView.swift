@@ -8,6 +8,7 @@ struct ProviderCardView: View {
     var absoluteResets: Bool = false
     var isStale: Bool = false
     var isRefreshing: Bool = false
+    var horizon: QuotaHorizon?
 
     @State private var isHovered = false
 
@@ -65,6 +66,17 @@ struct ProviderCardView: View {
                             .font(.caption2)
                             .foregroundStyle(GlassChrome.textTertiary)
                             .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+
+                    if let horizon, let label = QuotaFormatting.horizonLabel(horizon) {
+                        Label(label, systemImage: horizon.state == .likelyToExhaust ? "exclamationmark.triangle" : "sparkles")
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(
+                                horizon.state == .likelyToExhaust
+                                    ? Color.orange
+                                    : GlassChrome.textTertiary
+                            )
+                            .lineLimit(1)
                     }
                 }
             case .notLoggedIn:

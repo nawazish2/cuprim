@@ -11,9 +11,14 @@ final class UsageStore {
 
     private let providers: [any ProviderRuntime]
     private let cache: SnapshotCache
+    private let history: QuotaHistoryStore
+    private let notifications: NotificationCoordinator
     private let preferences: PreferencesStore
     private var loopTask: Task<Void, Never>?
     private var refreshGeneration = 0
+
+    /// AppContainer uses this to refresh the status glyph only when data changes.
+    var onStateChange: (() -> Void)?
 
     init(
         providers: [any ProviderRuntime] = [
@@ -23,10 +28,14 @@ final class UsageStore {
             GrokProvider()
         ],
         cache: SnapshotCache = SnapshotCache(),
+        history: QuotaHistoryStore = QuotaHistoryStore(),
+        notifications: NotificationCoordinator = NotificationCoordinator(),
         preferences: PreferencesStore
     ) {
         self.providers = providers
         self.cache = cache
+        self.history = history
+        self.notifications = notifications
         self.preferences = preferences
         self.snapshots = cache.load()
     }
@@ -72,6 +81,9 @@ final class UsageStore {
     }
 
     func start() {
+        if preferences.horizonAlertsEnabled {
+            notifications.requestAuthorizationIfNeeded()
+        }
         loopTask?.cancel()
         loopTask = Task { [weak self] in
             await self?.refresh()
@@ -91,12 +103,17 @@ final class UsageStore {
 
     /// Manual or automatic refresh. Concurrent calls are coalesced via generation.
     func refresh() async {
+        if preferences.horizonAlertsEnabled {
+            notifications.requestAuthorizationIfNeeded()
+        }
         refreshGeneration += 1
         let generation = refreshGeneration
         isRefreshing = true
+        onStateChange?()
         defer {
             if generation == refreshGeneration {
                 isRefreshing = false
+                onStateChange?()
             }
         }
 
@@ -124,5 +141,28 @@ final class UsageStore {
         snapshots = next
         lastRefresh = .now
         cache.save(snapshots)
+        for snapshot in next.values {
+            guard case .ok = snapshot.status else { continue }
+            for metric in snapshot.metrics {
+                let samples = history.append(provider: snapshot.id, metric: metric, at: snapshot.fetchedAt)
+                _ = QuotaHorizonEngine.estimate(samples: samples, now: snapshot.fetchedAt)
+                if preferences.horizonAlertsEnabled {
+                    notifications.scheduleIfNeeded(
+                        provider: snapshot.id,
+                        metric: metric,
+                        snapshot: snapshot,
+                        thresholds: [20, 5]
+                    )
+                }
+            }
+        }
+        onStateChange?()
+    }
+
+    func horizon(for provider: ProviderID, metricID: String) -> QuotaHorizon {
+        QuotaHorizonEngine.estimate(
+            samples: history.samples(provider: provider, metricID: metricID),
+            now: .now
+        )
     }
 }

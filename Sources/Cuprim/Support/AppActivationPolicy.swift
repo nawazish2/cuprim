@@ -1,8 +1,10 @@
 import AppKit
 import CuprimCore
 
-/// Keeps the app activatable for Settings / windows.
-/// Dock icon stays visible (app runs as `.regular`); we only activate, never demote to accessory.
+/// Keeps the menu-bar app out of the Dock until a real window is open.
+///
+/// Settings and About can overlap, so activation is reference counted. The
+/// policy only returns to `.accessory` once the last owned window closes.
 @MainActor
 enum AppActivationPolicy {
     private static var count = 0
@@ -15,7 +17,12 @@ enum AppActivationPolicy {
 
     static func leave() {
         count = max(0, count - 1)
-        // Stay `.regular` so the Dock icon remains. Menu bar apps that hide from
-        // Dock would set `.accessory` here — Cuprim shows both.
+        guard count == 0 else { return }
+        // Let AppKit finish the close transaction before changing activation
+        // policy; doing this synchronously can strand the closing window.
+        DispatchQueue.main.async { @MainActor in
+            guard count == 0 else { return }
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }

@@ -24,12 +24,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             shared = controller
         }
 
-        AppActivationPolicy.enter()
-        controller.didEnterActivation = true
-
         guard let window = controller.window else {
             NSLog("[Cuprim] Settings: window is nil")
             return
+        }
+
+        if !window.isVisible || !controller.didEnterActivation {
+            AppActivationPolicy.enter()
+            controller.didEnterActivation = true
         }
 
         window.isReleasedWhenClosed = false
@@ -80,10 +82,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         guard let window else { return }
         window.title = "Cuprim Settings"
         window.titleVisibility = .visible
-        window.titlebarAppearsTransparent = false
+        window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
-        window.backgroundColor = .windowBackgroundColor
-        window.isOpaque = true
+        window.backgroundColor = .clear
+        window.isOpaque = false
         window.hasShadow = true
         window.hidesOnDeactivate = false
         window.standardWindowButton(.zoomButton)?.isHidden = true

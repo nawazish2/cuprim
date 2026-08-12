@@ -91,8 +91,8 @@ Keep the product local-only. Do not add analytics SDKs, remote config, or “syn
 - README and product copy should stay short and local-only focused (private, low RAM); strip unnecessary detail
 - Share screenshots/cards should show only the selected provider, not every provider’s usage; do not re-add Share Screenshot to Settings or the status menu without being asked
 - Check for Updates should install automatically when an update exists and clearly say when already on the latest
-- Prefers reviewing the app or site locally before cloud/remote work
-- Marketing site visual direction: mac-utility landings like Purge/Alcove/Klack; light paper + SF hierarchy; sparse sections over card grids; hero led by product mock (monochrome gauge menu, optional glass dashboard); unique cup mark, not Raycast-style
+- Prefers reviewing the app or site locally (mobile and desktop) before Vercel/production or other cloud/remote work
+- Marketing site visual direction: mac-utility landings like Purge/Alcove/Klack/Session Watcher; light paper + SF hierarchy; sparse sections over card grids; frosted/liquid-glass nav; hero led by a layered MacBook product demo with real Cuprim UI (reject blank/ugly flat mocks); unique cup mark, not Raycast-style
 - Do not push the marketing website when releasing the macOS app unless explicitly asked
 - Menu bar should stay a quick status overview; detailed usage and analysis belong in the dashboard—do not duplicate detail; prefers dashboard panel size around 300×420; menu-bar glyph should be the native gauge (cup mark stays for app icon/brand)
 
@@ -100,6 +100,7 @@ Keep the product local-only. Do not add analytics SDKs, remote config, or “syn
 
 - Product renamed from TokenBar to Cuprim (name collision in the same niche); GitHub remote/product name is Cuprim
 - Marketing site is a Nuxt + Tailwind app under `website/`; design/copy notes live under `docs/website/`
+- Website hero MacBook mock is a layered `MacBookDemo` (frame + wallpaper + in-screen Cuprim UI); assets live under `website/public/` (e.g. macbook frame, macos wallpaper, demo poster)
 - App icon and menu bar assets live under `Design/AppIcon`, `Design/MenuBar`, and `Sources/Cuprim/Resources/`; DMG/installer background should stay in sync with the current icon
 - Menu bar status glyph is the native monochrome gauge (template, high quality at small sizes); cup-with-ring is the app icon / brand mark, not the default status item
 - Opening Settings from the status menu must use a dedicated `NSWindow` deferred until after menu tracking ends; `showSettingsWindow` is unreliable and windows opened during menu tracking often never appear

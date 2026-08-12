@@ -48,6 +48,11 @@ final class PreferencesStore {
         didSet { UserDefaults.standard.set(hideLoggedOutProviders, forKey: Keys.hideLoggedOut) }
     }
 
+    /// Opt-in local notifications from Quota Horizon.
+    var horizonAlertsEnabled: Bool {
+        didSet { UserDefaults.standard.set(horizonAlertsEnabled, forKey: Keys.horizonAlerts) }
+    }
+
     /// Display order for providers (tabs + All list). Drag to reorder with the cursor.
     var providerOrder: [ProviderID] {
         didSet {
@@ -78,6 +83,7 @@ final class PreferencesStore {
         showUsedPercent = defaults.object(forKey: Keys.showUsedPercent) as? Bool ?? true
         absoluteResetTimes = defaults.object(forKey: Keys.absoluteResets) as? Bool ?? true
         hideLoggedOutProviders = defaults.object(forKey: Keys.hideLoggedOut) as? Bool ?? true
+        horizonAlertsEnabled = defaults.object(forKey: Keys.horizonAlerts) as? Bool ?? false
 
         if let saved = defaults.stringArray(forKey: Keys.providerOrder) {
             var order = saved.compactMap(ProviderID.init(rawValue:))
@@ -196,6 +202,7 @@ final class PreferencesStore {
         static let showUsedPercent = "display.showUsedPercent"
         static let absoluteResets = "display.absoluteResets"
         static let hideLoggedOut = "display.hideLoggedOut"
+        static let horizonAlerts = "horizon.alertsEnabled"
         static let providerOrder = "provider.order"
     }
 }

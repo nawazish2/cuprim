@@ -80,9 +80,9 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
 	<key>CFBundleIdentifier</key>
 	<string>com.nawazish.cuprim</string>
 	<key>CFBundleVersion</key>
-	<string>5</string>
+	<string>6</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.4</string>
+	<string>0.1.5</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleExecutable</key>

@@ -75,4 +75,22 @@ public enum QuotaFormatting {
         guard let date else { return true }
         return now.timeIntervalSince(date) > Double(thresholdMinutes * 60)
     }
+
+    public static func horizonLabel(_ horizon: QuotaHorizon, relativeTo now: Date = .now) -> String? {
+        switch horizon.state {
+        case .insufficientHistory:
+            return nil
+        case .stableUntilReset:
+            return "Likely to last until reset"
+        case .likelyToExhaust:
+            guard let date = horizon.estimatedExhaustionAt else { return nil }
+            let seconds = max(0, date.timeIntervalSince(now))
+            let formatter = DateComponentsFormatter()
+            formatter.allowedUnits = seconds >= 3_600 ? [.hour, .minute] : [.minute]
+            formatter.unitsStyle = .abbreviated
+            formatter.maximumUnitCount = 2
+            guard let value = formatter.string(from: seconds) else { return nil }
+            return "At this pace: ~\(value) remaining"
+        }
+    }
 }

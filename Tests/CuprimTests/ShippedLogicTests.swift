@@ -157,4 +157,39 @@ final class ShippedLogicTests: XCTestCase {
         XCTAssertEqual(CodexWindowClassifier.label(for: .period), "Period limit")
         XCTAssertEqual(CodexWindowClassifier.label(for: .primary), "Usage limit")
     }
+
+    // MARK: - Quota Horizon
+
+    func testQuotaHorizonRequiresEnoughHistory() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let sample = UsageSample(timestamp: now, usedFraction: 0.2, resetsAt: now.addingTimeInterval(86_400))
+        let horizon = QuotaHorizonEngine.estimate(samples: [sample], now: now)
+        XCTAssertEqual(horizon.state, .insufficientHistory)
+        XCTAssertNil(horizon.ratePerHour)
+    }
+
+    func testQuotaHorizonPredictsExhaustionBeforeReset() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let reset = now.addingTimeInterval(8 * 3_600)
+        let samples = [
+            UsageSample(timestamp: now.addingTimeInterval(-3_600), usedFraction: 0.20, resetsAt: reset),
+            UsageSample(timestamp: now, usedFraction: 0.80, resetsAt: reset)
+        ]
+        let horizon = QuotaHorizonEngine.estimate(samples: samples, now: now)
+        XCTAssertEqual(horizon.state, .likelyToExhaust)
+        XCTAssertNotNil(horizon.estimatedExhaustionAt)
+        XCTAssertEqual(horizon.ratePerHour ?? 0, 0.6, accuracy: 1e-9)
+    }
+
+    func testQuotaHorizonTreatsExhaustionAfterResetAsStable() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let reset = now.addingTimeInterval(4 * 3_600)
+        let samples = [
+            UsageSample(timestamp: now.addingTimeInterval(-3_600), usedFraction: 0.10, resetsAt: reset),
+            UsageSample(timestamp: now, usedFraction: 0.20, resetsAt: reset)
+        ]
+        let horizon = QuotaHorizonEngine.estimate(samples: samples, now: now)
+        XCTAssertEqual(horizon.state, .stableUntilReset)
+        XCTAssertNil(horizon.estimatedExhaustionAt)
+    }
 }

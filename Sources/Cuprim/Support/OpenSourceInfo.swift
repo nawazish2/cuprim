@@ -14,12 +14,12 @@ enum OpenSourceInfo {
 
     static var versionString: String {
         let info = Bundle.main.infoDictionary
-        let v = info?["CFBundleShortVersionString"] as? String ?? "0.1.3"
-        let b = info?["CFBundleVersion"] as? String ?? "4"
+        let v = info?["CFBundleShortVersionString"] as? String ?? "0.1.5"
+        let b = info?["CFBundleVersion"] as? String ?? "6"
         return "Version \(v) (\(b))"
     }
 
-    /// Check GitHub Releases and install if a newer build exists.
+    /// Check GitHub Releases and open the release page when a newer build exists.
     @MainActor
     static func checkForUpdates() {
         AppUpdater.checkForUpdates(interactive: true)

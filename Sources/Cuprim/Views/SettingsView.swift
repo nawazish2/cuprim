@@ -31,11 +31,17 @@ struct SettingsView: View {
                     labeledToggle("Hide logged-out providers", isOn: $preferences.hideLoggedOutProviders)
                 }
 
+                group("Quota Horizon") {
+                    labeledToggle("Local alerts", isOn: $preferences.horizonAlertsEnabled)
+                } footer: {
+                    Text("Alerts are off by default and use only local usage history.")
+                }
+
                 group("General") {
                     labeledToggle("Launch at login", isOn: launchAtLoginBinding)
                         .disabled(preferences.launchAtLoginState == .unavailable)
                     hairline
-                    labeledValue("Auto-refresh", value: "Every 2 min")
+                    refreshPicker
 
                     if preferences.launchAtLoginState == .requiresApproval {
                         hairline
@@ -77,7 +83,8 @@ struct SettingsView: View {
             .padding(16)
         }
         .frame(width: 380, height: 480)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .scrollContentBackground(.hidden)
+        .background(.regularMaterial)
         .onAppear { preferences.refreshLaunchAtLoginState() }
     }
 
@@ -152,6 +159,23 @@ struct SettingsView: View {
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
+        }
+        .padding(.horizontal, padX)
+        .frame(height: rowH)
+    }
+
+    private var refreshPicker: some View {
+        HStack(spacing: 8) {
+            Text("Auto-refresh")
+                .font(.body)
+            Spacer(minLength: 8)
+            Picker("Auto-refresh", selection: $preferences.refreshMinutes) {
+                ForEach([1, 2, 5, 10, 15, 30], id: \.self) { minutes in
+                    Text("Every \(minutes) min").tag(minutes)
+                }
+            }
+            .labelsHidden()
+            .controlSize(.small)
         }
         .padding(.horizontal, padX)
         .frame(height: rowH)

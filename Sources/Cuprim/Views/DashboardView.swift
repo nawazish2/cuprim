@@ -104,7 +104,10 @@ struct DashboardView: View {
                                 showUsedPercent: preferences.showUsedPercent,
                                 absoluteResets: false,
                                 isStale: usage.isSnapshotStale(snapshot),
-                                isRefreshing: usage.isRefreshing
+                                isRefreshing: usage.isRefreshing,
+                                horizon: snapshot.metrics.first.map {
+                                    usage.horizon(for: snapshot.id, metricID: $0.id)
+                                }
                             )
                             .id(snapshot.id)
                         }

@@ -143,16 +143,6 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        let updates = NSMenuItem(
-            title: "Check for Updates…",
-            action: #selector(checkForUpdates),
-            keyEquivalent: ""
-        )
-        updates.target = self
-        menu.addItem(updates)
-
-        menu.addItem(.separator())
-
         let quit = NSMenuItem(
             title: "Quit Cuprim",
             action: #selector(quit),
@@ -229,6 +219,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     // MARK: - Actions
 
     @objc private func showOverviewDashboard() {
+        openDashboard(tab: .overview)
+    }
+
+    func showDashboardFromNotification() {
         openDashboard(tab: .overview)
     }
 
