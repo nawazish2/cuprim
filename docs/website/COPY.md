@@ -19,7 +19,7 @@ Tone: calm, precise, slightly dry. Honest about Gatekeeper.
 
 **Support:** Cuprim is a tiny, open-source menu-bar app for macOS that watches your **Claude, Codex, Cursor, and Grok** usage — remaining quota and resets — so you never burn a limit by surprise.
 
-**Meta:** v0.1.4 · macOS 26+ · Apple Silicon · MIT License
+**Meta:** v0.1.6 · macOS 26+ · Apple Silicon · MIT License
 
 ## Trust
 

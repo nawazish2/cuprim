@@ -91,37 +91,45 @@ struct DashboardView: View {
                     .padding(.bottom, 8)
             }
 
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVStack(spacing: GlassChrome.cardGap) {
-                    if usage.isRefreshing && !usage.hasAnyData {
-                        loadingState
-                    } else if filteredSnapshots.isEmpty {
-                        emptyState
-                    } else {
-                        ForEach(filteredSnapshots) { snapshot in
-                            ProviderCardView(
-                                snapshot: snapshot,
-                                showUsedPercent: preferences.showUsedPercent,
-                                absoluteResets: false,
-                                isStale: usage.isSnapshotStale(snapshot),
-                                isRefreshing: usage.isRefreshing,
-                                horizon: snapshot.metrics.first.map {
-                                    usage.horizon(for: snapshot.id, metricID: $0.id)
-                                }
-                            )
-                            .id(snapshot.id)
-                        }
+            if uiState.selectedTab == .overview, !filteredSnapshots.isEmpty {
+                overviewSummary
+                    .padding(.horizontal, GlassChrome.inset)
+                    .padding(.bottom, 7)
+            }
 
-                        if case .provider = uiState.selectedTab,
-                           let snap = selectedProviderSnapshot {
-                            providerDetailFill(for: snap)
-                                .padding(.top, 4)
+            ScrollView(.vertical, showsIndicators: false) {
+                GlassEffectContainer(spacing: GlassChrome.cardGap) {
+                    LazyVStack(spacing: GlassChrome.cardGap) {
+                        if usage.isRefreshing && !usage.hasAnyData {
+                            loadingState
+                        } else if filteredSnapshots.isEmpty {
+                            emptyState
+                        } else {
+                            ForEach(filteredSnapshots) { snapshot in
+                                ProviderCardView(
+                                    snapshot: snapshot,
+                                    showUsedPercent: preferences.showUsedPercent,
+                                    absoluteResets: false,
+                                    isStale: usage.isSnapshotStale(snapshot),
+                                    isRefreshing: usage.isRefreshing,
+                                    horizon: snapshot.metrics.first.map {
+                                        usage.horizon(for: snapshot.id, metricID: $0.id)
+                                    }
+                                )
+                                .id(snapshot.id)
+                            }
+
+                            if case .provider = uiState.selectedTab,
+                               let snap = selectedProviderSnapshot {
+                                providerDetailFill(for: snap)
+                                    .padding(.top, 4)
+                            }
                         }
                     }
+                    .padding(.horizontal, GlassChrome.inset)
+                    .padding(.top, 2)
+                    .padding(.bottom, GlassChrome.scrollBottomPad)
                 }
-                .padding(.horizontal, GlassChrome.inset)
-                .padding(.top, 2)
-                .padding(.bottom, GlassChrome.scrollBottomPad)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .layoutPriority(-1)
@@ -204,18 +212,17 @@ struct DashboardView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 8) {
-            CupBrandMark(size: 17, foreground: GlassChrome.textSecondary)
+            CupBrandMark(size: 18, foreground: GlassChrome.textSecondary)
 
-            Text("Cuprim")
-                .font(.title2.weight(.bold))
-                .tracking(-0.35)
-                .foregroundStyle(GlassChrome.textPrimary)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Cuprim")
+                    .font(.headline.weight(.semibold))
+                    .tracking(-0.15)
+                    .foregroundStyle(GlassChrome.textPrimary)
 
-            if let updated = QuotaFormatting.updatedLabel(for: usage.lastRefresh) {
-                Text(updated)
+                Text(updatedSubtitle)
                     .font(.caption2)
-                    .foregroundStyle(Color.primary.opacity(0.45))
-                    .padding(.leading, 1)
+                    .foregroundStyle(GlassChrome.textTertiary)
             }
 
             Spacer(minLength: 4)
@@ -241,8 +248,10 @@ struct DashboardView: View {
                     .scaleEffect(refreshPulse ? 1.12 : 1.0)
                     .frame(width: 28, height: 28)
                     .background {
-                        Circle()
-                            .fill(Color.primary.opacity(0.10))
+                        Circle().fill(Color.primary.opacity(0.08))
+                            .overlay {
+                                Circle().strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5)
+                            }
                     }
                     .contentShape(Circle())
             }
@@ -252,6 +261,48 @@ struct DashboardView: View {
             .keyboardShortcut("r", modifiers: .command)
             .opacity(usage.isRefreshing ? 0.7 : 1)
         }
+    }
+
+    private var updatedSubtitle: String {
+        if let updated = QuotaFormatting.updatedLabel(for: usage.lastRefresh) {
+            return "Updated " + updated
+        }
+        return "Your usage at a glance"
+    }
+
+    private var overviewSummary: some View {
+        let metrics = filteredSnapshots.flatMap(\.metrics)
+        let used = metrics.compactMap(\.usedFraction)
+        let average = used.isEmpty ? nil : used.reduce(0, +) / Double(used.count)
+        let nextReset = metrics.compactMap(\.resetsAt).min()
+
+        return HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Usage overview")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(GlassChrome.textPrimary)
+                Text("\(filteredSnapshots.count) services · \(metrics.count) limits")
+                    .font(.caption2)
+                    .foregroundStyle(GlassChrome.textTertiary)
+            }
+
+            Spacer(minLength: 4)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                if let average {
+                    Text("\(Int((average * 100).rounded()))% used")
+                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(QuotaFormatting.meterColor(usedFraction: average))
+                }
+                if let nextReset {
+                    Text(QuotaFormatting.smartResetLabel(for: nextReset))
+                        .font(.caption2)
+                        .foregroundStyle(GlassChrome.textTertiary)
+                }
+            }
+        }
+        .padding(.horizontal, 3)
+        .padding(.vertical, 1)
     }
 
     private var refreshHelp: String {
@@ -355,15 +406,8 @@ struct DashboardView: View {
 }
 
 private struct FooterScrim: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
-        Rectangle()
-            .fill(
-                colorScheme == .dark
-                    ? GlassChrome.footerScrimDark
-                    : GlassChrome.footerScrimLight
-            )
+        Rectangle().fill(.thinMaterial)
     }
 }
 

@@ -1,10 +1,10 @@
 import SwiftUI
 import CuprimCore
 
-/// Compact glass dashboard tokens — Liquid Glass shell, solid content cards.
+/// Compact dashboard tokens — native Liquid Glass shell and grouped surfaces.
 enum GlassChrome {
-    static let panelCorner: CGFloat = 14
-    static let cardCorner: CGFloat = 14
+    static let panelCorner: CGFloat = 18
+    static let cardCorner: CGFloat = 16
     static let tabBarCorner: CGFloat = 11
     static let tabPillCorner: CGFloat = 10
     static let panelWidth: CGFloat = 300
@@ -12,12 +12,12 @@ enum GlassChrome {
     static let panelHeight: CGFloat = 420
     static let outerPad: CGFloat = 0
     static let inset: CGFloat = 12
-    static let cardPad: CGFloat = 10
-    static let cardGap: CGFloat = 10
+    static let cardPad: CGFloat = 11
+    static let cardGap: CGFloat = 8
     static let scrollBottomPad: CGFloat = 12
     static let sectionGap: CGFloat = 8
-    static let meterHeight: CGFloat = 12
-    static let providerIconSize: CGFloat = 22
+    static let meterHeight: CGFloat = 8
+    static let providerIconSize: CGFloat = 18
     static let brandBlue = Color(red: 0.0, green: 0.451, blue: 0.922)
 
     // MARK: Type (3 levels)
@@ -28,14 +28,13 @@ enum GlassChrome {
     static let textTabIdle = Color.primary.opacity(0.60)
     static let textTabActive = Color.primary.opacity(0.98)
 
-    static let panelScrimDark = Color.black.opacity(0.68)
-    static let panelScrimLight = Color.white.opacity(0.86)
-    static let footerScrimDark = Color.black.opacity(0.50)
-    static let footerScrimLight = Color.white.opacity(0.72)
-    /// Solid cards (not glass).
-    static let cardFill = Color.primary.opacity(0.09)
-    static let cardStroke = Color.primary.opacity(0.12)
-    static let cardShadow = Color.black.opacity(0.22)
+    static let panelScrimDark = Color.black.opacity(0.28)
+    static let panelScrimLight = Color.white.opacity(0.58)
+    static let footerScrimDark = Color.black.opacity(0.24)
+    static let footerScrimLight = Color.white.opacity(0.44)
+    static let cardFill = Color.primary.opacity(0.045)
+    static let cardStroke = Color.primary.opacity(0.14)
+    static let cardShadow = Color.black.opacity(0.16)
 }
 
 // MARK: - Surfaces
@@ -63,10 +62,15 @@ struct GlassPanelBackground: ViewModifier {
 
 struct GlassCardBackground: ViewModifier {
     func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: GlassChrome.cardCorner, style: .continuous)
+
         content
             .background {
-                RoundedRectangle(cornerRadius: GlassChrome.cardCorner, style: .continuous)
-                    .fill(GlassChrome.cardFill)
+                shape.fill(GlassChrome.cardFill)
+            }
+            .glassEffect(.regular.interactive(), in: shape)
+            .overlay {
+                shape.strokeBorder(GlassChrome.cardStroke, lineWidth: 0.5)
             }
     }
 }

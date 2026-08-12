@@ -1,7 +1,7 @@
 import SwiftUI
 import CuprimCore
 
-/// Metric row: label · bare % · solid capsule bar.
+/// Metric row: restrained label/value hierarchy with a compact semantic meter.
 struct MetricRowView: View {
     let metric: Metric
     var showUsedPercent: Bool = true
@@ -28,7 +28,7 @@ struct MetricRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(metric.displayLabel)
-                    .font(isTotal ? .caption.weight(.semibold) : .caption.weight(.medium))
+                    .font(isTotal ? .caption.weight(.semibold) : .caption2.weight(.medium))
                     .foregroundStyle(GlassChrome.textSecondary)
                     .lineLimit(1)
 
@@ -36,7 +36,7 @@ struct MetricRowView: View {
 
                 Text(primaryPercentText)
                     .font(
-                        .system(isTotal ? .body : .callout, design: .rounded)
+                        .system(isTotal ? .subheadline : .callout, design: .rounded)
                             .monospacedDigit()
                             .weight(.bold)
                     )
@@ -113,16 +113,16 @@ struct MetricRowView: View {
 
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.primary.opacity(0.12))
+                    .fill(Color.primary.opacity(0.11))
                     .frame(height: meterHeight)
 
                 if used > 0.001 {
                     Capsule()
-                        .fill(color)
+                        .fill(color.opacity(0.94))
                         .frame(width: max(w, meterHeight * 0.45), height: meterHeight)
                         .shadow(
-                            color: showGlow ? color.opacity(0.45) : .clear,
-                            radius: showGlow ? 3 : 0,
+                            color: showGlow ? color.opacity(0.28) : .clear,
+                            radius: showGlow ? 2 : 0,
                             y: 0
                         )
                 }

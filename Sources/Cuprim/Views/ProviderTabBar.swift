@@ -20,9 +20,10 @@ struct ProviderTabBar: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Prefer system segmented when All + providers fit (~4 segments).
+    /// The native segmented control is the most legible treatment for the
+    /// four providers plus the overview tab at this panel width.
     private var useNativeSegmented: Bool {
-        available.count <= 3
+        true
     }
 
     private var selectionSpring: Animation? {

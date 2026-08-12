@@ -3,18 +3,18 @@ import SwiftUI
 import CuprimCore
 
 extension QuotaFormatting {
-    /// 4-band semantic meter colors using system semantic hues.
+    /// Calm semantic meter colors with enough contrast for the compact panel.
     static func meterColor(usedFraction: Double?) -> Color {
         guard let usedFraction else { return GlassChrome.textSecondary }
         switch Utilization.clamp01(usedFraction) {
         case ..<0.55:
-            return Color.green
+            return Color(red: 0.24, green: 0.55, blue: 0.98)
         case ..<0.80:
-            return Color.yellow
+            return Color(red: 0.96, green: 0.68, blue: 0.22)
         case ..<0.95:
-            return Color.orange
+            return Color(red: 0.95, green: 0.43, blue: 0.20)
         default:
-            return Color.red
+            return Color(red: 0.96, green: 0.28, blue: 0.32)
         }
     }
 

@@ -1,7 +1,7 @@
 import SwiftUI
 import CuprimCore
 
-/// Solid provider card (content surface — not Liquid Glass).
+/// Compact provider surface with native Liquid Glass depth.
 struct ProviderCardView: View {
     let snapshot: ProviderSnapshot
     var showUsedPercent: Bool = true
@@ -33,7 +33,7 @@ struct ProviderCardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 9) {
             header
 
             switch snapshot.status {
@@ -49,7 +49,7 @@ struct ProviderCardView: View {
                         .font(.caption)
                         .foregroundStyle(GlassChrome.textTertiary)
                 } else {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 7) {
                         ForEach(snapshot.metrics) { metric in
                             MetricRowView(
                                 metric: metric,
@@ -62,8 +62,8 @@ struct ProviderCardView: View {
                     }
 
                     if let cardResetCaption {
-                        Text(cardResetCaption)
-                            .font(.caption2)
+                        Label(cardResetCaption, systemImage: "arrow.counterclockwise")
+                            .font(.caption2.weight(.medium))
                             .foregroundStyle(GlassChrome.textTertiary)
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
@@ -90,22 +90,8 @@ struct ProviderCardView: View {
         }
         .padding(GlassChrome.cardPad)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: GlassChrome.cardCorner, style: .continuous)
-                .fill(GlassChrome.cardFill.opacity(isHovered ? 1.12 : 1))
-                .shadow(
-                    color: GlassChrome.cardShadow.opacity(isHovered ? 0.95 : 0.75),
-                    radius: isHovered ? 10 : 7,
-                    y: isHovered ? 3 : 2
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: GlassChrome.cardCorner, style: .continuous)
-                        .strokeBorder(
-                            GlassChrome.cardStroke.opacity(isHovered ? 1.15 : 1),
-                            lineWidth: 0.5
-                        )
-                }
-        }
+        .agentGlassCard()
+        .scaleEffect(isHovered ? 1.008 : 1)
         .opacity(isStale && isOK ? 0.88 : 1)
         .fixedSize(horizontal: false, vertical: true)
         .onHover { hovering in
@@ -127,7 +113,7 @@ struct ProviderCardView: View {
             ProviderIconWell(id: snapshot.id, size: GlassChrome.providerIconSize)
 
             Text(snapshot.id.displayName)
-                .font(.body.weight(.semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(GlassChrome.textPrimary)
 
             if let plan = snapshot.planName, !plan.isEmpty {

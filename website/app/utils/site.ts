@@ -1,6 +1,6 @@
 export const SITE = {
   name: "Cuprim",
-  version: "v0.1.4",
+  version: "v0.1.6",
   tagline: "AI quota in your Mac menu bar",
   description:
     "Free local macOS app that shows Claude, Codex, Cursor, and Grok usage. No accounts with us. No telemetry.",

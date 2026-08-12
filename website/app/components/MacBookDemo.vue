@@ -3,10 +3,10 @@
     <picture class="demo-poster">
       <source srcset="/macbook-demo-poster.webp" type="image/webp">
       <img
-        src="/macbook-demo-poster.webp"
+        src="/macbook-demo-poster.jpg"
         width="1700"
-        height="1120"
-        alt="Cuprim’s status menu shown on a MacBook Air desktop"
+        height="1281"
+        alt="Cuprim on a MacBook desktop"
         fetchpriority="high"
       >
     </picture>
@@ -17,7 +17,8 @@
           <div class="macbook-screen">
             <picture>
               <source srcset="/macos-wallpaper.avif" type="image/avif">
-              <img src="/macos-wallpaper.webp" width="1586" height="992" alt="">
+              <source srcset="/macos-wallpaper.webp" type="image/webp">
+              <img src="/macos-wallpaper.jpg" width="1586" height="992" alt="">
             </picture>
             <div class="desktop-menu-bar">
               <span class="desktop-menu-bar__left">●&nbsp;&nbsp; Finder&nbsp;&nbsp;&nbsp; File&nbsp;&nbsp;&nbsp; Edit</span>

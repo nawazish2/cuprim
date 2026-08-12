@@ -19,7 +19,7 @@ find "$ROOT/dist" -mindepth 1 -maxdepth 1 ! -name '.gitkeep' -exec rm -rf {} +
 
 APP_DIR="$ROOT/dist/Cuprim.app"
 VERSION="$(
-  /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "0.1.4"
+  /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "0.1.6"
 )"
 DMG="$ROOT/dist/Cuprim-${VERSION}.dmg"
 ZIP="$ROOT/dist/Cuprim-${VERSION}.app.zip"
