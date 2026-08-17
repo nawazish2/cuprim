@@ -9,4 +9,7 @@ pnpm run generate # static output → .output/public
 pnpm run smoke    # after generate
 ```
 
-Deploy: Cloudflare Workers static assets. `wrangler.jsonc` lives at the repo root; build with `pnpm run generate` (output `.output/public`).
+Deploy: Cloudflare Workers static assets. `wrangler.jsonc` lives at the repo root.
+
+Dashboard: Worker name `cuprim`, build command `npm run build`, deploy command `npx wrangler deploy`.
+Output: `website/.output/public`.

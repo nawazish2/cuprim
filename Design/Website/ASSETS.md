@@ -9,4 +9,4 @@
 | Hero static fallback | `website/public/macbook-demo-poster.webp` |
 | Cup mark | `CupLogo.vue` |
 
-Stack: Nuxt 4 + Tailwind static → Vercel (`cuprim.vercel.app`).
+Stack: Nuxt 4 + Tailwind static → Cloudflare Workers (`cuprim`).

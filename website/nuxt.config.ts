@@ -1,4 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { SITE } from "./app/utils/site"
+
+const siteUrl = SITE.url.replace(/\/$/, "")
+const ogImage = siteUrl ? `${siteUrl}/og.png` : "/og.png"
+
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: false },
@@ -7,31 +12,32 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: "en" },
-      title: "Cuprim — AI quotas, live in your Mac menu bar",
+      title: "Cuprim — Know which AI tool runs out next",
       meta: [
         {
           name: "description",
           content:
-            "Free open-source macOS menu-bar app for Claude, Codex, Cursor, and Grok quota — local only, no telemetry.",
+            "Free open-source macOS menu-bar app for Claude, Codex, Cursor, Grok, and Antigravity quota — local only, no telemetry.",
         },
-        { property: "og:title", content: "Cuprim — AI quotas, live in your Mac menu bar" },
+        { property: "og:title", content: "Cuprim — Know which AI tool runs out next" },
         {
           property: "og:description",
-          content: "Every AI quota, right at the rim. Free, open source, native Swift.",
+          content: "Menu-bar AI quota for Claude, Codex, Cursor, Grok, and Antigravity. Local only.",
         },
-        { property: "og:image", content: "https://cuprim.vercel.app/og.png" },
+        { property: "og:image", content: ogImage },
         { property: "og:type", content: "website" },
-        { property: "og:url", content: "https://cuprim.vercel.app/" },
+        ...(siteUrl ? [{ property: "og:url", content: `${siteUrl}/` }] : []),
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: "Cuprim" },
         {
           name: "twitter:description",
-          content: "Menu-bar AI quota for Claude, Codex, Cursor, and Grok. Local only.",
+          content: "Menu-bar AI quota for Claude, Codex, Cursor, Grok, and Antigravity. Local only.",
         },
-        { name: "twitter:image", content: "https://cuprim.vercel.app/og.png" },
+        { name: "twitter:image", content: ogImage },
         { name: "theme-color", content: "#f4f6f3" },
       ],
       link: [
+        ...(siteUrl ? [{ rel: "canonical", href: `${siteUrl}/` }] : []),
         { rel: "icon", type: "image/png", href: "/favicon.png" },
         { rel: "apple-touch-icon", href: "/icon-192.png" },
       ],

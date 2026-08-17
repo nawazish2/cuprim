@@ -5,7 +5,7 @@ Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, **Grok**, 
 **Local only** · no accounts · no telemetry · no cloud sync · light on RAM  
 **Apple Silicon** · **macOS 26+** · MIT
 
-**Website:** [cuprim.vercel.app](https://cuprim.vercel.app) · **Download:** [Releases](https://github.com/nawazish2/cuprim/releases/latest)
+**Website:** Cloudflare Workers (`cuprim`) · **Download:** [Releases](https://github.com/nawazish2/cuprim/releases/latest)
 
 ## Install
 
@@ -29,6 +29,13 @@ This build is ad-hoc signed (not notarized yet). If macOS blocks it:
   - Codex CLI (`~/.codex/auth.json`)
   - Cursor
   - Grok Build (`grok login`)
+  - Antigravity / `agy`
+
+## Updates
+
+Release builds use **Sparkle** to verify and install updates from GitHub Releases. Debug builds skip the checker. Private signing keys stay in Keychain.
+
+Ad-hoc signing still needs a Gatekeeper workaround on first open. Developer ID notarization is optional.
 
 ## Privacy
 
