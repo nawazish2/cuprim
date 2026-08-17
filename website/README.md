@@ -3,9 +3,10 @@
 Nuxt 4 + Tailwind static landing page for [Cuprim](https://github.com/nawazish2/cuprim).
 
 ```bash
-npm install
-npm run dev      # local
-npm run generate # static output → .output/public
+pnpm install
+pnpm run dev      # local
+pnpm run generate # static output → .output/public
+pnpm run smoke    # after generate
 ```
 
-Deploy: Vercel project rooted at `website/` with `npm run generate` and output `.output/public`.
+Deploy: Cloudflare Workers static assets. `wrangler.jsonc` lives at the repo root; build with `pnpm run generate` (output `.output/public`).
