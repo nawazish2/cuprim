@@ -13,7 +13,7 @@ enum ProviderTab: Hashable, Identifiable {
     }
 }
 
-/// Native segmented row for the original set, plus a quiet capsule rail for extras.
+/// One segmented control: original providers on the first row, extras on the next.
 struct ProviderTabBar: View {
     @Binding var selection: ProviderTab
     let available: [ProviderID]
@@ -21,32 +21,20 @@ struct ProviderTabBar: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var selectionNS
 
-    private var primary: [ProviderID] {
-        available.filter { $0 != .antigravity }
-    }
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 5)
 
-    private var extras: [ProviderID] {
-        available.filter { $0 == .antigravity }
-    }
-
-    private var primaryTabs: [(tab: ProviderTab, title: String)] {
-        [(.overview, "All")] + primary.map { (.provider($0), $0.displayName) }
+    private var items: [(tab: ProviderTab, title: String)] {
+        let primary = available.filter { $0 != .antigravity }
+        let extras = available.filter { $0 == .antigravity }
+        return [(.overview, "All")]
+            + primary.map { (.provider($0), $0.displayName) }
+            + extras.map { (.provider($0), $0.displayName) }
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            primaryRow
-
-            if !extras.isEmpty {
-                extraRail
-            }
-        }
-    }
-
-    private var primaryRow: some View {
-        HStack(spacing: 0) {
-            ForEach(primaryTabs, id: \.tab) { item in
-                primaryCell(item)
+        LazyVGrid(columns: columns, alignment: .leading, spacing: 0) {
+            ForEach(items, id: \.tab) { item in
+                cell(item)
             }
         }
         .padding(2)
@@ -60,17 +48,24 @@ struct ProviderTabBar: View {
         }
     }
 
-    private func primaryCell(_ item: (tab: ProviderTab, title: String)) -> some View {
+    private func cell(_ item: (tab: ProviderTab, title: String)) -> some View {
         let selected = selection == item.tab
         return Button {
-            select(item.tab)
+            guard item.tab != selection else { return }
+            if reduceMotion {
+                selection = item.tab
+            } else {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+                    selection = item.tab
+                }
+            }
         } label: {
             Text(item.title)
                 .font(.system(size: 11, weight: selected ? .semibold : .medium))
                 .tracking(-0.15)
                 .foregroundStyle(selected ? Color.primary : Color.primary.opacity(0.58))
                 .lineLimit(1)
-                .minimumScaleFactor(0.82)
+                .minimumScaleFactor(0.72)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 5)
                 .background {
@@ -78,7 +73,7 @@ struct ProviderTabBar: View {
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .fill(.background.opacity(0.92))
                             .shadow(color: .black.opacity(0.12), radius: 1.5, y: 0.5)
-                            .matchedGeometryEffect(id: "primary-pill", in: selectionNS)
+                            .matchedGeometryEffect(id: "tab-pill", in: selectionNS)
                     }
                 }
                 .contentShape(Rectangle())
@@ -86,61 +81,5 @@ struct ProviderTabBar: View {
         .buttonStyle(.plain)
         .accessibilityLabel(item.title)
         .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
-    private var extraRail: some View {
-        HStack(spacing: 6) {
-            ForEach(extras) { id in
-                extraCapsule(id)
-            }
-        }
-    }
-
-    private func extraCapsule(_ id: ProviderID) -> some View {
-        let tab = ProviderTab.provider(id)
-        let selected = selection == tab
-        return Button {
-            select(tab)
-        } label: {
-            HStack(spacing: 5) {
-                ProviderIconView(
-                    id: id,
-                    size: 10,
-                    foreground: selected ? Color.primary : Color.primary.opacity(0.62)
-                )
-                Text(id.displayName)
-                    .font(.system(size: 11, weight: selected ? .semibold : .medium))
-                    .tracking(-0.2)
-                    .foregroundStyle(selected ? Color.primary : Color.primary.opacity(0.62))
-            }
-            .padding(.horizontal, 9)
-            .padding(.vertical, 5)
-            .background {
-                Capsule(style: .continuous)
-                    .fill(selected ? Color.primary.opacity(0.14) : Color.primary.opacity(0.055))
-            }
-            .overlay {
-                Capsule(style: .continuous)
-                    .strokeBorder(
-                        Color.primary.opacity(selected ? 0.16 : 0.07),
-                        lineWidth: 0.5
-                    )
-            }
-        }
-        .buttonStyle(.plain)
-        .scaleEffect(selected && !reduceMotion ? 1 : 0.99)
-        .accessibilityLabel(id.displayName)
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
-    private func select(_ tab: ProviderTab) {
-        guard tab != selection else { return }
-        if reduceMotion {
-            selection = tab
-        } else {
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-                selection = tab
-            }
-        }
     }
 }
