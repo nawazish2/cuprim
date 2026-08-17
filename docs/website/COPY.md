@@ -21,6 +21,8 @@ Tone: calm, precise, slightly dry. Honest about Gatekeeper.
 
 **Meta:** v0.1.6 · macOS 26+ · Apple Silicon · MIT License
 
+**Install whisper:** Ad-hoc signed for now — Control-click → Open, or `xattr -cr /Applications/Cuprim.app`
+
 ## Trust
 
 1. Open source, MIT  

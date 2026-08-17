@@ -38,6 +38,12 @@
       >
         Free · {{ SITE.version }} · macOS 26+ · Apple Silicon · MIT
       </p>
+      <p
+        class="reveal d4 mx-auto mt-2 max-w-[46ch] text-[0.78rem] leading-snug text-[color-mix(in_srgb,var(--muted)_72%,transparent)]"
+      >
+        Ad-hoc signed for now — Control-click → Open, or
+        <code class="code-snippet !px-1.5 !py-0.5 !text-[0.72rem]">xattr -cr /Applications/Cuprim.app</code>
+      </p>
 
       <!-- Product proof starts as a complete static composition and gains motion on desktop. -->
       <MacBookDemo />

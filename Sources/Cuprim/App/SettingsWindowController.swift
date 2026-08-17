@@ -6,6 +6,7 @@ import CuprimCore
 @MainActor
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private static var shared: SettingsWindowController?
+    private static let contentSize = NSSize(width: 360, height: 584)
     private var didEnterActivation = false
     private var hosting: NSHostingController<SettingsView>?
 
@@ -43,11 +44,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             window.level = .normal
         }
 
-        if window.frame.size.width < 50 || window.frame.size.height < 50 {
-            window.setContentSize(NSSize(width: 400, height: 480))
-            window.center()
-        }
-
+        window.setContentSize(Self.contentSize)
         window.center()
         window.orderFrontRegardless()
         window.makeKeyAndOrderFront(nil)
@@ -63,7 +60,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private init(preferences: PreferencesStore) {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 480),
+            contentRect: NSRect(origin: .zero, size: Self.contentSize),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -80,12 +77,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private func configure(preferences: PreferencesStore) {
         guard let window else { return }
-        window.title = "Cuprim Settings"
+        window.title = "Settings"
         window.titleVisibility = .visible
-        window.titlebarAppearsTransparent = true
+        window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
-        window.backgroundColor = .clear
-        window.isOpaque = false
+        window.backgroundColor = .windowBackgroundColor
+        window.isOpaque = true
         window.hasShadow = true
         window.hidesOnDeactivate = false
         window.standardWindowButton(.zoomButton)?.isHidden = true
@@ -95,11 +92,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let root = SettingsView(preferences: preferences)
         let controller = NSHostingController(rootView: root)
         controller.sizingOptions = []
-        controller.view.frame = NSRect(x: 0, y: 0, width: 400, height: 480)
+        controller.view.frame = NSRect(origin: .zero, size: Self.contentSize)
         controller.view.wantsLayer = true
         window.contentViewController = controller
         hosting = controller
-        window.setContentSize(NSSize(width: 400, height: 480))
+        window.setContentSize(Self.contentSize)
         window.center()
     }
 

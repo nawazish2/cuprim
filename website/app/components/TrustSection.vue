@@ -7,7 +7,7 @@
         A menu-bar app should stay out of the way — and out of your data.
       </p>
 
-      <div class="trust-grid reveal mt-10 sm:mt-14">
+      <div class="trust-grid reveal mt-12 sm:mt-16">
         <article v-for="c in cards" :key="c.title" class="trust-card">
           <div class="trust-icon" aria-hidden="true">
             <FeatureGlyph :name="c.icon" :size="32" />

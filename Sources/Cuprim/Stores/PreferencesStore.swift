@@ -28,6 +28,10 @@ final class PreferencesStore {
         didSet { UserDefaults.standard.set(grokEnabled, forKey: Keys.grok) }
     }
 
+    var antigravityEnabled: Bool {
+        didSet { UserDefaults.standard.set(antigravityEnabled, forKey: Keys.antigravity) }
+    }
+
     /// Auto-refresh interval in minutes (wired to UsageStore loop).
     var refreshMinutes: Int {
         didSet { UserDefaults.standard.set(max(1, refreshMinutes), forKey: Keys.refreshMinutes) }
@@ -70,6 +74,7 @@ final class PreferencesStore {
         codexEnabled = defaults.object(forKey: Keys.codex) as? Bool ?? true
         cursorEnabled = defaults.object(forKey: Keys.cursor) as? Bool ?? true
         grokEnabled = defaults.object(forKey: Keys.grok) as? Bool ?? true
+        antigravityEnabled = defaults.object(forKey: Keys.antigravity) as? Bool ?? true
 
         if defaults.object(forKey: Keys.refreshMigratedTo2) == nil {
             refreshMinutes = 2
@@ -106,6 +111,7 @@ final class PreferencesStore {
         case .codex: codexEnabled
         case .cursor: cursorEnabled
         case .grok: grokEnabled
+        case .antigravity: antigravityEnabled
         }
     }
 
@@ -115,6 +121,7 @@ final class PreferencesStore {
         case .codex: codexEnabled = enabled
         case .cursor: cursorEnabled = enabled
         case .grok: grokEnabled = enabled
+        case .antigravity: antigravityEnabled = enabled
         }
     }
 
@@ -197,6 +204,7 @@ final class PreferencesStore {
         static let codex = "provider.codex.enabled"
         static let cursor = "provider.cursor.enabled"
         static let grok = "provider.grok.enabled"
+        static let antigravity = "provider.antigravity.enabled"
         static let refreshMinutes = "refresh.minutes"
         static let refreshMigratedTo2 = "refresh.migratedTo2min"
         static let showUsedPercent = "display.showUsedPercent"

@@ -7,7 +7,7 @@
         No browser tab for quotas. Menu for glance, panel for detail.
       </p>
 
-      <ul class="feature-grid reveal mt-10 sm:mt-14" role="list">
+      <ul class="feature-grid reveal mt-12 sm:mt-16" role="list">
         <li v-for="f in features" :key="f.label" class="feature-cell">
           <span class="feature-icon" aria-hidden="true">
             <FeatureGlyph :name="f.icon" />
@@ -21,16 +21,12 @@
 
 <script setup lang="ts">
 const features = [
-  { icon: "menu", label: "Lives in Menu Bar" },
-  { icon: "gauge", label: "Status at a Glance" },
-  { icon: "panel", label: "Dashboard Detail" },
+  { icon: "menu", label: "Lives in the menu bar" },
+  { icon: "gauge", label: "Glance in the menu, detail in the panel" },
   { icon: "providers", label: "Claude · Codex · Cursor · Grok" },
-  { icon: "lock", label: "Local Only" },
-  { icon: "shield", label: "No Telemetry" },
-  { icon: "refresh", label: "One-Click Refresh" },
-  { icon: "swift", label: "Native Swift App" },
-  { icon: "free", label: "Free · MIT Forever" },
-  { icon: "chip", label: "Apple Silicon" },
+  { icon: "lock", label: "Local only" },
+  { icon: "shield", label: "No telemetry" },
+  { icon: "free", label: "Free · MIT" },
 ] as const
 </script>
 
@@ -54,8 +50,9 @@ const features = [
 
 @media (min-width: 900px) {
   .feature-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    max-width: 720px;
   }
 }
 
@@ -93,7 +90,7 @@ const features = [
 }
 
 .feature-label {
-  max-width: 14ch;
+  max-width: 22ch;
   font-size: 0.92rem;
   font-weight: 600;
   letter-spacing: -0.022em;

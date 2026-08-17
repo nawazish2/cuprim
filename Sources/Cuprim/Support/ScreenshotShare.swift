@@ -8,6 +8,7 @@ enum ScreenshotShare {
         case codex
         case cursor
         case grok
+        case antigravity
 
         var title: String {
             switch self {
@@ -15,6 +16,7 @@ enum ScreenshotShare {
             case .codex: "Codex"
             case .cursor: "Cursor"
             case .grok: "Grok"
+            case .antigravity: "Antigravity"
             }
         }
 
@@ -28,6 +30,8 @@ enum ScreenshotShare {
                 ["com.todesktop.230313mzl4w4u92", "com.cursor.Cursor", "dev.cursor.Cursor"]
             case .grok:
                 ["ai.x.grok", "com.xai.grok", "ai.xai.grok"]
+            case .antigravity:
+                ["com.google.antigravity"]
             }
         }
 
@@ -37,6 +41,7 @@ enum ScreenshotShare {
             case .codex: ["ChatGPT", "ChatGPT.app", "Codex"]
             case .cursor: ["Cursor", "Cursor.app"]
             case .grok: ["Grok", "Grok.app"]
+            case .antigravity: ["Antigravity", "Antigravity.app"]
             }
         }
     }

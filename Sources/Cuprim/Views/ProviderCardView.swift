@@ -8,7 +8,6 @@ struct ProviderCardView: View {
     var absoluteResets: Bool = false
     var isStale: Bool = false
     var isRefreshing: Bool = false
-    var horizon: QuotaHorizon?
 
     @State private var isHovered = false
 
@@ -29,7 +28,7 @@ struct ProviderCardView: View {
 
     private var cardResetCaption: String? {
         guard let date = sharedResetDate else { return nil }
-        return QuotaFormatting.smartResetLabel(for: date)
+        return QuotaFormatting.resetLabel(for: date, absolute: absoluteResets)
     }
 
     var body: some View {
@@ -68,15 +67,11 @@ struct ProviderCardView: View {
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
 
-                    if let horizon, let label = QuotaFormatting.horizonLabel(horizon) {
-                        Label(label, systemImage: horizon.state == .likelyToExhaust ? "exclamationmark.triangle" : "sparkles")
+                    if isStale {
+                        Text("May be outdated")
                             .font(.caption2.weight(.medium))
-                            .foregroundStyle(
-                                horizon.state == .likelyToExhaust
-                                    ? Color.orange
-                                    : GlassChrome.textTertiary
-                            )
-                            .lineLimit(1)
+                            .foregroundStyle(GlassChrome.textTertiary)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                 }
             case .notLoggedIn:
@@ -160,6 +155,9 @@ struct ProviderCardView: View {
         if lower.contains("no weekly") || lower.contains("not available") || lower.contains("no limit") {
             return "Limit details aren’t available right now. Try refreshing in a moment."
         }
+        if lower == "offline" || lower.contains("internet connection") || lower.contains("appears to be offline") {
+            return "Offline. Last known usage is shown when we have it."
+        }
         return message
     }
 
@@ -169,6 +167,7 @@ struct ProviderCardView: View {
         case .codex: "Sign in with the Codex CLI (`codex`)."
         case .cursor: "Open Cursor and sign in to your account."
         case .grok: "Sign in with Grok Build (`grok login`)."
+        case .antigravity: "Open Antigravity or run `agy`."
         }
     }
 }

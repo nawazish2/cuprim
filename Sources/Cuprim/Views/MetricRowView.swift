@@ -102,7 +102,7 @@ struct MetricRowView: View {
 
     private var resetText: String? {
         guard metric.resetsAt != nil else { return nil }
-        return QuotaFormatting.smartResetLabel(for: metric.resetsAt)
+        return QuotaFormatting.resetLabel(for: metric.resetsAt, absolute: absoluteResets)
     }
 
     private var meter: some View {

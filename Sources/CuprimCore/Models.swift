@@ -5,6 +5,7 @@ public enum ProviderID: String, CaseIterable, Identifiable, Codable, Sendable {
     case codex
     case cursor
     case grok
+    case antigravity
 
     public var id: String { rawValue }
 
@@ -14,6 +15,7 @@ public enum ProviderID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .codex: "Codex"
         case .cursor: "Cursor"
         case .grok: "Grok"
+        case .antigravity: "Antigravity"
         }
     }
 
@@ -23,6 +25,7 @@ public enum ProviderID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .codex: "chevron.left.forwardslash.chevron.right"
         case .cursor: "cursorarrow.click.2"
         case .grok: "sparkles"
+        case .antigravity: "point.3.filled.connected.trianglepath"
         }
     }
 }

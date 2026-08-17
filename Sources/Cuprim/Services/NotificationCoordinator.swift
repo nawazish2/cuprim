@@ -52,8 +52,9 @@ final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate 
             guard !UserDefaults.standard.bool(forKey: key) else { continue }
 
             let content = UNMutableNotificationContent()
-            content.title = "\(provider.displayName) quota"
-            content.body = "\(metric.displayLabel) has \(remaining)% remaining."
+            content.title = "\(provider.displayName) · \(remaining)% left on \(metric.displayLabel)"
+            let reset = QuotaFormatting.resetLabel(for: metric.resetsAt, absolute: false)
+            content.body = reset.isEmpty ? "Local quota alert" : reset
             content.sound = .default
             content.categoryIdentifier = "CUPrim.Quota"
 

@@ -2,7 +2,7 @@
 
 ## What this is
 
-**Cuprim** is a free macOS **menu-bar** app that shows quota usage for **Claude**, **Codex**, **Cursor**, and **Grok**.
+**Cuprim** is a free macOS **menu-bar** app that shows quota usage for **Claude**, **Codex**, **Cursor**, **Grok**, and **Antigravity**.
 
 - Local only: no accounts with us, no telemetry, no cloud sync, no backend
 - Credentials stay on the machine; Cuprim only talks to each provider’s own usage API
@@ -12,7 +12,7 @@
 
 - **Apple Silicon** (arm64) only
 - **macOS 26+** (Liquid Glass)
-- Providers the user cares about already signed in locally (Claude Code/Desktop, Codex CLI `~/.codex/auth.json`, Cursor, Grok Build / `grok login`)
+- Providers the user cares about already signed in locally (Claude Code/Desktop, Codex CLI `~/.codex/auth.json`, Cursor, Grok Build / `grok login`, Antigravity / `agy`)
 
 Cloud/Linux agents **cannot** compile or run the app. Treat build/package/UI verification as **manual on an Apple Silicon Mac**, or skip with that precondition stated.
 
@@ -86,7 +86,7 @@ Keep the product local-only. Do not add analytics SDKs, remote config, or “syn
 - Prefers free and open source; do not reopen Polar, paywall, or monetization work
 - For this solo repo, prefer pushing to `main` over branch-and-PR workflows unless asked otherwise
 - Prefers compact, premium, native macOS UI (Liquid Glass / HIG, glanceable and readable) over custom web-dashboard glassmorphism; rejects heavy or overworked icon treatments and often prefers earlier simpler icon versions when iterating
-- Status menu should be monochrome and compact (native NSMenu, system greys only—no colorful status chips/dots); use “Limit Reached” when exhausted; keep actions slim (e.g. Show Cuprim / Refresh / Settings / Quit—no Share Screenshot or About in the status menu)
+- Status item click opens the glass dashboard directly (no native usage menu). Detail lives in the dashboard; Settings / Quit stay in the panel footer. Menu-bar glyph stays the monochrome gauge
 - About and shipping surfaces should credit the author (Created by Nawazish); About belongs in Settings (or the app menu), not the slim status menu
 - README and product copy should stay short and local-only focused (private, low RAM); strip unnecessary detail
 - Share screenshots/cards should show only the selected provider, not every provider’s usage; do not re-add Share Screenshot to Settings or the status menu without being asked

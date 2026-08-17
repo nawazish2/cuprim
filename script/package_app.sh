@@ -100,6 +100,11 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
 	<false/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSPrincipalClass</key>
 	<string>CuprimApplication</string>
 </dict>

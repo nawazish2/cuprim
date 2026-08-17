@@ -1,6 +1,6 @@
 # Cuprim
 
-Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, and **Grok** quota usage.
+Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, **Grok**, and **Antigravity** quota usage.
 
 **Local only** · no accounts · no telemetry · no cloud sync · light on RAM  
 **Apple Silicon** · **macOS 26+** · MIT

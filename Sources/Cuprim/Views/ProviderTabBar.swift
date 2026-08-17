@@ -13,96 +13,134 @@ enum ProviderTab: Hashable, Identifiable {
     }
 }
 
-/// Native-feeling segmented chips — soft track, rounded active pill.
+/// Native segmented row for the original set, plus a quiet capsule rail for extras.
 struct ProviderTabBar: View {
     @Binding var selection: ProviderTab
     let available: [ProviderID]
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var selectionNS
 
-    /// The native segmented control is the most legible treatment for the
-    /// four providers plus the overview tab at this panel width.
-    private var useNativeSegmented: Bool {
-        true
+    private var primary: [ProviderID] {
+        available.filter { $0 != .antigravity }
     }
 
-    private var selectionSpring: Animation? {
-        reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.86)
+    private var extras: [ProviderID] {
+        available.filter { $0 == .antigravity }
+    }
+
+    private var primaryTabs: [(tab: ProviderTab, title: String)] {
+        [(.overview, "All")] + primary.map { (.provider($0), $0.displayName) }
     }
 
     var body: some View {
-        Group {
-            if useNativeSegmented {
-                nativePicker
-            } else {
-                scrollingChips
+        VStack(alignment: .leading, spacing: 7) {
+            primaryRow
+
+            if !extras.isEmpty {
+                extraRail
             }
         }
-        .animation(selectionSpring, value: selection)
     }
 
-    private var nativePicker: some View {
-        Picker("", selection: $selection) {
-            Text("All").tag(ProviderTab.overview)
-            ForEach(available) { id in
-                Text(shortName(id)).tag(ProviderTab.provider(id))
+    private var primaryRow: some View {
+        HStack(spacing: 0) {
+            ForEach(primaryTabs, id: \.tab) { item in
+                primaryCell(item)
             }
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .controlSize(.small)
-    }
-
-    private var scrollingChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 4) {
-                chip(tab: .overview, title: "All")
-                ForEach(available) { id in
-                    chip(tab: .provider(id), title: shortName(id))
-                }
-            }
-            .padding(3)
+        .padding(2)
+        .background {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(.quaternary.opacity(0.55))
         }
-        .agentGlassTabBar()
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.5)
+        }
     }
 
-    private func chip(tab: ProviderTab, title: String) -> some View {
-        let selected = selection == tab
-
+    private func primaryCell(_ item: (tab: ProviderTab, title: String)) -> some View {
+        let selected = selection == item.tab
         return Button {
-            if reduceMotion {
-                selection = tab
-            } else {
-                withAnimation(selectionSpring) {
-                    selection = tab
-                }
-            }
+            select(item.tab)
         } label: {
-            Text(title)
-                .font(.caption.weight(selected ? .semibold : .medium))
-                .foregroundStyle(selected ? GlassChrome.textTabActive : GlassChrome.textTabIdle)
+            Text(item.title)
+                .font(.system(size: 11, weight: selected ? .semibold : .medium))
+                .tracking(-0.15)
+                .foregroundStyle(selected ? Color.primary : Color.primary.opacity(0.58))
                 .lineLimit(1)
-                .padding(.horizontal, 11)
+                .minimumScaleFactor(0.82)
+                .frame(maxWidth: .infinity)
                 .padding(.vertical, 5)
                 .background {
                     if selected {
-                        RoundedRectangle(cornerRadius: GlassChrome.tabPillCorner, style: .continuous)
-                            .fill(Color.primary.opacity(0.15))
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(.background.opacity(0.92))
+                            .shadow(color: .black.opacity(0.12), radius: 1.5, y: 0.5)
+                            .matchedGeometryEffect(id: "primary-pill", in: selectionNS)
                     }
                 }
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(title)
+        .accessibilityLabel(item.title)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
-    private func shortName(_ id: ProviderID) -> String {
-        switch id {
-        case .claude: "Claude"
-        case .codex: "Codex"
-        case .cursor: "Cursor"
-        case .grok: "Grok"
+    private var extraRail: some View {
+        HStack(spacing: 6) {
+            ForEach(extras) { id in
+                extraCapsule(id)
+            }
+        }
+    }
+
+    private func extraCapsule(_ id: ProviderID) -> some View {
+        let tab = ProviderTab.provider(id)
+        let selected = selection == tab
+        return Button {
+            select(tab)
+        } label: {
+            HStack(spacing: 5) {
+                ProviderIconView(
+                    id: id,
+                    size: 10,
+                    foreground: selected ? Color.primary : Color.primary.opacity(0.62)
+                )
+                Text(id.displayName)
+                    .font(.system(size: 11, weight: selected ? .semibold : .medium))
+                    .tracking(-0.2)
+                    .foregroundStyle(selected ? Color.primary : Color.primary.opacity(0.62))
+            }
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background {
+                Capsule(style: .continuous)
+                    .fill(selected ? Color.primary.opacity(0.14) : Color.primary.opacity(0.055))
+            }
+            .overlay {
+                Capsule(style: .continuous)
+                    .strokeBorder(
+                        Color.primary.opacity(selected ? 0.16 : 0.07),
+                        lineWidth: 0.5
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .scaleEffect(selected && !reduceMotion ? 1 : 0.99)
+        .accessibilityLabel(id.displayName)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func select(_ tab: ProviderTab) {
+        guard tab != selection else { return }
+        if reduceMotion {
+            selection = tab
+        } else {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+                selection = tab
+            }
         }
     }
 }

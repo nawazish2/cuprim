@@ -1,4 +1,5 @@
 import AppKit
+import QuartzCore
 import SwiftUI
 import CuprimCore
 
@@ -38,7 +39,8 @@ final class PanelController: NSObject, NSWindowDelegate {
         super.init()
     }
 
-    var isVisible: Bool { panel?.isVisible == true }
+    var isVisible: Bool { panel?.isVisible == true && !isHiding }
+    private var isHiding = false
 
     /// Snapshot the glass dashboard for Share Screenshot.
     func snapshotImage() -> NSImage? {
@@ -96,14 +98,93 @@ final class PanelController: NSObject, NSWindowDelegate {
         panel.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
 
         position(panel, relativeTo: statusButton)
-        panel.orderFrontRegardless()
-        panel.makeKey()
+        animateIn(panel)
         installDismissMonitor()
     }
 
     func hide() {
-        panel?.orderOut(nil)
+        guard let panel, panel.isVisible, !isHiding else {
+            removeDismissMonitor()
+            return
+        }
         removeDismissMonitor()
+        animateOut(panel)
+    }
+
+    private var reduceMotion: Bool {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+
+    private func animateIn(_ panel: KeyablePanel) {
+        isHiding = false
+
+        if reduceMotion {
+            resetPresentation(panel)
+            panel.alphaValue = 1
+            panel.orderFrontRegardless()
+            panel.makeKey()
+            return
+        }
+
+        applyScale(0.96, to: panel)
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+        panel.makeKey()
+
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.22
+            ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.22, 0.82, 0.24, 1)
+            ctx.allowsImplicitAnimation = true
+            panel.animator().alphaValue = 1
+            applyScale(1, to: panel, animated: true)
+        }
+    }
+
+    private func animateOut(_ panel: KeyablePanel) {
+        if reduceMotion {
+            panel.orderOut(nil)
+            resetPresentation(panel)
+            isHiding = false
+            return
+        }
+
+        isHiding = true
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.16
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            ctx.allowsImplicitAnimation = true
+            panel.animator().alphaValue = 0
+            applyScale(0.96, to: panel, animated: true)
+        }, completionHandler: { [weak self] in
+            Task { @MainActor in
+                guard let self else { return }
+                panel.orderOut(nil)
+                self.resetPresentation(panel)
+                self.isHiding = false
+            }
+        })
+    }
+
+    private func applyScale(_ scale: CGFloat, to panel: KeyablePanel, animated: Bool = false) {
+        guard let view = panel.contentView else { return }
+        view.wantsLayer = true
+        let layer = view.layer
+        layer?.anchorPoint = CGPoint(x: 0.5, y: 1)
+        layer?.position = CGPoint(x: view.bounds.midX, y: view.bounds.maxY)
+        let transform = CATransform3DMakeScale(scale, scale, 1)
+        if animated {
+            layer?.transform = transform
+        } else {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            layer?.transform = transform
+            CATransaction.commit()
+        }
+    }
+
+    private func resetPresentation(_ panel: KeyablePanel) {
+        panel.alphaValue = 1
+        applyScale(1, to: panel)
     }
 
     private func position(_ panel: KeyablePanel, relativeTo statusButton: NSStatusBarButton) {

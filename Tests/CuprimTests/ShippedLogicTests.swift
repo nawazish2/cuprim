@@ -136,6 +136,21 @@ final class ShippedLogicTests: XCTestCase {
         }
     }
 
+    func testOfflineErrorMapsToShortOfflineStatus() {
+        let snap = ProviderStatusMapping.snapshot(
+            for: .cursor,
+            error: URLError(.notConnectedToInternet)
+        )
+        if case .error(let message) = snap.status {
+            XCTAssertEqual(message, ProviderStatusMapping.offlineMessage)
+        } else {
+            XCTFail("expected .error(Offline), got \(snap.status)")
+        }
+        XCTAssertTrue(ProviderStatusMapping.isOffline(URLError(.notConnectedToInternet)))
+        XCTAssertTrue(ProviderStatusMapping.isOffline(URLError(.networkConnectionLost)))
+        XCTAssertFalse(ProviderStatusMapping.isOffline(ProviderError.notLoggedIn))
+    }
+
     func testGenericErrorMapsToErrorStatus() {
         struct E: Error {}
         let snap = ProviderStatusMapping.snapshot(for: .cursor, error: E())
@@ -144,6 +159,54 @@ final class ShippedLogicTests: XCTestCase {
         } else {
             XCTFail("expected .error for generic Error")
         }
+    }
+
+    func testAntigravityQuotaSummaryMapping() throws {
+        let json = """
+        {
+          "response": {
+            "groups": [
+              {
+                "displayName": "Gemini Models",
+                "buckets": [
+                  {
+                    "bucketId": "gemini-weekly",
+                    "window": "weekly",
+                    "remainingFraction": 0.75,
+                    "resetTime": "2026-08-24T10:33:35Z"
+                  }
+                ]
+              },
+              {
+                "displayName": "Claude and GPT models",
+                "buckets": [
+                  {
+                    "bucketId": "3p-weekly",
+                    "window": "weekly",
+                    "remainingFraction": 1,
+                    "resetTime": "2026-08-24T10:35:28Z"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+        """.data(using: .utf8)!
+
+        let metrics = try AntigravityQuotaMapping.metrics(fromSummaryJSON: json)
+        XCTAssertEqual(metrics.count, 2)
+        XCTAssertEqual(metrics[0].label, "Gemini weekly")
+        XCTAssertEqual(metrics[0].usedFraction ?? -1, 0.25, accuracy: 1e-9)
+        XCTAssertEqual(metrics[1].label, "Claude + GPT weekly")
+        XCTAssertEqual(metrics[1].usedFraction ?? -1, 0, accuracy: 1e-9)
+        XCTAssertNotNil(metrics[0].resetsAt)
+    }
+
+    func testAntigravityPlanNameFromUserStatus() {
+        let json = """
+        {"userStatus":{"planStatus":{"planInfo":{"planName":"Pro"}}}}
+        """.data(using: .utf8)!
+        XCTAssertEqual(AntigravityQuotaMapping.planName(fromStatusJSON: json), "Pro")
     }
 
     // MARK: - Codex window classifier

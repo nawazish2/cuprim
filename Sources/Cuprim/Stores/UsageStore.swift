@@ -25,7 +25,8 @@ final class UsageStore {
             ClaudeProvider(),
             CodexProvider(),
             CursorProvider(),
-            GrokProvider()
+            GrokProvider(),
+            AntigravityProvider()
         ],
         cache: SnapshotCache = SnapshotCache(),
         history: QuotaHistoryStore = QuotaHistoryStore(),
@@ -118,13 +119,22 @@ final class UsageStore {
         }
 
         var next = snapshots
+        let previous = snapshots
 
         await withTaskGroup(of: (ProviderID, ProviderSnapshot).self) { group in
             for provider in providers where preferences.isEnabled(provider.id) {
+                NSLog("[Cuprim] refresh %@", provider.id.rawValue)
                 group.addTask {
                     do {
                         return (provider.id, try await provider.refresh())
                     } catch {
+                        // Offline is machine-wide. Keep last-good usage instead of
+                        // replacing every row with the system network string.
+                        if ProviderStatusMapping.isOffline(error),
+                           let last = previous[provider.id],
+                           case .ok = last.status {
+                            return (provider.id, last)
+                        }
                         return (provider.id, ProviderStatusMapping.snapshot(for: provider.id, error: error))
                     }
                 }
