@@ -5,7 +5,7 @@ Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, **Grok**, 
 **Local only** · no accounts · no telemetry · no cloud sync · light on RAM  
 **Apple Silicon** · **macOS 26+** · MIT
 
-**Website:** Cloudflare Workers (`cuprim`) · **Download:** [Releases](https://github.com/nawazish2/cuprim/releases/latest)
+**Website:** [cuprim.knawazish153.workers.dev](https://cuprim.knawazish153.workers.dev) · **Download:** [Releases](https://github.com/nawazish2/cuprim/releases/latest)
 
 ## Install
 

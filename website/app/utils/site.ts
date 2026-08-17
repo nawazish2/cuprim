@@ -3,7 +3,7 @@ export const SITE = {
   tagline: "Know which AI tool runs out next",
   description:
     "Free local macOS app that shows Claude, Codex, Cursor, Grok, and Antigravity usage. No accounts with us. No telemetry.",
-  url: "",
+  url: "https://cuprim.knawazish153.workers.dev",
   github: "https://github.com/nawazish2/cuprim",
   releasesLatest: "https://github.com/nawazish2/cuprim/releases/latest",
   releases: "https://github.com/nawazish2/cuprim/releases",

@@ -9,4 +9,4 @@
 | Hero static fallback | `website/public/macbook-demo-poster.webp` |
 | Cup mark | `CupLogo.vue` |
 
-Stack: Nuxt 4 + Tailwind static → Cloudflare Workers (`cuprim`).
+Stack: Nuxt 4 + Tailwind static → Cloudflare Workers (`https://cuprim.knawazish153.workers.dev`).
