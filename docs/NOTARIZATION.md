@@ -1,6 +1,16 @@
 # Distributing Cuprim
 
-Cuprim ships outside the Mac App Store: build a `.app`, wrap it in a `.dmg` / `.zip`, optionally **Developer ID sign + notarize**, then attach artifacts to a [GitHub Release](https://github.com/nawazish2/cuprim/releases).
+Cuprim ships outside the Mac App Store. The **free path** is ad-hoc app signing plus Sparkle EdDSA signatures on updates. Developer ID notarization is optional and paid.
+
+## Sparkle updates (free integrity)
+
+Release builds check `SUFeedURL` (GitHub Releases `appcast.xml`), verify the EdDSA signature, then download and install.
+
+- Public key: `SUPublicEDKey` in the packaged Info.plist (`SPARKLE_PUBLIC_ED_KEY` at package time)
+- Private key: Keychain only. Generate with Sparkle `generate_keys`; sign artifacts with `sign_update` from `script/release.sh`
+- Debug builds skip Sparkle so a debug `.app` is never replaced by a release build
+
+This does **not** remove Gatekeeper on first install. Users still Control-click → Open (or `xattr -cr`) for ad-hoc builds.
 
 ## Quick path (you, local testing)
 

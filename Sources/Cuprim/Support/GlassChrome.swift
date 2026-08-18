@@ -1,14 +1,13 @@
 import SwiftUI
 import CuprimCore
 
-/// Compact dashboard tokens — native Liquid Glass shell and grouped surfaces.
+/// Compact dashboard tokens — one native Liquid Glass shell, quiet grouped rows.
 enum GlassChrome {
     static let panelCorner: CGFloat = 18
-    static let cardCorner: CGFloat = 16
+    static let cardCorner: CGFloat = 12
     static let tabBarCorner: CGFloat = 11
     static let tabPillCorner: CGFloat = 10
     static let panelWidth: CGFloat = 300
-    /// Tall enough for several providers + pinned footer.
     static let panelHeight: CGFloat = 420
     static let outerPad: CGFloat = 0
     static let inset: CGFloat = 12
@@ -20,8 +19,6 @@ enum GlassChrome {
     static let providerIconSize: CGFloat = 18
     static let brandBlue = Color(red: 0.0, green: 0.451, blue: 0.922)
 
-    // MARK: Type (3 levels)
-
     static let textPrimary = Color.primary.opacity(0.98)
     static let textSecondary = Color.primary.opacity(0.78)
     static let textTertiary = Color.primary.opacity(0.62)
@@ -30,17 +27,13 @@ enum GlassChrome {
 
     static let panelScrimDark = Color.black.opacity(0.28)
     static let panelScrimLight = Color.white.opacity(0.58)
-    static let footerScrimDark = Color.black.opacity(0.24)
-    static let footerScrimLight = Color.white.opacity(0.44)
     static let cardFill = Color.primary.opacity(0.045)
-    static let cardStroke = Color.primary.opacity(0.14)
-    static let cardShadow = Color.black.opacity(0.16)
+    static let cardStroke = Color.primary.opacity(0.10)
 }
-
-// MARK: - Surfaces
 
 struct GlassPanelBackground: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: GlassChrome.panelCorner, style: .continuous)
@@ -50,9 +43,9 @@ struct GlassPanelBackground: ViewModifier {
 
         content
             .background {
-                shape.fill(scrim)
+                shape.fill(reduceTransparency ? Color(nsColor: .windowBackgroundColor) : scrim)
             }
-            .glassEffect(.regular.interactive(), in: shape)
+            .modifier(OptionalGlassEffect(enabled: !reduceTransparency, shape: shape))
             .overlay {
                 shape.strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.5)
             }
@@ -60,17 +53,35 @@ struct GlassPanelBackground: ViewModifier {
     }
 }
 
-struct GlassCardBackground: ViewModifier {
+private struct OptionalGlassEffect<S: Shape>: ViewModifier {
+    let enabled: Bool
+    let shape: S
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.glassEffect(.regular.interactive(), in: shape)
+        } else {
+            content
+        }
+    }
+}
+
+struct GroupedCardBackground: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
+
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: GlassChrome.cardCorner, style: .continuous)
-
+        let fill = contrast == .increased
+            ? Color.primary.opacity(0.08)
+            : GlassChrome.cardFill
         content
             .background {
-                shape.fill(GlassChrome.cardFill)
+                shape.fill(reduceTransparency ? Color(nsColor: .controlBackgroundColor) : fill)
             }
-            .glassEffect(.regular.interactive(), in: shape)
             .overlay {
-                shape.strokeBorder(GlassChrome.cardStroke, lineWidth: 0.5)
+                shape.strokeBorder(GlassChrome.cardStroke, lineWidth: contrast == .increased ? 1 : 0.5)
             }
     }
 }
@@ -102,9 +113,9 @@ struct GlassIconWell: ViewModifier {
 }
 
 extension View {
-    func agentGlassPanel() -> some View { modifier(GlassPanelBackground()) }
-    func agentGlassCard() -> some View { modifier(GlassCardBackground()) }
-    func agentGlassTabBar() -> some View { modifier(GlassTabBarBackground()) }
-    func agentGlassTabPill() -> some View { modifier(GlassTabPillBackground()) }
-    func agentGlassIconWell() -> some View { modifier(GlassIconWell()) }
+    func cuprimGlassPanel() -> some View { modifier(GlassPanelBackground()) }
+    func cuprimGroupedCard() -> some View { modifier(GroupedCardBackground()) }
+    func cuprimGlassTabBar() -> some View { modifier(GlassTabBarBackground()) }
+    func cuprimGlassTabPill() -> some View { modifier(GlassTabPillBackground()) }
+    func cuprimGlassIconWell() -> some View { modifier(GlassIconWell()) }
 }

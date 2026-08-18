@@ -9,23 +9,36 @@ let package = Package(
     ],
     products: [
         .library(name: "CuprimCore", targets: ["CuprimCore"]),
+        .library(name: "CuprimProviders", targets: ["CuprimProviders"]),
         .executable(name: "Cuprim", targets: ["Cuprim"])
+    ],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.7.1")
     ],
     targets: [
         .target(
             name: "CuprimCore",
             path: "Sources/CuprimCore"
         ),
+        .target(
+            name: "CuprimProviders",
+            dependencies: ["CuprimCore"],
+            path: "Sources/CuprimProviders"
+        ),
         .executableTarget(
             name: "Cuprim",
-            dependencies: ["CuprimCore"],
+            dependencies: [
+                "CuprimCore",
+                "CuprimProviders",
+                .product(name: "Sparkle", package: "Sparkle")
+            ],
             path: "Sources/Cuprim",
-            // Resources are copied into the .app by script/build_and_run.sh (Bundle.main).
+            // Resources are copied into the .app by script/package_app.sh (Bundle.main).
             exclude: ["Resources"]
         ),
         .testTarget(
             name: "CuprimTests",
-            dependencies: ["CuprimCore"],
+            dependencies: ["CuprimCore", "CuprimProviders"],
             path: "Tests/CuprimTests"
         )
     ]

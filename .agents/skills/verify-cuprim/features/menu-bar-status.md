@@ -31,6 +31,7 @@ Preconditions:
 
 ## Gotchas
 
+- Tooltip remaining percent never suffixes “Limit reached” when a percent is shown
 - Status items are not reliably scriptable; treat UI steps as manual
 - Empty usage is valid when providers are logged out — not an automatic failure
 - Do not confuse `/Applications/Cuprim.app` with this checkout’s `dist/` build

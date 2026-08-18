@@ -17,21 +17,4 @@ extension QuotaFormatting {
             return Color(red: 0.96, green: 0.28, blue: 0.32)
         }
     }
-
-    /// Short whisper label for last panel refresh (e.g. "just now").
-    static func updatedLabel(for date: Date?, relativeTo now: Date = .now) -> String? {
-        guard let date else { return nil }
-        let seconds = now.timeIntervalSince(date)
-        if seconds < 8 { return "Just now" }
-        if seconds < 60 { return "\(Int(seconds))s ago" }
-        if seconds < 3600 {
-            let m = max(1, Int(seconds / 60))
-            return "\(m)m ago"
-        }
-        if seconds < 86_400 {
-            let h = max(1, Int(seconds / 3600))
-            return "\(h)h ago"
-        }
-        return "Earlier"
-    }
 }

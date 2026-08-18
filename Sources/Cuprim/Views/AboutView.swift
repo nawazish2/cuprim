@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// OpenUsage-style centered About panel: icon, name, version, credit, GitHub.
+/// Open-source About panel: icon, name, version, credit, GitHub.
 struct AboutView: View {
     var body: some View {
         VStack(spacing: 0) {
@@ -19,6 +19,11 @@ struct AboutView: View {
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .padding(.top, 6)
+
+            Text("Private · No telemetry · MIT")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .padding(.top, 10)
 
             VStack(spacing: 8) {
                 HStack(spacing: 4) {

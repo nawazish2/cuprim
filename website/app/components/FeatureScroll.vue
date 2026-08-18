@@ -1,106 +1,39 @@
 <template>
-  <section id="features" class="section">
+  <section id="providers" class="section">
     <div class="wrap">
-      <div class="reveal section-eyebrow">What you get</div>
-      <h2 class="reveal section-title">At the edge of the screen.</h2>
-      <p class="reveal section-lead mt-3">
-        No browser tab for quotas. Menu for glance, panel for detail.
+      <div class="section-eyebrow">Providers</div>
+      <h2 class="section-title">Five tools. One glance.</h2>
+      <p class="section-lead mt-3">
+        Cuprim reads the sign-in already on this Mac. It never creates an account with us.
       </p>
-
-      <ul class="feature-grid reveal mt-12 sm:mt-16" role="list">
-        <li v-for="f in features" :key="f.label" class="feature-cell">
-          <span class="feature-icon" aria-hidden="true">
-            <FeatureGlyph :name="f.icon" />
-          </span>
-          <span class="feature-label">{{ f.label }}</span>
-        </li>
+      <ul class="provider-list mt-10" role="list">
+        <li v-for="name in PROVIDERS" :key="name">{{ name }}</li>
       </ul>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-const features = [
-  { icon: "menu", label: "Lives in the menu bar" },
-  { icon: "gauge", label: "Glance in the menu, detail in the panel" },
-  { icon: "providers", label: "Claude · Codex · Cursor · Grok" },
-  { icon: "lock", label: "Local only" },
-  { icon: "shield", label: "No telemetry" },
-  { icon: "free", label: "Free · MIT" },
-] as const
+import { PROVIDERS } from "~/utils/site"
 </script>
 
 <style scoped>
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  list-style: none;
-  margin: 0 auto;
-  max-width: 920px;
-  padding: 0;
-}
-
-@media (min-width: 640px) {
-  .feature-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-}
-
-@media (min-width: 900px) {
-  .feature-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-    max-width: 720px;
-  }
-}
-
-.feature-cell {
+.provider-list {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
-  min-height: 112px;
-  padding: 18px 10px 16px;
-  border-radius: 16px;
-  text-align: center;
-  transition:
-    background 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.15s ease;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.feature-cell:hover {
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 70%, transparent) inset,
-    0 8px 24px -16px rgba(24, 27, 23, 0.28);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.feature-icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  color: var(--ink);
-}
-
-.feature-label {
-  max-width: 22ch;
-  font-size: 0.92rem;
+.provider-list li {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.95rem;
   font-weight: 600;
-  letter-spacing: -0.022em;
-  line-height: 1.25;
-  color: var(--ink);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .feature-cell {
-    transition: none;
-  }
+  letter-spacing: -0.02em;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  border: 1px solid var(--line);
 }
 </style>

@@ -1,23 +1,27 @@
 import Foundation
 import Observation
 import CuprimCore
+import CuprimProviders
 
 @MainActor
 @Observable
 final class UsageStore {
     private(set) var snapshots: [ProviderID: ProviderSnapshot] = [:]
+    private(set) var lastFailures: [ProviderID: ProviderFailureKind] = [:]
+    private(set) var lastSuccessAt: [ProviderID: Date] = [:]
+    private(set) var lastAttemptAt: Date?
+    private(set) var lastSuccessfulRefresh: Date?
     private(set) var isRefreshing = false
-    private(set) var lastRefresh: Date?
+    private(set) var isOffline = false
 
     private let providers: [any ProviderRuntime]
     private let cache: SnapshotCache
-    private let history: QuotaHistoryStore
     private let notifications: NotificationCoordinator
     private let preferences: PreferencesStore
+    private let gate = RefreshGate()
     private var loopTask: Task<Void, Never>?
-    private var refreshGeneration = 0
+    private let providerTimeout: TimeInterval = 15
 
-    /// AppContainer uses this to refresh the status glyph only when data changes.
     var onStateChange: (() -> Void)?
 
     init(
@@ -29,26 +33,42 @@ final class UsageStore {
             AntigravityProvider()
         ],
         cache: SnapshotCache = SnapshotCache(),
-        history: QuotaHistoryStore = QuotaHistoryStore(),
         notifications: NotificationCoordinator = NotificationCoordinator(),
         preferences: PreferencesStore
     ) {
         self.providers = providers
         self.cache = cache
-        self.history = history
         self.notifications = notifications
         self.preferences = preferences
-        self.snapshots = cache.load()
+        cache.deleteLegacyHistory()
+        if DemoSnapshots.isEnabled {
+            snapshots = DemoSnapshots.all()
+            lastSuccessfulRefresh = .now
+            for (id, snapshot) in snapshots {
+                lastSuccessAt[id] = snapshot.fetchedAt
+            }
+        } else {
+            snapshots = cache.load()
+            lastSuccessfulRefresh = snapshots.values.map(\.fetchedAt).max()
+            for (id, snapshot) in snapshots {
+                if case .ok = snapshot.status {
+                    lastSuccessAt[id] = snapshot.fetchedAt
+                }
+            }
+        }
     }
 
     var visibleSnapshots: [ProviderSnapshot] {
         preferences.orderedProviders.compactMap { id in
             guard preferences.isEnabled(id) else { return nil }
-            guard let snapshot = snapshots[id] else { return nil }
-            if preferences.hideLoggedOutProviders {
-                if case .notLoggedIn = snapshot.status { return nil }
+            let presentation = presentation(for: id)
+            if preferences.hideLoggedOutProviders, !preferences.showsFirstLaunchSetup {
+                if case .signedOut = presentation { return nil }
             }
-            return snapshot
+            if let snapshot = presentation.snapshot {
+                return snapshot
+            }
+            return snapshots[id]
         }
     }
 
@@ -70,11 +90,21 @@ final class UsageStore {
     }
 
     var isStale: Bool {
-        QuotaFormatting.isStale(lastRefresh, thresholdMinutes: 6)
+        StalePolicy.isStale(lastSuccessfulRefresh, refreshMinutes: preferences.refreshMinutes)
     }
 
     func isSnapshotStale(_ snapshot: ProviderSnapshot) -> Bool {
-        QuotaFormatting.isStale(snapshot.fetchedAt, thresholdMinutes: 6)
+        StalePolicy.isStale(snapshot.fetchedAt, refreshMinutes: preferences.refreshMinutes)
+    }
+
+    func presentation(for id: ProviderID) -> ProviderPresentation {
+        ProviderPresentation.make(
+            id: id,
+            lastGood: snapshots[id],
+            lastFailure: lastFailures[id],
+            isRefreshing: isRefreshing && snapshots[id] == nil && lastFailures[id] == nil,
+            refreshMinutes: preferences.refreshMinutes
+        )
     }
 
     private var autoRefreshSeconds: TimeInterval {
@@ -82,7 +112,7 @@ final class UsageStore {
     }
 
     func start() {
-        if preferences.horizonAlertsEnabled {
+        if preferences.lowQuotaAlertsEnabled {
             notifications.requestAuthorizationIfNeeded()
         }
         loopTask?.cancel()
@@ -102,77 +132,85 @@ final class UsageStore {
         loopTask = nil
     }
 
-    /// Manual or automatic refresh. Concurrent calls are coalesced via generation.
     func refresh() async {
-        if preferences.horizonAlertsEnabled {
+        if DemoSnapshots.isEnabled { return }
+        if preferences.lowQuotaAlertsEnabled {
             notifications.requestAuthorizationIfNeeded()
         }
-        refreshGeneration += 1
-        let generation = refreshGeneration
+        let store = self
+        await gate.run {
+            await store.performRefresh()
+        }
+    }
+
+    private func performRefresh() async {
         isRefreshing = true
         onStateChange?()
         defer {
-            if generation == refreshGeneration {
-                isRefreshing = false
-                onStateChange?()
-            }
+            isRefreshing = false
+            onStateChange?()
         }
 
-        var next = snapshots
         let previous = snapshots
+        var next = snapshots
+        var nextFailures = lastFailures
+        var nextSuccess = lastSuccessAt
+        var sawOffline = false
+        var freshlyOK = Set<ProviderID>()
+        let timeout = providerTimeout
+        let enabled = providers.filter { preferences.isEnabled($0.id) }
 
-        await withTaskGroup(of: (ProviderID, ProviderSnapshot).self) { group in
-            for provider in providers where preferences.isEnabled(provider.id) {
+        await withTaskGroup(of: (ProviderID, Result<ProviderSnapshot, Error>).self) { group in
+            for provider in enabled {
                 NSLog("[Cuprim] refresh %@", provider.id.rawValue)
                 group.addTask {
                     do {
-                        return (provider.id, try await provider.refresh())
-                    } catch {
-                        // Offline is machine-wide. Keep last-good usage instead of
-                        // replacing every row with the system network string.
-                        if ProviderStatusMapping.isOffline(error),
-                           let last = previous[provider.id],
-                           case .ok = last.status {
-                            return (provider.id, last)
+                        let snapshot = try await AsyncTimeout.run(seconds: timeout) {
+                            try await provider.refresh()
                         }
-                        return (provider.id, ProviderStatusMapping.snapshot(for: provider.id, error: error))
+                        return (provider.id, .success(snapshot))
+                    } catch {
+                        return (provider.id, .failure(error))
                     }
                 }
             }
 
-            for await (id, snapshot) in group {
-                // Stale generation: stop collecting; task group cancels remaining children on exit.
-                guard generation == refreshGeneration else { break }
-                next[id] = snapshot
-            }
-        }
-
-        guard generation == refreshGeneration else { return }
-        snapshots = next
-        lastRefresh = .now
-        cache.save(snapshots)
-        for snapshot in next.values {
-            guard case .ok = snapshot.status else { continue }
-            for metric in snapshot.metrics {
-                let samples = history.append(provider: snapshot.id, metric: metric, at: snapshot.fetchedAt)
-                _ = QuotaHorizonEngine.estimate(samples: samples, now: snapshot.fetchedAt)
-                if preferences.horizonAlertsEnabled {
-                    notifications.scheduleIfNeeded(
-                        provider: snapshot.id,
-                        metric: metric,
-                        snapshot: snapshot,
-                        thresholds: [20, 5]
-                    )
+            for await (id, result) in group {
+                switch result {
+                case .success(let snapshot):
+                    next[id] = snapshot
+                    nextFailures[id] = nil
+                    if case .ok = snapshot.status {
+                        nextSuccess[id] = snapshot.fetchedAt
+                        freshlyOK.insert(id)
+                    } else {
+                        nextFailures[id] = snapshot.status.failureKind
+                    }
+                case .failure(let error):
+                    if ProviderStatusMapping.isOffline(error) {
+                        sawOffline = true
+                    }
+                    let incoming = ProviderStatusMapping.snapshot(for: id, error: error)
+                    next[id] = RefreshMergePolicy.merge(previous: previous[id], incoming: incoming)
+                    nextFailures[id] = incoming.status.failureKind
                 }
             }
         }
-        onStateChange?()
-    }
 
-    func horizon(for provider: ProviderID, metricID: String) -> QuotaHorizon {
-        QuotaHorizonEngine.estimate(
-            samples: history.samples(provider: provider, metricID: metricID),
-            now: .now
-        )
+        snapshots = next
+        lastFailures = nextFailures
+        lastSuccessAt = nextSuccess
+        lastAttemptAt = .now
+        isOffline = sawOffline
+        lastSuccessfulRefresh = nextSuccess.values.max()
+        try? cache.save(next)
+
+        if preferences.lowQuotaAlertsEnabled {
+            for id in freshlyOK {
+                guard let snapshot = next[id] else { continue }
+                notifications.scheduleIfNeeded(snapshot: snapshot)
+            }
+        }
+        onStateChange?()
     }
 }

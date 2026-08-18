@@ -19,36 +19,19 @@ enum MenuBarIcon {
 
     /// Highest-severity glance state from current usage (refresh handled by caller).
     static func resolve(usage: UsageStore) -> MenuBarIconKind {
-        if usage.isRefreshing {
-            return .refreshing
+        let severity = MenuBarTooltip.severity(
+            worstUsedFraction: usage.worstUsedFraction,
+            hasVisibleError: usage.visibleSnapshots.contains { $0.status.failureKind != nil },
+            hasVisibleOK: usage.visibleSnapshots.contains { if case .ok = $0.status { return true }; return false },
+            isRefreshing: usage.isRefreshing
+        )
+        switch severity {
+        case .idle: return .idle
+        case .warning: return .warning
+        case .critical: return .critical
+        case .error: return .error
+        case .refreshing: return .refreshing
         }
-
-        if let worst = usage.worstUsedFraction {
-            if worst >= 0.95 {
-                return .critical
-            }
-            if worst >= 0.80 {
-                return .warning
-            }
-            return .idle
-        }
-
-        let snaps = usage.visibleSnapshots
-        guard !snaps.isEmpty else { return .idle }
-
-        let hasError = snaps.contains {
-            if case .error = $0.status { return true }
-            return false
-        }
-        let hasOk = snaps.contains {
-            if case .ok = $0.status { return true }
-            return false
-        }
-        // Error(s) and nothing OK with metrics → error badge.
-        if hasError, !hasOk {
-            return .error
-        }
-        return .idle
     }
 
     static func tooltipSuffix(for kind: MenuBarIconKind) -> String? {
@@ -65,11 +48,16 @@ enum MenuBarIcon {
     }
 
     /// Compose the status item image for the given kind and optional refresh phase (0…1).
-    /// Monochrome only: no colored badges. Exception detail lives in the menu / tooltip.
     static func image(kind: MenuBarIconKind, refreshPhase: CGFloat = 0) -> NSImage {
         switch kind {
-        case .idle, .warning, .critical, .error:
+        case .idle:
             return templateGaugeImage() ?? symbolFallback()
+        case .warning:
+            return badgedGauge(symbol: "exclamationmark")
+        case .critical:
+            return badgedGauge(symbol: "exclamationmark.square.fill")
+        case .error:
+            return badgedGauge(symbol: "xmark")
         case .refreshing:
             return composed(refreshPhase: refreshPhase)
         }
@@ -115,7 +103,20 @@ enum MenuBarIcon {
         return image
     }
 
-    // MARK: - Refresh composition (monochrome label color)
+    private static func badgedGauge(symbol: String) -> NSImage {
+        let size = pointSize
+        let image = NSImage(size: size, flipped: false) { rect in
+            if let gauge = templateGaugeImage() {
+                gauge.draw(in: rect.insetBy(dx: 0.5, dy: 0.5), from: .zero, operation: .sourceOver, fraction: 1)
+            }
+            let badge = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+            let badgeRect = NSRect(x: rect.maxX - 7.5, y: 0.5, width: 7, height: 7)
+            badge?.draw(in: badgeRect, from: .zero, operation: .sourceOver, fraction: 1)
+            return true
+        }
+        image.isTemplate = true
+        return image
+    }
 
     private static func composed(refreshPhase: CGFloat) -> NSImage {
         let size = pointSize

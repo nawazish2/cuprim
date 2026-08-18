@@ -1,18 +1,17 @@
 import SwiftUI
 import CuprimCore
 
-/// Metric row: restrained label/value hierarchy with a compact semantic meter.
+/// Metric row: label, used/remaining button, compact meter.
 struct MetricRowView: View {
     let metric: Metric
     var showUsedPercent: Bool = true
     var absoluteResets: Bool = false
     var showReset: Bool = false
-    var emphasizeUpdate: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
     @State private var showRemaining = false
     @State private var animatedUsed: CGFloat = 0
-    @State private var showGlow = false
 
     private var meterHeight: CGFloat { GlassChrome.meterHeight }
     private var isTotal: Bool {
@@ -24,32 +23,49 @@ struct MetricRowView: View {
         return CGFloat(Utilization.clamp01(f))
     }
 
+    private var isHighUsage: Bool {
+        guard let used = metric.usedFraction else { return false }
+        return Utilization.clamp01(used) >= 0.80
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(metric.displayLabel)
-                    .font(isTotal ? .caption.weight(.semibold) : .caption2.weight(.medium))
-                    .foregroundStyle(GlassChrome.textSecondary)
-                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    Text(metric.displayLabel)
+                        .font(isTotal ? .caption.weight(.semibold) : .caption2.weight(.medium))
+                        .foregroundStyle(GlassChrome.textSecondary)
+                        .lineLimit(1)
+                    if isHighUsage {
+                        Image(systemName: "exclamationmark.square.fill")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(QuotaFormatting.meterColor(usedFraction: metric.usedFraction))
+                            .accessibilityHidden(true)
+                    }
+                }
 
                 Spacer(minLength: 4)
 
-                Text(primaryPercentText)
-                    .font(
-                        .system(isTotal ? .subheadline : .callout, design: .rounded)
-                            .monospacedDigit()
-                            .weight(.bold)
-                    )
-                    .foregroundStyle(QuotaFormatting.meterColor(usedFraction: metric.usedFraction))
-                    .contentTransition(.numericText())
-                    .layoutPriority(1)
-                    .onTapGesture {
-                        guard metric.usedFraction != nil else { return }
-                        withAnimation(.snappy(duration: 0.12)) {
-                            showRemaining.toggle()
-                        }
+                Button {
+                    guard metric.usedFraction != nil else { return }
+                    withAnimation(reduceMotion ? nil : .snappy(duration: 0.12)) {
+                        showRemaining.toggle()
                     }
-                    .help(metric.usedFraction == nil ? "" : "Toggle used / remaining")
+                } label: {
+                    Text(primaryPercentText)
+                        .font(
+                            .system(isTotal ? .subheadline : .callout, design: .rounded)
+                                .monospacedDigit()
+                                .weight(.bold)
+                        )
+                        .foregroundStyle(QuotaFormatting.meterColor(usedFraction: metric.usedFraction))
+                        .contentTransition(.numericText())
+                }
+                .buttonStyle(.plain)
+                .disabled(metric.usedFraction == nil)
+                .help(metric.usedFraction == nil ? "" : "Toggle used / remaining")
+                .accessibilityLabel(voiceOverValue)
+                .accessibilityHint("Shows used or remaining percent")
             }
 
             meter
@@ -70,13 +86,6 @@ struct MetricRowView: View {
         }
         .onChange(of: targetUsed) { _, newValue in
             animateFill(to: newValue, immediate: reduceMotion)
-            if emphasizeUpdate, !reduceMotion {
-                showGlow = true
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(420))
-                    showGlow = false
-                }
-            }
         }
     }
 
@@ -100,6 +109,17 @@ struct MetricRowView: View {
         return QuotaFormatting.usedPercentLabel(usedFraction: metric.usedFraction)
     }
 
+    private var voiceOverValue: String {
+        let label = metric.displayLabel
+        if metric.usedFraction == nil {
+            return "\(label) unavailable"
+        }
+        if showRemaining {
+            return "\(label) \(QuotaFormatting.remainingLabel(usedFraction: metric.usedFraction)) remaining. Currently showing remaining."
+        }
+        return "\(label) \(QuotaFormatting.usedPercentLabel(usedFraction: metric.usedFraction)) used. Currently showing used."
+    }
+
     private var resetText: String? {
         guard metric.resetsAt != nil else { return nil }
         return QuotaFormatting.resetLabel(for: metric.resetsAt, absolute: absoluteResets)
@@ -113,23 +133,18 @@ struct MetricRowView: View {
 
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.primary.opacity(0.11))
+                    .fill(Color.primary.opacity(contrast == .increased ? 0.18 : 0.11))
                     .frame(height: meterHeight)
 
                 if used > 0.001 {
                     Capsule()
                         .fill(color.opacity(0.94))
                         .frame(width: max(w, meterHeight * 0.45), height: meterHeight)
-                        .shadow(
-                            color: showGlow ? color.opacity(0.28) : .clear,
-                            radius: showGlow ? 2 : 0,
-                            y: 0
-                        )
                 }
             }
             .frame(width: geo.size.width, height: meterHeight, alignment: .leading)
         }
         .frame(height: meterHeight)
-        .accessibilityLabel("\(metric.displayLabel) \(primaryPercentText)")
+        .accessibilityHidden(true)
     }
 }

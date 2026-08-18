@@ -42,21 +42,6 @@ final class PanelController: NSObject, NSWindowDelegate {
     var isVisible: Bool { panel?.isVisible == true && !isHiding }
     private var isHiding = false
 
-    /// Snapshot the glass dashboard for Share Screenshot.
-    func snapshotImage() -> NSImage? {
-        if let view = hosting?.view ?? panel?.contentView {
-            return view.cuprimSnapshotImage()
-        }
-        return nil
-    }
-
-    /// Ensure the panel is built/shown so a snapshot has real content.
-    func prepareForSnapshot(relativeTo statusButton: NSStatusBarButton) {
-        show(relativeTo: statusButton)
-        // Give SwiftUI one turn to lay out before bitmap capture.
-        RunLoop.current.run(until: Date().addingTimeInterval(0.05))
-    }
-
     func toggle(relativeTo statusButton: NSStatusBarButton) {
         self.statusButton = statusButton
         if isVisible { hide() } else { show(relativeTo: statusButton) }

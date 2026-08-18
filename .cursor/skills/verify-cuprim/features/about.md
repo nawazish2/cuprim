@@ -4,15 +4,14 @@ About Cuprim shows the branded about panel: icon, name, version, author credit, 
 
 ## Sub-features
 
-- `about-open` opens the About window from status menu, app menu, or Settings
+- `about-open` opens the About window from the app menu or Settings
 - `about-version` displays the marketing/build version string consistent with the packaged app
 - `about-links` exposes author and GitHub links
 
 ## How to get to it (user POV)
 
-- Status menu → **About Cuprim**
 - App menu → **About Cuprim**
-- Settings → About → **About Cuprim…**
+- Settings → About and updates (About lives here, not in a slim status menu)
 
 ## Driving it with verify-cuprim
 

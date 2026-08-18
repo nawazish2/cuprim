@@ -1,9 +1,9 @@
 # Cuprim — website design
 
-**Stack:** Nuxt 4 + Vue 3 + Tailwind (static)  
-**Look:** [Purge](https://getpurge.vercel.app/) macapp.supply family — light paper UI
+**Stack:** Nuxt 4 + Vue 3 + Tailwind, built with **pnpm** (static)  
+**Look:** light paper UI (`#f4f6f3`), SF hierarchy, one Cuprim blue (`#0073eb`), cup mark
 
-## Visual tokens (from Purge)
+## Tokens
 
 | Token | Value |
 |-------|-------|
@@ -16,6 +16,8 @@
 | Display font | SF / system UI |
 | Mono | Geist Mono |
 
-Floating pill dock nav with stronger frosted glass, soft blue gradient CTAs with Apple mark, version chip, centered hero + logo. Hero product proof: **CSS MacBook frame** with Cuprim’s real status-menu screenshot on a quiet desktop (not a competitor UI). Dashboard tab uses compact glass panel until a panel capture exists. Sparse feature/trust sections, line FAQ. No analytics / Clarity.
+Asymmetric hero with one Download CTA. Product proof is a layered MacBook with a single menu-to-dashboard transition (IntersectionObserver / CSS). Static poster on mobile and reduced motion. No fake Finder chrome, fake Dock, version chips, or equal feature grids.
 
-Product facts unchanged: Claude / Codex / Cursor / Grok · macOS 26+ · Apple Silicon · Gatekeeper ad-hoc.
+Core copy is visible without JavaScript. Reveal and FAQ collapse are progressive enhancement.
+
+Product facts: Claude / Codex / Cursor / Grok / Antigravity · macOS 26+ · Apple Silicon · ad-hoc Gatekeeper path · Sparkle update integrity.

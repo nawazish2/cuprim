@@ -1,43 +1,39 @@
-# Cuprim — website copy
+# Website copy
 
-Tone: calm, precise, slightly dry. Honest about Gatekeeper.
-
----
+Tone: calm, precise, slightly dry. Honest about Gatekeeper. No rim slogans.
 
 ## Meta
 
 | Field | Copy |
 |-------|------|
-| Title | Cuprim — AI quotas, live in your Mac menu bar |
-| Description | Free open-source macOS menu-bar app for Claude, Codex, Cursor, and Grok quota — local only, no telemetry. |
+| Title | Cuprim — Know which AI tool runs out next |
+| Description | Free open-source macOS menu-bar app for Claude, Codex, Cursor, Grok, and Antigravity quota — local only, no telemetry. |
 
 ## Hero
 
-**Eyebrow:** Free · Open source · macOS menu bar
+**Headline:** Know which AI tool runs out next
 
-**Headline:** Every AI quota, right at the **rim**.
+**Support:** Claude, Codex, Cursor, Grok, and Antigravity — live in the Mac menu bar. Local only. No telemetry.
 
-**Support:** Cuprim is a tiny, open-source menu-bar app for macOS that watches your **Claude, Codex, Cursor, and Grok** usage — remaining quota and resets — so you never burn a limit by surprise.
+**CTAs:** Download Cuprim · GitHub
 
-**Meta:** v0.1.6 · macOS 26+ · Apple Silicon · MIT License
+**Meta:** Free · Apple Silicon · macOS 26+ · MIT
 
-**Install whisper:** Ad-hoc signed for now — Control-click → Open, or `xattr -cr /Applications/Cuprim.app`
+Gatekeeper instructions live in **Install**, not the hero.
 
-## Trust
+## Sections
 
-1. Open source, MIT  
-2. Private by design (0 trackers · 0 analytics · 0 accounts)  
-3. No lock-in, no paywall  
+1. Menu bar → dashboard
+2. Five providers
+3. Privacy proof (credentials stay on the Mac; only provider APIs)
+4. Install / first-open
+5. FAQ
 
-## FAQ (must-haves)
+## FAQ
 
-- Free / MIT  
-- Install + Gatekeeper ad-hoc (`xattr` / right-click Open) — **not** notarized  
-- Providers: Claude, Codex, Cursor, Grok  
-- No conversation reading  
-- Apple Silicon + macOS 26+  
-- Updates via GitHub Releases  
-
-## Footer CTA
-
-Bring your quotas to the **rim**.
+- Free / MIT
+- Install + Gatekeeper ad-hoc
+- Providers include Antigravity
+- No conversation reading
+- Apple Silicon + macOS 26+
+- Sparkle verifies and installs updates in release builds

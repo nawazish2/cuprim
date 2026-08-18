@@ -71,26 +71,28 @@ public enum QuotaFormatting {
         return "Resets soon"
     }
 
-    public static func isStale(_ date: Date?, thresholdMinutes: Int = 8, relativeTo now: Date = .now) -> Bool {
-        guard let date else { return true }
-        return now.timeIntervalSince(date) > Double(thresholdMinutes * 60)
+    public static func isStale(
+        _ date: Date?,
+        refreshMinutes: Int,
+        relativeTo now: Date = .now
+    ) -> Bool {
+        StalePolicy.isStale(date, refreshMinutes: refreshMinutes, relativeTo: now)
     }
 
-    public static func horizonLabel(_ horizon: QuotaHorizon, relativeTo now: Date = .now) -> String? {
-        switch horizon.state {
-        case .insufficientHistory:
-            return nil
-        case .stableUntilReset:
-            return "Likely to last until reset"
-        case .likelyToExhaust:
-            guard let date = horizon.estimatedExhaustionAt else { return nil }
-            let seconds = max(0, date.timeIntervalSince(now))
-            let formatter = DateComponentsFormatter()
-            formatter.allowedUnits = seconds >= 3_600 ? [.hour, .minute] : [.minute]
-            formatter.unitsStyle = .abbreviated
-            formatter.maximumUnitCount = 2
-            guard let value = formatter.string(from: seconds) else { return nil }
-            return "At this pace: ~\(value) remaining"
+    /// Short age for last *successful* fetch (e.g. "just now").
+    public static func updatedLabel(for date: Date?, relativeTo now: Date = .now) -> String? {
+        guard let date else { return nil }
+        let seconds = now.timeIntervalSince(date)
+        if seconds < 8 { return "just now" }
+        if seconds < 60 { return "\(Int(seconds))s ago" }
+        if seconds < 3600 {
+            let minutes = max(1, Int(seconds / 60))
+            return "\(minutes)m ago"
         }
+        if seconds < 86_400 {
+            let hours = max(1, Int(seconds / 3600))
+            return "\(hours)h ago"
+        }
+        return "earlier"
     }
 }

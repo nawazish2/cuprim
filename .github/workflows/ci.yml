@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  macos:
+    name: App
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app || sudo xcode-select -s /Applications/Xcode-beta.app
+          xcodebuild -version
+          uname -m
+      - name: Test
+        run: swift test --arch arm64
+      - name: Package debug app
+        run: CONFIG=debug LAUNCH=0 ./script/package_app.sh
+      - name: Validate bundle
+        run: |
+          APP=dist/Cuprim.app
+          test -x "$APP/Contents/MacOS/Cuprim"
+          test -d "$APP/Contents/Frameworks/Sparkle.framework"
+          file "$APP/Contents/MacOS/Cuprim" | grep arm64
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist" | grep com.nawazish.cuprim
+          /usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$APP/Contents/Info.plist" | grep true
+          /usr/libexec/PlistBuddy -c 'Print :SUFeedURL' "$APP/Contents/Info.plist"
+          codesign --verify --verbose=2 "$APP"
+
+  website:
+    name: Website
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm run generate
+      - run: pnpm run smoke

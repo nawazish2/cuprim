@@ -52,10 +52,17 @@ final class PreferencesStore {
         didSet { UserDefaults.standard.set(hideLoggedOutProviders, forKey: Keys.hideLoggedOut) }
     }
 
-    /// Opt-in local notifications from Quota Horizon.
-    var horizonAlertsEnabled: Bool {
-        didSet { UserDefaults.standard.set(horizonAlertsEnabled, forKey: Keys.horizonAlerts) }
+    /// Opt-in local notifications when remaining quota crosses 20% or 5%.
+    var lowQuotaAlertsEnabled: Bool {
+        didSet { UserDefaults.standard.set(lowQuotaAlertsEnabled, forKey: Keys.lowQuotaAlerts) }
     }
+
+    /// First-launch dashboard shows every provider with a live connection state.
+    var hasCompletedFirstLaunch: Bool {
+        didSet { UserDefaults.standard.set(hasCompletedFirstLaunch, forKey: Keys.firstLaunch) }
+    }
+
+    var showsFirstLaunchSetup: Bool { !hasCompletedFirstLaunch }
 
     /// Display order for providers (tabs + All list). Drag to reorder with the cursor.
     var providerOrder: [ProviderID] {
@@ -88,7 +95,8 @@ final class PreferencesStore {
         showUsedPercent = defaults.object(forKey: Keys.showUsedPercent) as? Bool ?? true
         absoluteResetTimes = defaults.object(forKey: Keys.absoluteResets) as? Bool ?? true
         hideLoggedOutProviders = defaults.object(forKey: Keys.hideLoggedOut) as? Bool ?? true
-        horizonAlertsEnabled = defaults.object(forKey: Keys.horizonAlerts) as? Bool ?? false
+        lowQuotaAlertsEnabled = Self.migrateAlerts(defaults)
+        hasCompletedFirstLaunch = defaults.object(forKey: Keys.firstLaunch) as? Bool ?? false
 
         if let saved = defaults.stringArray(forKey: Keys.providerOrder) {
             var order = saved.compactMap(ProviderID.init(rawValue:))
@@ -103,6 +111,21 @@ final class PreferencesStore {
 
         launchAtLoginState = Self.currentLaunchAtLoginState()
         launchAtLoginError = nil
+    }
+
+    func completeFirstLaunch() {
+        hasCompletedFirstLaunch = true
+    }
+
+    private static func migrateAlerts(_ defaults: UserDefaults) -> Bool {
+        let current = defaults.object(forKey: Keys.lowQuotaAlerts) as? Bool
+        let legacy = defaults.object(forKey: Keys.horizonAlerts) as? Bool
+        let value = AlertPreferenceMigration.resolved(current: current, legacy: legacy)
+        if current == nil, legacy != nil {
+            defaults.set(value, forKey: Keys.lowQuotaAlerts)
+            defaults.removeObject(forKey: Keys.horizonAlerts)
+        }
+        return value
     }
 
     func isEnabled(_ id: ProviderID) -> Bool {
@@ -211,6 +234,8 @@ final class PreferencesStore {
         static let absoluteResets = "display.absoluteResets"
         static let hideLoggedOut = "display.hideLoggedOut"
         static let horizonAlerts = "horizon.alertsEnabled"
+        static let lowQuotaAlerts = "alerts.lowQuotaEnabled"
+        static let firstLaunch = "onboarding.firstLaunchCompleted"
         static let providerOrder = "provider.order"
     }
 }

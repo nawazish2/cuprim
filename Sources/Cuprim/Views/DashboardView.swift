@@ -1,7 +1,8 @@
+import AppKit
 import SwiftUI
 import CuprimCore
 
-/// Native-minimal Liquid Glass panel — solid cards, not glass data.
+/// Native-minimal Liquid Glass panel — one glass shell, grouped data.
 struct DashboardView: View {
     @Bindable var usage: UsageStore
     @Bindable var preferences: PreferencesStore
@@ -10,32 +11,26 @@ struct DashboardView: View {
     var onQuit: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var refreshPulse = false
-    @State private var showRefreshCheck = false
+    @State private var copiedCommand: String?
 
     private let panelWidth = GlassChrome.panelWidth
     private let panelHeight = GlassChrome.panelHeight
 
     private var tabProviders: [ProviderID] {
-        preferences.orderedProviders.filter { id in
-            guard preferences.isEnabled(id) else { return false }
-            guard let snap = usage.snapshots[id] else { return usage.isRefreshing }
-            if preferences.hideLoggedOutProviders, case .notLoggedIn = snap.status {
-                return false
-            }
-            return true
-        }
+        preferences.orderedProviders.filter { preferences.isEnabled($0) }
     }
 
-    private var filteredSnapshots: [ProviderSnapshot] {
+    private var filteredIDs: [ProviderID] {
         switch uiState.selectedTab {
         case .overview:
-            return usage.visibleSnapshots
-        case .provider(let id):
-            if let snap = usage.snapshots[id], preferences.isEnabled(id) {
-                return [snap]
+            return tabProviders.filter { id in
+                if preferences.hideLoggedOutProviders, !preferences.showsFirstLaunchSetup {
+                    if case .signedOut = usage.presentation(for: id) { return false }
+                }
+                return true
             }
-            return []
+        case .provider(let id):
+            return preferences.isEnabled(id) ? [id] : []
         }
     }
 
@@ -46,48 +41,58 @@ struct DashboardView: View {
                 .padding(.top, 10)
                 .padding(.bottom, 8)
 
-            if !tabProviders.isEmpty || usage.isRefreshing {
+            if !tabProviders.isEmpty {
                 ProviderTabBar(
                     selection: $uiState.selectedTab,
-                    available: preferences.orderedProviders.filter { preferences.isEnabled($0) }
+                    available: tabProviders
                 )
                 .padding(.horizontal, GlassChrome.inset)
                 .padding(.bottom, 8)
             }
 
             ScrollView(.vertical, showsIndicators: false) {
-                GlassEffectContainer(spacing: GlassChrome.cardGap) {
-                    LazyVStack(spacing: GlassChrome.cardGap) {
-                        if usage.isRefreshing && !usage.hasAnyData {
-                            loadingState
-                        } else if filteredSnapshots.isEmpty {
-                            emptyState
-                        } else {
-                            ForEach(filteredSnapshots) { snapshot in
-                                ProviderCardView(
-                                    snapshot: snapshot,
-                                    showUsedPercent: preferences.showUsedPercent,
-                                    absoluteResets: preferences.absoluteResetTimes,
-                                    isStale: usage.isSnapshotStale(snapshot),
-                                    isRefreshing: usage.isRefreshing
-                                )
-                                .id(snapshot.id)
-                            }
+                LazyVStack(spacing: GlassChrome.cardGap) {
+                    if usage.isOffline {
+                        offlineBanner
+                    }
+
+                    if preferences.showsFirstLaunchSetup, uiState.selectedTab == .overview {
+                        firstLaunchIntro
+                    }
+
+                    if filteredIDs.isEmpty {
+                        emptyState
+                    } else {
+                        ForEach(filteredIDs, id: \.self) { id in
+                            ProviderCardView(
+                                id: id,
+                                presentation: usage.presentation(for: id),
+                                snapshot: usage.snapshots[id],
+                                showUsedPercent: preferences.showUsedPercent,
+                                absoluteResets: preferences.absoluteResetTimes,
+                                isStale: usage.snapshots[id].map(usage.isSnapshotStale) ?? false,
+                                copiedCommand: copiedCommand,
+                                onCopy: copy(_:),
+                                onRefresh: { Task { await usage.refresh() } }
+                            )
+                            .id(id)
                         }
                     }
-                    .padding(.horizontal, GlassChrome.inset)
-                    .padding(.top, 2)
-                    .padding(.bottom, GlassChrome.scrollBottomPad)
                 }
+                .padding(.horizontal, GlassChrome.inset)
+                .padding(.top, 2)
+                .padding(.bottom, GlassChrome.scrollBottomPad)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .layoutPriority(-1)
             .clipped()
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(usage.isRefreshing ? "Refreshing usage" : "Usage")
 
             footer
         }
         .frame(width: panelWidth, height: panelHeight, alignment: .top)
-        .agentGlassPanel()
+        .cuprimGlassPanel()
         .frame(width: panelWidth, height: panelHeight)
         .onChange(of: tabProviders.map(\.rawValue).joined(separator: ",")) { _, _ in
             if case .provider(let id) = uiState.selectedTab,
@@ -95,37 +100,16 @@ struct DashboardView: View {
                 uiState.selectedTab = .overview
             }
         }
-        .onChange(of: uiState.selectedTab) { _, tab in
-            if case .provider(let id) = tab, usage.snapshots[id] == nil {
-                Task { await usage.refresh() }
-            }
-        }
-        .onChange(of: usage.isRefreshing) { was, isNow in
-            guard was, !isNow else { return }
-            showRefreshCheck = true
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(1100))
-                showRefreshCheck = false
-            }
-            if !reduceMotion {
-                withAnimation(.spring(response: 0.28, dampingFraction: 0.7)) {
-                    refreshPulse = true
-                }
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(180))
-                    withAnimation(.easeOut(duration: 0.14)) {
-                        refreshPulse = false
-                    }
-                }
-            }
-        }
         .animation(
             reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.86),
             value: uiState.selectedTab
         )
+        .onAppear {
+            if !filteredIDs.isEmpty, !preferences.showsFirstLaunchSetup {
+                return
+            }
+        }
     }
-
-    // MARK: - Header
 
     private var header: some View {
         HStack(alignment: .center, spacing: 8) {
@@ -145,25 +129,12 @@ struct DashboardView: View {
             Spacer(minLength: 4)
 
             Button {
-                if !reduceMotion {
-                    withAnimation(.spring(response: 0.22, dampingFraction: 0.65)) {
-                        refreshPulse = true
-                    }
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(120))
-                        withAnimation(.easeOut(duration: 0.12)) {
-                            refreshPulse = false
-                        }
-                    }
-                }
                 Task { await usage.refresh() }
             } label: {
-                Image(systemName: showRefreshCheck ? "checkmark" : AppSymbols.refresh)
+                Image(systemName: AppSymbols.refresh)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(GlassChrome.textSecondary)
                     .symbolEffect(.rotate, isActive: usage.isRefreshing && !reduceMotion)
-                    .contentTransition(.symbolEffect(.replace))
-                    .scaleEffect(refreshPulse ? 1.12 : 1.0)
                     .frame(width: 28, height: 28)
                     .background {
                         Circle().fill(Color.primary.opacity(0.08))
@@ -177,25 +148,58 @@ struct DashboardView: View {
             .disabled(usage.isRefreshing)
             .help(refreshHelp)
             .keyboardShortcut("r", modifiers: .command)
-            .opacity(usage.isRefreshing ? 0.7 : 1)
+            .accessibilityLabel(usage.isRefreshing ? "Refreshing" : "Refresh")
         }
     }
 
     private var updatedSubtitle: String {
-        if let updated = QuotaFormatting.updatedLabel(for: usage.lastRefresh) {
+        if let updated = QuotaFormatting.updatedLabel(for: usage.lastSuccessfulRefresh) {
             return "Updated " + updated
         }
         return "Your usage at a glance"
     }
 
     private var refreshHelp: String {
-        if let updated = QuotaFormatting.updatedLabel(for: usage.lastRefresh) {
+        if usage.isRefreshing { return "Refresh" }
+        if let updated = QuotaFormatting.updatedLabel(for: usage.lastSuccessfulRefresh) {
             return "Refresh (\(updated))"
         }
         return "Refresh"
     }
 
-    // MARK: - Footer
+    private var offlineBanner: some View {
+        Text("You’re offline. Showing last saved usage.")
+            .font(.caption2.weight(.medium))
+            .foregroundStyle(GlassChrome.textSecondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.primary.opacity(0.06))
+            }
+            .accessibilityLabel("Offline. Showing last saved usage.")
+    }
+
+    private var firstLaunchIntro: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Connect the tools you use")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(GlassChrome.textPrimary)
+            Text("Cuprim reads local sign-in on this Mac. Nothing is sent to us.")
+                .font(.caption)
+                .foregroundStyle(GlassChrome.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button("Continue") {
+                preferences.completeFirstLaunch()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .keyboardShortcut(.defaultAction)
+        }
+        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
     private var footer: some View {
         VStack(spacing: 0) {
@@ -216,62 +220,6 @@ struct DashboardView: View {
         }
         .background { FooterScrim() }
         .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var loadingState: some View {
-        VStack(spacing: GlassChrome.cardGap) {
-            ForEach(0..<3, id: \.self) { _ in
-                skeletonCard
-            }
-        }
-    }
-
-    private var skeletonCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .fill(Color.primary.opacity(0.08))
-                    .frame(width: 18, height: 18)
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(Color.primary.opacity(0.08))
-                    .frame(width: 72, height: 10)
-                Spacer(minLength: 0)
-            }
-            ForEach(0..<2, id: \.self) { _ in
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack {
-                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                            .fill(Color.primary.opacity(0.07))
-                            .frame(width: 54, height: 8)
-                        Spacer(minLength: 0)
-                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                            .fill(Color.primary.opacity(0.07))
-                            .frame(width: 28, height: 8)
-                    }
-                    Capsule()
-                        .fill(Color.primary.opacity(0.08))
-                        .frame(height: GlassChrome.meterHeight)
-                }
-            }
-        }
-        .padding(GlassChrome.cardPad)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .agentGlassCard()
-        .redacted(reason: .placeholder)
-        .accessibilityLabel("Loading")
-    }
-
-    private var emptyProviderHint: String {
-        guard case .provider(let id) = uiState.selectedTab else {
-            return "This provider has no usage to show."
-        }
-        switch id {
-        case .antigravity: return "Open Antigravity or run `agy`, then tap Refresh."
-        case .claude: return "Sign in to Claude Desktop or run `claude` in Terminal."
-        case .codex: return "Sign in with the Codex CLI (`codex`)."
-        case .cursor: return "Open Cursor and sign in to your account."
-        case .grok: return "Sign in with Grok Build (`grok login`)."
-        }
     }
 
     private var emptyState: some View {
@@ -299,11 +247,34 @@ struct DashboardView: View {
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+
+    private var emptyProviderHint: String {
+        guard case .provider(let id) = uiState.selectedTab else {
+            return "This provider has no usage to show."
+        }
+        return ProviderLoginAction.hint(for: id)
+    }
+
+    private func copy(_ command: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(command, forType: .string)
+        copiedCommand = command
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.6))
+            if copiedCommand == command { copiedCommand = nil }
+        }
+    }
 }
 
 private struct FooterScrim: View {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     var body: some View {
-        Rectangle().fill(.thinMaterial)
+        if reduceTransparency {
+            Rectangle().fill(Color(nsColor: .windowBackgroundColor))
+        } else {
+            Rectangle().fill(.thinMaterial)
+        }
     }
 }
 
@@ -337,9 +308,7 @@ private struct NativeMenuRowButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.08)) {
-                isHovered = hovering
-            }
+            isHovered = hovering
         }
     }
 }

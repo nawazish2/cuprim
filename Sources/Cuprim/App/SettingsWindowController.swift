@@ -6,11 +6,15 @@ import CuprimCore
 @MainActor
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private static var shared: SettingsWindowController?
-    private static let contentSize = NSSize(width: 360, height: 584)
+    private static let contentSize = NSSize(width: 360, height: 640)
     private var didEnterActivation = false
     private var hosting: NSHostingController<SettingsView>?
 
-    static func show(preferences: PreferencesStore) {
+    static func show(
+        preferences: PreferencesStore,
+        usage: UsageStore? = nil,
+        notifications: NotificationCoordinator? = nil
+    ) {
         // Fresh controller if the previous window was released.
         if let existing = shared, existing.window == nil {
             shared = nil
@@ -18,10 +22,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
         let controller: SettingsWindowController
         if let existing = shared {
-            existing.hosting?.rootView = SettingsView(preferences: preferences)
+            existing.hosting?.rootView = SettingsView(
+                preferences: preferences,
+                usage: usage,
+                notifications: notifications
+            )
             controller = existing
         } else {
-            controller = SettingsWindowController(preferences: preferences)
+            controller = SettingsWindowController(
+                preferences: preferences,
+                usage: usage,
+                notifications: notifications
+            )
             shared = controller
         }
 
@@ -58,7 +70,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         )
     }
 
-    private init(preferences: PreferencesStore) {
+    private init(
+        preferences: PreferencesStore,
+        usage: UsageStore?,
+        notifications: NotificationCoordinator?
+    ) {
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: Self.contentSize),
             styleMask: [.titled, .closable],
@@ -67,7 +83,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         )
         window.isReleasedWhenClosed = false
         super.init(window: window)
-        configure(preferences: preferences)
+        configure(preferences: preferences, usage: usage, notifications: notifications)
     }
 
     @available(*, unavailable)
@@ -75,7 +91,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func configure(preferences: PreferencesStore) {
+    private func configure(
+        preferences: PreferencesStore,
+        usage: UsageStore?,
+        notifications: NotificationCoordinator?
+    ) {
         guard let window else { return }
         window.title = "Settings"
         window.titleVisibility = .visible
@@ -89,7 +109,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
         window.delegate = self
 
-        let root = SettingsView(preferences: preferences)
+        let root = SettingsView(preferences: preferences, usage: usage, notifications: notifications)
         let controller = NSHostingController(rootView: root)
         controller.sizingOptions = []
         controller.view.frame = NSRect(origin: .zero, size: Self.contentSize)

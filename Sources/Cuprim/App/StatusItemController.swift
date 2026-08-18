@@ -106,22 +106,14 @@ final class StatusItemController: NSObject {
         button.title = ""
         statusItem.length = 26
 
-        var tip = "Cuprim"
-        if kind == .refreshing {
-            if let remaining = usage.worstRemainingPercent {
-                tip = "Cuprim · \(remaining)% remaining · Refreshing"
-            } else {
-                tip = "Cuprim · Refreshing"
-            }
-        } else if let remaining = usage.worstRemainingPercent {
-            tip = "Cuprim · \(remaining)% remaining"
-            if let suffix = MenuBarIcon.tooltipSuffix(for: kind) {
-                tip += " · \(suffix)"
-            }
-        } else if let suffix = MenuBarIcon.tooltipSuffix(for: kind) {
-            tip = "Cuprim · \(suffix)"
-        }
-        button.toolTip = tip
+        let remaining = usage.worstRemainingPercent
+        let severity = MenuBarTooltip.severity(
+            worstUsedFraction: usage.worstUsedFraction,
+            hasVisibleError: usage.visibleSnapshots.contains { $0.status.failureKind != nil },
+            hasVisibleOK: usage.visibleSnapshots.contains { if case .ok = $0.status { return true }; return false },
+            isRefreshing: kind == .refreshing
+        )
+        button.toolTip = MenuBarTooltip.text(remainingPercent: remaining, severity: severity)
     }
 
     private func syncRefreshAnimation(isRefreshing: Bool) {

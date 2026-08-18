@@ -10,7 +10,7 @@
           <a :href="SITE.github" class="text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]" target="_blank" rel="noopener noreferrer">GitHub</a>
           <a :href="SITE.releases" class="text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]" target="_blank" rel="noopener noreferrer">Releases</a>
           <a :href="SITE.license" class="text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]" target="_blank" rel="noopener noreferrer">License (MIT)</a>
-          <a href="#trust" class="text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]">Privacy</a>
+          <a href="#privacy" class="text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]">Privacy</a>
         </nav>
       </div>
       <p class="text-[0.78rem] font-medium tracking-[-0.01em] text-[var(--muted)]">

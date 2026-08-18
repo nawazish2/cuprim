@@ -7,7 +7,7 @@ final class AppContainer {
     let preferences = PreferencesStore()
     let uiState = DashboardUIState()
     let usage: UsageStore
-    private let notifications: NotificationCoordinator
+    let notifications: NotificationCoordinator
     private var statusItem: StatusItemController?
     private var panel: PanelController?
 
@@ -20,7 +20,7 @@ final class AppContainer {
         // Cuprim is a menu-bar utility. A Dock icon appears only while a real
         // Settings/About window is open.
         NSApp.setActivationPolicy(.accessory)
-        SettingsOpener.configure(preferences: preferences, usage: usage)
+        SettingsOpener.configure(preferences: preferences, usage: usage, notifications: notifications)
 
         let panel = PanelController(
             usage: usage,
@@ -48,6 +48,12 @@ final class AppContainer {
         }
 
         usage.start()
+
+        if preferences.showsFirstLaunchSetup {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                self?.statusItem?.showDashboardFromNotification()
+            }
+        }
 
         // Dev-only: prove Settings presentation path without status-menu tracking.
         if ProcessInfo.processInfo.environment["CUPRIM_OPEN_SETTINGS"] == "1" {

@@ -1,16 +1,14 @@
 import Foundation
 
-/// Maps thrown provider failures into a `ProviderSnapshot` status.
+/// Maps thrown provider failures into a sanitized `ProviderSnapshot` status.
 public enum ProviderStatusMapping {
-    public static let offlineMessage = "Offline"
-
     public static func isOffline(_ error: Error) -> Bool {
         if let url = error as? URLError {
             switch url.code {
             case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed, .internationalRoamingOff:
                 return true
             default:
-                return false
+                break
             }
         }
         let ns = error as NSError
@@ -26,24 +24,26 @@ public enum ProviderStatusMapping {
         }
     }
 
-    public static func snapshot(for id: ProviderID, error: Error, at date: Date = .now) -> ProviderSnapshot {
-        if isOffline(error) {
-            return .empty(id, status: .error(offlineMessage), at: date)
+    public static func isTimedOut(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        if let provider = error as? ProviderError, case .timedOut = provider { return true }
+        if let url = error as? URLError {
+            return url.code == .timedOut
         }
+        let ns = error as NSError
+        return ns.domain == NSURLErrorDomain && ns.code == NSURLErrorTimedOut
+    }
+
+    public static func kind(for error: Error) -> ProviderFailureKind {
+        if isOffline(error) { return .offline }
+        if isTimedOut(error) { return .timedOut }
         if let providerError = error as? ProviderError {
-            switch providerError {
-            case .notLoggedIn:
-                return .empty(id, status: .notLoggedIn, at: date)
-            default:
-                return .empty(id, status: .error(providerError.localizedDescription), at: date)
-            }
+            return providerError.failureKind
         }
-        // Some layers throw plain errors with the same message as notLoggedIn.
-        if let localized = error as? LocalizedError,
-           let description = localized.errorDescription,
-           description == ProviderError.notLoggedIn.localizedDescription {
-            return .empty(id, status: .notLoggedIn, at: date)
-        }
-        return .empty(id, status: .error(error.localizedDescription), at: date)
+        return .unavailable
+    }
+
+    public static func snapshot(for id: ProviderID, error: Error, at date: Date = .now) -> ProviderSnapshot {
+        .failed(id, kind(for: error), at: date)
     }
 }

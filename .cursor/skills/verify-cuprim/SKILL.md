@@ -92,9 +92,11 @@ Refuse to “verify” against a random already-running Cuprim you did not start
 - Status menu **Usage** rows / empty “No providers signed in”
 - **Show Cuprim** glass dashboard panel
 - Provider tabs, refresh (⌘R), Settings toggles/reorder
-- **Share Screenshot** → provider submenu → pasteboard + target app activate
-- **Check for Updates…** dialogs (hits GitHub Releases network)
+- First-launch dashboard with five provider states
+- Low-quota alerts (20% / 5%) and Notification Settings recovery
+- **Check for Updates…** (Sparkle in release; debug explains it is skipped)
 - First-open Gatekeeper behavior for ad-hoc builds
+- Menu-bar tooltip remaining percent without a contradictory “Limit reached” suffix
 
 When proving a UI feature, follow the matching file under [`features/`](features/). Capture screenshots manually (⌘⇧4 or Screenshot app) into the evidence path below. State clearly: `manual UI` vs `scripted build`.
 
@@ -116,7 +118,7 @@ Suggested files:
 - `swift-test.log` — `swift test` transcript
 - `package.log` — packaging transcript
 - `doctor.txt` — uname / sw_vers / codesign / plist snippets
-- `ui-*.png` — manual screenshots (menu open, dashboard, settings, about, share card)
+- `ui-*.png` — manual screenshots (dashboard, settings, about, first launch)
 - `NOTES.md` — claim, entry point, scripted vs manual, result
 
 Proof standards:
@@ -144,7 +146,6 @@ Index: [`features/README.md`](features/README.md)
 | Menu-bar status | [`features/menu-bar-status.md`](features/menu-bar-status.md) |
 | Dashboard panel | [`features/dashboard-panel.md`](features/dashboard-panel.md) |
 | Settings | [`features/settings.md`](features/settings.md) |
-| Share screenshot | [`features/share-screenshot.md`](features/share-screenshot.md) |
 | Check for updates | [`features/check-for-updates.md`](features/check-for-updates.md) |
 | About | [`features/about.md`](features/about.md) |
 

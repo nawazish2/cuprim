@@ -4,7 +4,7 @@ import Foundation
 public enum AntigravityQuotaMapping {
     public static func metrics(fromSummaryJSON data: Data) throws -> [Metric] {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw ProviderError.decode("Antigravity quota summary is not an object")
+            throw ProviderError.decode
         }
         let groups = (root["response"] as? [String: Any])?["groups"] as? [[String: Any]]
             ?? root["groups"] as? [[String: Any]]
@@ -24,7 +24,7 @@ public enum AntigravityQuotaMapping {
                         id: "\(sanitized(groupName)).\(bucketID)",
                         label: metricLabel(group: groupName, window: window),
                         usedFraction: used,
-                        resetsAt: parseReset(bucket["resetTime"]),
+                        resetsAt: ISO8601Parsing.date(fromAny: bucket["resetTime"]),
                         detail: nil,
                         showsResetRow: true
                     )
@@ -71,22 +71,6 @@ public enum AntigravityQuotaMapping {
             return "\(family) session"
         }
         return family
-    }
-
-    private static func parseReset(_ raw: Any?) -> Date? {
-        if let text = raw as? String, !text.isEmpty {
-            let iso = ISO8601DateFormatter()
-            if let date = iso.date(from: text) { return date }
-            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            return iso.date(from: text)
-        }
-        if let seconds = raw as? Double {
-            return Date(timeIntervalSince1970: seconds)
-        }
-        if let seconds = raw as? Int {
-            return Date(timeIntervalSince1970: TimeInterval(seconds))
-        }
-        return nil
     }
 
     private static func sanitized(_ value: String) -> String {

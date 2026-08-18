@@ -2,9 +2,11 @@ import AppKit
 import SwiftUI
 import CuprimCore
 
-/// Compact grouped Settings — native type, tight rows, no Form air.
+/// Compact grouped Settings — Providers, Display, Refresh and alerts, About.
 struct SettingsView: View {
     @Bindable var preferences: PreferencesStore
+    var usage: UsageStore?
+    var notifications: NotificationCoordinator?
 
     private let rowHeight: CGFloat = 28
     private let providerRowHeight: CGFloat = 36
@@ -17,27 +19,21 @@ struct SettingsView: View {
                     ForEach(preferences.orderedProviders) { id in
                         ProviderSettingsRow(
                             id: id,
-                            isOn: enabledBinding(for: id)
+                            isOn: enabledBinding(for: id),
+                            status: usage?.presentation(for: id)
                         )
                         .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .move(edge: .top)),
-                            removal: .opacity
-                        ))
                     }
                     .onMove { source, destination in
-                        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-                            preferences.moveProviders(from: source, to: destination)
-                        }
+                        preferences.moveProviders(from: source, to: destination)
                     }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .scrollDisabled(true)
                 .frame(height: providerRowHeight * CGFloat(preferences.orderedProviders.count) + 8)
-                .animation(.spring(response: 0.32, dampingFraction: 0.82), value: preferences.orderedProviders)
             }
 
             group("Display") {
@@ -48,13 +44,13 @@ struct SettingsView: View {
                 toggle("Hide signed-out providers", isOn: $preferences.hideLoggedOutProviders)
             }
 
-            group("General", footer: generalFooterText) {
+            group("Refresh and alerts", footer: alertsFooter) {
                 toggle("Launch at login", isOn: launchAtLoginBinding)
                     .disabled(preferences.launchAtLoginState == .unavailable)
                 divider
                 refreshRow
                 divider
-                toggle("Local alerts", isOn: $preferences.horizonAlertsEnabled)
+                toggle("Low-quota alerts", isOn: $preferences.lowQuotaAlertsEnabled)
 
                 if preferences.launchAtLoginState == .requiresApproval {
                     divider
@@ -65,14 +61,26 @@ struct SettingsView: View {
                         .padding(.horizontal, inset)
                         .frame(height: rowHeight, alignment: .leading)
                 }
+
+                if preferences.lowQuotaAlertsEnabled, notifications?.permission == .denied {
+                    divider
+                    Button("Open Notification Settings…") {
+                        notifications?.openSystemSettings()
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
+                    .font(.callout)
+                    .padding(.horizontal, inset)
+                    .frame(height: rowHeight, alignment: .leading)
+                }
             }
 
-            group("About", footer: "macOS 26 · Apple Silicon") {
+            group("About and updates", footer: "Private · No telemetry · MIT") {
                 infoRow("Version", shortVersion)
                 divider
                 HStack(spacing: 14) {
                     Button("About") { AboutWindowController.show() }
-                    Button("Updates") { OpenSourceInfo.checkForUpdates() }
+                    Button("Check for Updates…") { OpenSourceInfo.checkForUpdates() }
                     Link("GitHub", destination: OpenSourceInfo.repositoryURL)
                     Spacer(minLength: 0)
                 }
@@ -86,10 +94,11 @@ struct SettingsView: View {
         .padding(14)
         .frame(width: 360, alignment: .leading)
         .background(Color(nsColor: .windowBackgroundColor))
-        .onAppear { preferences.refreshLaunchAtLoginState() }
+        .onAppear {
+            preferences.refreshLaunchAtLoginState()
+            Task { await notifications?.refreshPermission() }
+        }
     }
-
-    // MARK: - Rows
 
     private func toggle(_ title: String, isOn: Binding<Bool>) -> some View {
         HStack(spacing: 8) {
@@ -143,8 +152,6 @@ struct SettingsView: View {
             .padding(.leading, inset)
     }
 
-    // MARK: - Group
-
     private func group<Content: View>(
         _ title: String,
         footer: String? = nil,
@@ -177,20 +184,21 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Bindings
-
     private var shortVersion: String {
         OpenSourceInfo.versionString.replacingOccurrences(of: "Version ", with: "")
     }
 
-    private var generalFooterText: String? {
+    private var alertsFooter: String? {
         if preferences.launchAtLoginState == .unavailable {
-            return "Login items need a Developer ID–signed build."
+            return "Launch at login needs a signed app. Alerts stay on this Mac."
         }
         if let error = preferences.launchAtLoginError {
             return error
         }
-        return "Alerts stay on this Mac."
+        if preferences.launchAtLoginState == .requiresApproval {
+            return "macOS still needs approval in Login Items."
+        }
+        return "Alerts stay on this Mac. They fire at 20% and 5% remaining."
     }
 
     private func enabledBinding(for id: ProviderID) -> Binding<Bool> {
@@ -218,30 +226,32 @@ struct SettingsView: View {
 private struct ProviderSettingsRow: View {
     let id: ProviderID
     @Binding var isOn: Bool
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var isHovered = false
+    var status: ProviderPresentation?
 
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundStyle(.tertiary)
-                .opacity(isHovered ? 0.9 : 0.35)
-                .offset(x: isHovered ? 0 : -2)
                 .accessibilityHidden(true)
 
             ProviderIconView(id: id, size: 13, foreground: isOn ? .primary : .secondary)
                 .frame(width: 24, height: 24)
                 .background {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(Color.primary.opacity(isHovered ? 0.12 : 0.08))
+                        .fill(Color.primary.opacity(0.08))
                 }
-                .scaleEffect(isOn ? 1 : 0.94)
 
-            Text(id.displayName)
-                .font(.callout.weight(.medium))
-                .foregroundStyle(isOn ? .primary : .secondary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(id.displayName)
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(isOn ? .primary : .secondary)
+                if let caption = connectionCaption {
+                    Text(caption)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             Spacer(minLength: 8)
 
@@ -252,18 +262,20 @@ private struct ProviderSettingsRow: View {
         }
         .padding(.horizontal, 4)
         .frame(height: 32)
-        .background {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.primary.opacity(isHovered ? 0.06 : 0))
-        }
-        .opacity(isOn ? 1 : 0.72)
-        .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.84), value: isOn)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: isHovered)
-        .onHover { hovering in
-            isHovered = hovering
-        }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel(id.displayName)
+    }
+
+    private var connectionCaption: String? {
+        guard isOn, let status else { return nil }
+        switch status {
+        case .ready: return "Connected"
+        case .stale: return "Saved usage"
+        case .signedOut(let kind):
+            return kind == .sessionExpired ? "Session expired" : "Not signed in"
+        case .failed(let kind, _): return kind.userMessage
+        case .loading: return "Checking"
+        }
     }
 }

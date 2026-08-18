@@ -68,17 +68,63 @@ public struct Metric: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
+/// Sanitized failure kind. Never carry raw HTTP bodies.
+public enum ProviderFailureKind: String, Codable, Hashable, Sendable {
+    case signedOut
+    case sessionExpired
+    case offline
+    case timedOut
+    case rateLimited
+    case malformedResponse
+    case unavailable
+
+    public var userMessage: String {
+        switch self {
+        case .signedOut: "Not signed in"
+        case .sessionExpired: "Session expired"
+        case .offline: "Offline"
+        case .timedOut: "Timed out"
+        case .rateLimited: "Rate limited. Try again shortly."
+        case .malformedResponse: "Couldn’t read usage data"
+        case .unavailable: "Unavailable"
+        }
+    }
+
+    public var isTransient: Bool {
+        switch self {
+        case .offline, .timedOut, .rateLimited, .unavailable:
+            return true
+        case .signedOut, .sessionExpired, .malformedResponse:
+            return false
+        }
+    }
+
+    public var hidesWhenSignedOut: Bool {
+        self == .signedOut || self == .sessionExpired
+    }
+}
+
 public enum ProviderStatus: Codable, Hashable, Sendable {
     case ok
-    case notLoggedIn
-    case error(String)
+    case failed(ProviderFailureKind)
 
     public var message: String? {
         switch self {
         case .ok: nil
-        case .notLoggedIn: "Not logged in"
-        case .error(let message): message
+        case .failed(let kind): kind.userMessage
         }
+    }
+
+    public var failureKind: ProviderFailureKind? {
+        switch self {
+        case .ok: nil
+        case .failed(let kind): kind
+        }
+    }
+
+    public var isSignedOut: Bool {
+        if case .failed(let kind) = self { return kind.hidesWhenSignedOut }
+        return false
     }
 }
 
@@ -106,6 +152,10 @@ public struct ProviderSnapshot: Identifiable, Codable, Hashable, Sendable {
     public static func empty(_ id: ProviderID, status: ProviderStatus, at date: Date = .now) -> ProviderSnapshot {
         ProviderSnapshot(id: id, planName: nil, metrics: [], status: status, fetchedAt: date)
     }
+
+    public static func failed(_ id: ProviderID, _ kind: ProviderFailureKind, at date: Date = .now) -> ProviderSnapshot {
+        empty(id, status: .failed(kind), at: date)
+    }
 }
 
 public protocol ProviderRuntime: Sendable {
@@ -115,19 +165,44 @@ public protocol ProviderRuntime: Sendable {
 }
 
 public enum ProviderError: Error, LocalizedError, Sendable {
-    case notLoggedIn
-    case http(Int, String)
-    case decode(String)
+    case signedOut
+    case sessionExpired
+    case http(Int)
+    case decode
+    case timedOut
+    case rateLimited
+    case unavailable
     case message(String)
+
+    public var failureKind: ProviderFailureKind {
+        switch self {
+        case .signedOut: .signedOut
+        case .sessionExpired: .sessionExpired
+        case .http: .unavailable
+        case .decode: .malformedResponse
+        case .timedOut: .timedOut
+        case .rateLimited: .rateLimited
+        case .unavailable: .unavailable
+        case .message: .unavailable
+        }
+    }
 
     public var errorDescription: String? {
         switch self {
-        case .notLoggedIn:
-            return "Not logged in"
-        case .http(let code, let body):
-            return "HTTP \(code): \(body)"
-        case .decode(let detail):
-            return "Decode failed: \(detail)"
+        case .signedOut:
+            return ProviderFailureKind.signedOut.userMessage
+        case .sessionExpired:
+            return ProviderFailureKind.sessionExpired.userMessage
+        case .http(let code):
+            return "HTTP \(code)"
+        case .decode:
+            return ProviderFailureKind.malformedResponse.userMessage
+        case .timedOut:
+            return ProviderFailureKind.timedOut.userMessage
+        case .rateLimited:
+            return ProviderFailureKind.rateLimited.userMessage
+        case .unavailable:
+            return ProviderFailureKind.unavailable.userMessage
         case .message(let text):
             return text
         }

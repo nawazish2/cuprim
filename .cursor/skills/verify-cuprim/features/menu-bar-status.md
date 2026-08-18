@@ -1,19 +1,19 @@
 # Menu-bar status
 
-The menu-bar gauge is the primary surface: click it for a native usage menu (provider rows, refresh, settings entry, share, about, updates, quit).
+The menu-bar gauge is the primary entry: click it to toggle the glass dashboard. There is no native usage menu.
 
 ## Sub-features
 
 - `status-visible` shows the Cuprim status item in the menu bar after launch
-- `usage-rows` lists enabled providers with plan/subtitle or empty/loading copy
-- `refresh` reloads provider snapshots from the menu (⌘R while menu targets allow)
-- `quit` exits via **Quit Cuprim** (⌘Q)
+- `click-opens-dashboard` toggles the glass panel from the status item
+- `refresh` reloads from the dashboard (⌘R)
+- `quit` exits via the dashboard **Quit Cuprim** row (⌘Q)
 
 ## How to get to it (user POV)
 
 - Launch Cuprim (`./script/build_and_run.sh` or open `dist/Cuprim.app`)
 - Click the gauge / chart status item
-- Choose **Refresh**, a provider row, or **Quit Cuprim**
+- The glass dashboard appears (click again or outside to dismiss)
 
 ## Driving it with verify-cuprim
 
@@ -25,12 +25,13 @@ Preconditions:
 - **Build proof.** Run `swift build -c debug --arch arm64` and `CONFIG=debug LAUNCH=0 ./script/package_app.sh`. Exit `0`; app binary exists.
 - **Launch.** Run `./script/build_and_run.sh`. Record PID / process path in `doctor.txt`.
 - **Status visible (manual).** Confirm the status item appears. Screenshot the menu bar region → `evidence/<slug>/ui-status-item.png`.
-- **Open menu (manual).** Click the status item. Expect **Usage** header and either provider rows or “No providers signed in” / “Loading…”. Screenshot → `ui-status-menu.png`.
-- **Refresh (manual).** Choose **Refresh**. Menu may show “Refreshing…” then updated subtitles. Note result in `NOTES.md`.
-- **Quit (manual).** Choose **Quit Cuprim**. `pgrep` no longer lists this run’s binary.
+- **Open dashboard (manual).** Click the status item. Expect the glass panel (not a native NSMenu). Screenshot → `ui-dashboard.png`.
+- **Refresh (manual).** Click the dashboard refresh control. Note result in `NOTES.md`.
+- **Quit (manual).** Dashboard footer **Quit Cuprim**. `pgrep` no longer lists this run’s binary.
 
 ## Gotchas
 
+- Tooltip remaining percent never suffixes “Limit reached” when a percent is shown
 - Status items are not reliably scriptable; treat UI steps as manual
 - Empty usage is valid when providers are logged out — not an automatic failure
 - Do not confuse `/Applications/Cuprim.app` with this checkout’s `dist/` build

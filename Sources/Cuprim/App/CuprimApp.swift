@@ -7,10 +7,9 @@ struct CuprimApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        Settings {
-            SettingsView(
-                preferences: appDelegate.container.preferences
-            )
+        // Status item is AppKit-owned. This scene only hosts app-menu commands.
+        MenuBarExtra("Cuprim", isInserted: .constant(false)) {
+            EmptyView()
         }
         .commands {
             CommandGroup(replacing: .appInfo) {
@@ -41,6 +40,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let icon = AppIconImage.aboutImage() {
             NSApp.applicationIconImage = icon
         }
+
+        _ = UpdaterManager.shared
+        UpdaterManager.shared.start()
 
         // Defer one tick so NSStatusBar is ready under SwiftUI App lifecycle.
         DispatchQueue.main.async { [weak self] in

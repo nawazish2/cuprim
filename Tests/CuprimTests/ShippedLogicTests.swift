@@ -1,10 +1,9 @@
 import XCTest
+import Foundation
 import CuprimCore
+import CuprimProviders
 
-/// Exercises **shipped** pure logic in CuprimCore — not a mirror reimplementation.
 final class ShippedLogicTests: XCTestCase {
-    // MARK: - Utilization
-
     func testClamp01Bounds() {
         XCTAssertEqual(Utilization.clamp01(-0.5), 0)
         XCTAssertEqual(Utilization.clamp01(0), 0)
@@ -14,18 +13,15 @@ final class ShippedLogicTests: XCTestCase {
     }
 
     func testFractionFromRawPercentOrUnit() {
-        // Dual-scale only for ambiguous APIs: >1 ⇒ percent, ≤1 ⇒ unit fraction.
         XCTAssertEqual(Utilization.fraction(fromRaw: 0.42), 0.42, accuracy: 1e-12)
         XCTAssertEqual(Utilization.fraction(fromRaw: 42), 0.42, accuracy: 1e-12)
         XCTAssertEqual(Utilization.fraction(fromRaw: 0), 0)
         XCTAssertEqual(Utilization.fraction(fromRaw: 100), 1)
         XCTAssertEqual(Utilization.fraction(fromRaw: 150), 1)
         XCTAssertEqual(Utilization.fraction(fromRaw: -10), 0)
-        // Dual-scale treats 1 as 100% unit — callers with whole percents must not use this.
         XCTAssertEqual(Utilization.fraction(fromRaw: 1), 1, accuracy: 1e-12)
     }
 
-    /// Known 0…100 provider fields must use `fraction(fromPercent:)` so 1 means 1%.
     func testFractionFromWholePercentBoundary() {
         XCTAssertEqual(Utilization.fraction(fromPercent: 1), 0.01, accuracy: 1e-12)
         XCTAssertEqual(Utilization.fraction(fromPercent: 0.5), 0.005, accuracy: 1e-12)
@@ -35,30 +31,9 @@ final class ShippedLogicTests: XCTestCase {
         XCTAssertEqual(Utilization.fraction(fromPercent: 150), 1, accuracy: 1e-12)
         XCTAssertEqual(Utilization.fraction(fromPercent: -5), 0, accuracy: 1e-12)
 
-        // Labels stay consistent with percent scale (1% used → 99% left).
         let onePercent = Utilization.fraction(fromPercent: 1)
         XCTAssertEqual(QuotaFormatting.usedPercentLabel(usedFraction: onePercent), "1%")
         XCTAssertEqual(QuotaFormatting.remainingLabel(usedFraction: onePercent), "99%")
-    }
-
-    /// Claude Desktop / Codex / Cursor / Grok percent fields map through fromPercent.
-    func testKnownProviderPercentFieldsUsePercentScale() {
-        // Simulate Claude Desktop fh/sd = 1 (1% used), not dual-scale.
-        let desktop = Utilization.fraction(fromPercent: 1)
-        XCTAssertEqual(desktop, 0.01, accuracy: 1e-12)
-        XCTAssertNotEqual(desktop, Utilization.fraction(fromRaw: 1))
-
-        // Codex used_percent = 1
-        let codex = Utilization.fraction(fromPercent: 1)
-        XCTAssertEqual(Utilization.usedPercent(usedFraction: codex), 1)
-
-        // Cursor autoPercentUsed = 4.01
-        let cursor = Utilization.fraction(fromPercent: 4.01)
-        XCTAssertEqual(cursor, 0.0401, accuracy: 1e-9)
-
-        // Grok creditUsagePercent = 1
-        let grok = Utilization.fraction(fromPercent: 1)
-        XCTAssertEqual(QuotaFormatting.usedPercentLabel(usedFraction: grok), "1%")
     }
 
     func testRemainingAndUsedPercent() {
@@ -66,12 +41,9 @@ final class ShippedLogicTests: XCTestCase {
         XCTAssertEqual(Utilization.remainingPercent(usedFraction: 1), 0)
         XCTAssertEqual(Utilization.remainingPercent(usedFraction: 0), 100)
         XCTAssertEqual(Utilization.usedPercent(usedFraction: 0.42), 42)
-        // Clamp over-range used fractions before percent conversion
         XCTAssertEqual(Utilization.usedPercent(usedFraction: 1.5), 100)
         XCTAssertEqual(Utilization.remainingPercent(usedFraction: -0.2), 100)
     }
-
-    // MARK: - QuotaFormatting (shipped)
 
     func testRemainingAndUsedLabels() {
         XCTAssertEqual(QuotaFormatting.remainingLabel(usedFraction: 0.42), "58%")
@@ -85,7 +57,6 @@ final class ShippedLogicTests: XCTestCase {
         let soon = now.addingTimeInterval(2 * 86_400 + 3 * 3600)
         let label = QuotaFormatting.resetLabel(for: soon, absolute: true, relativeTo: now)
         XCTAssertTrue(label.hasPrefix("Resets in "), label)
-        // Production does not append absolute with " · " for nearby windows.
         XCTAssertFalse(label.contains("·"), label)
     }
 
@@ -111,54 +82,42 @@ final class ShippedLogicTests: XCTestCase {
         XCTAssertEqual(QuotaFormatting.resetLabel(for: nil), "")
     }
 
-    // MARK: - Provider status mapping
-
-    func testNotLoggedInErrorMapsToNotLoggedInStatus() {
-        let snap = ProviderStatusMapping.snapshot(for: .grok, error: ProviderError.notLoggedIn)
-        XCTAssertEqual(snap.id, .grok)
-        if case .notLoggedIn = snap.status {
-            // ok
-        } else {
-            XCTFail("expected .notLoggedIn, got \(snap.status)")
-        }
+    func testSignedOutMapsToFailedKind() {
+        let snap = ProviderStatusMapping.snapshot(for: .grok, error: ProviderError.signedOut)
+        XCTAssertEqual(snap.status, .failed(.signedOut))
         XCTAssertTrue(snap.metrics.isEmpty)
     }
 
-    func testHTTPErrorMapsToErrorStatus() {
-        let snap = ProviderStatusMapping.snapshot(
-            for: .claude,
-            error: ProviderError.http(500, "boom")
-        )
-        if case .error(let message) = snap.status {
-            XCTAssertTrue(message.contains("500"), message)
-        } else {
-            XCTFail("expected .error, got \(snap.status)")
-        }
+    func testHTTPErrorMapsToUnavailable() {
+        let snap = ProviderStatusMapping.snapshot(for: .claude, error: ProviderError.http(500))
+        XCTAssertEqual(snap.status, .failed(.unavailable))
     }
 
-    func testOfflineErrorMapsToShortOfflineStatus() {
-        let snap = ProviderStatusMapping.snapshot(
-            for: .cursor,
-            error: URLError(.notConnectedToInternet)
-        )
-        if case .error(let message) = snap.status {
-            XCTAssertEqual(message, ProviderStatusMapping.offlineMessage)
-        } else {
-            XCTFail("expected .error(Offline), got \(snap.status)")
-        }
+    func testOfflineErrorMapsToOffline() {
+        let snap = ProviderStatusMapping.snapshot(for: .cursor, error: URLError(.notConnectedToInternet))
+        XCTAssertEqual(snap.status, .failed(.offline))
         XCTAssertTrue(ProviderStatusMapping.isOffline(URLError(.notConnectedToInternet)))
-        XCTAssertTrue(ProviderStatusMapping.isOffline(URLError(.networkConnectionLost)))
-        XCTAssertFalse(ProviderStatusMapping.isOffline(ProviderError.notLoggedIn))
+        XCTAssertFalse(ProviderStatusMapping.isOffline(ProviderError.signedOut))
     }
 
-    func testGenericErrorMapsToErrorStatus() {
+    func testSessionExpiredDistinctFromSignedOut() {
+        let expired = ProviderStatusMapping.snapshot(for: .codex, error: ProviderError.sessionExpired)
+        XCTAssertEqual(expired.status, .failed(.sessionExpired))
+        XCTAssertNotEqual(expired.status, .failed(.signedOut))
+    }
+
+    func testRateLimitedAndMalformed() {
+        XCTAssertEqual(ProviderStatusMapping.kind(for: ProviderError.rateLimited), .rateLimited)
+        XCTAssertEqual(ProviderStatusMapping.kind(for: ProviderError.decode), .malformedResponse)
+        XCTAssertEqual(HTTPResponseMapping.kind(statusCode: 429), .rateLimited)
+        XCTAssertEqual(HTTPResponseMapping.kind(statusCode: 401, credentialsPresent: true), .sessionExpired)
+        XCTAssertEqual(HTTPResponseMapping.kind(statusCode: 401, credentialsPresent: false), .signedOut)
+    }
+
+    func testGenericErrorMapsToUnavailable() {
         struct E: Error {}
         let snap = ProviderStatusMapping.snapshot(for: .cursor, error: E())
-        if case .error = snap.status {
-            // ok
-        } else {
-            XCTFail("expected .error for generic Error")
-        }
+        XCTAssertEqual(snap.status, .failed(.unavailable))
     }
 
     func testAntigravityQuotaSummaryMapping() throws {
@@ -209,8 +168,6 @@ final class ShippedLogicTests: XCTestCase {
         XCTAssertEqual(AntigravityQuotaMapping.planName(fromStatusJSON: json), "Pro")
     }
 
-    // MARK: - Codex window classifier
-
     func testCodexWindowClassification() {
         XCTAssertEqual(CodexWindowClassifier.kind(windowSeconds: 5 * 3600), .session)
         XCTAssertEqual(CodexWindowClassifier.kind(windowSeconds: 7 * 86_400), .weekly)
@@ -221,38 +178,72 @@ final class ShippedLogicTests: XCTestCase {
         XCTAssertEqual(CodexWindowClassifier.label(for: .primary), "Usage limit")
     }
 
-    // MARK: - Quota Horizon
-
-    func testQuotaHorizonRequiresEnoughHistory() {
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let sample = UsageSample(timestamp: now, usedFraction: 0.2, resetsAt: now.addingTimeInterval(86_400))
-        let horizon = QuotaHorizonEngine.estimate(samples: [sample], now: now)
-        XCTAssertEqual(horizon.state, .insufficientHistory)
-        XCTAssertNil(horizon.ratePerHour)
+    func testLowQuotaAlertEmitsMostUrgentOnly() {
+        XCTAssertEqual(
+            LowQuotaAlertPolicy.newlyReachedThreshold(remainingPercent: 4, alreadySent: []),
+            5
+        )
+        XCTAssertEqual(
+            LowQuotaAlertPolicy.newlyReachedThreshold(remainingPercent: 18, alreadySent: []),
+            20
+        )
+        XCTAssertNil(LowQuotaAlertPolicy.newlyReachedThreshold(remainingPercent: 4, alreadySent: [5, 20]))
+        XCTAssertEqual(
+            LowQuotaAlertPolicy.newlyReachedThreshold(remainingPercent: 4, alreadySent: [20]),
+            5
+        )
     }
 
-    func testQuotaHorizonPredictsExhaustionBeforeReset() {
+    func testStalePolicyAgreesWithRefreshInterval() {
+        XCTAssertEqual(StalePolicy.thresholdMinutes(refreshMinutes: 2), 6)
+        XCTAssertEqual(StalePolicy.thresholdMinutes(refreshMinutes: 10), 30)
         let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let reset = now.addingTimeInterval(8 * 3_600)
-        let samples = [
-            UsageSample(timestamp: now.addingTimeInterval(-3_600), usedFraction: 0.20, resetsAt: reset),
-            UsageSample(timestamp: now, usedFraction: 0.80, resetsAt: reset)
-        ]
-        let horizon = QuotaHorizonEngine.estimate(samples: samples, now: now)
-        XCTAssertEqual(horizon.state, .likelyToExhaust)
-        XCTAssertNotNil(horizon.estimatedExhaustionAt)
-        XCTAssertEqual(horizon.ratePerHour ?? 0, 0.6, accuracy: 1e-9)
+        XCTAssertTrue(StalePolicy.isStale(now.addingTimeInterval(-7 * 60), refreshMinutes: 2, relativeTo: now))
+        XCTAssertFalse(StalePolicy.isStale(now.addingTimeInterval(-3 * 60), refreshMinutes: 2, relativeTo: now))
     }
 
-    func testQuotaHorizonTreatsExhaustionAfterResetAsStable() {
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let reset = now.addingTimeInterval(4 * 3_600)
-        let samples = [
-            UsageSample(timestamp: now.addingTimeInterval(-3_600), usedFraction: 0.10, resetsAt: reset),
-            UsageSample(timestamp: now, usedFraction: 0.20, resetsAt: reset)
-        ]
-        let horizon = QuotaHorizonEngine.estimate(samples: samples, now: now)
-        XCTAssertEqual(horizon.state, .stableUntilReset)
-        XCTAssertNil(horizon.estimatedExhaustionAt)
+    func testRefreshMergeKeepsLastGoodOnTransientFailure() {
+        let good = ProviderSnapshot(
+            id: .cursor,
+            planName: "Pro",
+            metrics: [Metric(id: "total", label: "Total", usedFraction: 0.4)],
+            status: .ok,
+            fetchedAt: Date(timeIntervalSince1970: 10)
+        )
+        let incoming = ProviderSnapshot.failed(.cursor, .offline, at: Date(timeIntervalSince1970: 20))
+        let merged = RefreshMergePolicy.merge(previous: good, incoming: incoming)
+        XCTAssertEqual(merged.status, .ok)
+        XCTAssertEqual(merged.metrics.first?.usedFraction ?? 0, 0.4, accuracy: 1e-9)
+        XCTAssertFalse(RefreshMergePolicy.shouldAlert(from: incoming))
+        XCTAssertTrue(RefreshMergePolicy.shouldAlert(from: good))
+    }
+
+    func testRefreshMergeReplacesOnSignedOut() {
+        let good = ProviderSnapshot.empty(.codex, status: .ok, at: Date(timeIntervalSince1970: 10))
+        let incoming = ProviderSnapshot.failed(.codex, .signedOut, at: Date(timeIntervalSince1970: 20))
+        let merged = RefreshMergePolicy.merge(previous: good, incoming: incoming)
+        XCTAssertEqual(merged.status, .failed(.signedOut))
+    }
+
+    func testMenuBarTooltipDoesNotContradictRemaining() {
+        let text = MenuBarTooltip.text(remainingPercent: 4, severity: .critical)
+        XCTAssertEqual(text, "Cuprim · 4% left")
+        XCTAssertFalse(text.contains("Limit reached"))
+        XCTAssertEqual(MenuBarTooltip.text(remainingPercent: nil, severity: .error), "Cuprim · Unavailable")
+    }
+
+    func testMenuBarSeverityFromUsage() {
+        XCTAssertEqual(
+            MenuBarTooltip.severity(worstUsedFraction: 0.96, hasVisibleError: false, hasVisibleOK: true, isRefreshing: false),
+            .critical
+        )
+        XCTAssertEqual(
+            MenuBarTooltip.severity(worstUsedFraction: 0.82, hasVisibleError: false, hasVisibleOK: true, isRefreshing: false),
+            .warning
+        )
+        XCTAssertEqual(
+            MenuBarTooltip.severity(worstUsedFraction: nil, hasVisibleError: true, hasVisibleOK: false, isRefreshing: false),
+            .error
+        )
     }
 }
