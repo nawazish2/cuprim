@@ -182,11 +182,8 @@ struct DashboardView: View {
     }
 
     private var firstLaunchIntro: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Connect the tools you use")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(GlassChrome.textPrimary)
-            Text("Cuprim reads local sign-in on this Mac. Nothing is sent to us.")
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Usage appears from apps already signed in on this Mac.")
                 .font(.caption)
                 .foregroundStyle(GlassChrome.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -197,7 +194,7 @@ struct DashboardView: View {
             .controlSize(.small)
             .keyboardShortcut(.defaultAction)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 

@@ -13,7 +13,7 @@ enum ProviderTab: Hashable, Identifiable {
     }
 }
 
-/// Compact icon-led selector for All plus every enabled provider.
+/// Compact icon selector: All plus every enabled provider’s brand mark.
 struct ProviderTabBar: View {
     @Binding var selection: ProviderTab
     let available: [ProviderID]
@@ -21,62 +21,65 @@ struct ProviderTabBar: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var selectionNS
 
-    private var items: [(tab: ProviderTab, title: String, systemImage: String)] {
-        [(.overview, "All", AppSymbols.overviewTab)]
-            + available.map { (.provider($0), $0.displayName, $0.systemImage) }
-    }
-
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(items, id: \.tab) { item in
-                cell(item)
+        HStack(spacing: 1) {
+            tabButton(tab: .overview, title: "All") {
+                Image(systemName: AppSymbols.app)
+                    .font(.system(size: 12, weight: selection == .overview ? .semibold : .medium))
+                    .symbolRenderingMode(.hierarchical)
+            }
+            ForEach(available, id: \.self) { id in
+                tabButton(tab: .provider(id), title: id.displayName) {
+                    ProviderIconView(
+                        id: id,
+                        size: 13,
+                        foreground: selection == .provider(id)
+                            ? GlassChrome.textTabActive
+                            : GlassChrome.textTabIdle
+                    )
+                }
             }
         }
-        .padding(2)
-        .background {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(.quaternary.opacity(0.55))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.5)
-        }
+        .padding(3)
+        .cuprimGlassTabBar()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Providers")
     }
 
-    private func cell(_ item: (tab: ProviderTab, title: String, systemImage: String)) -> some View {
-        let selected = selection == item.tab
+    private func tabButton<Icon: View>(
+        tab: ProviderTab,
+        title: String,
+        @ViewBuilder icon: () -> Icon
+    ) -> some View {
+        let selected = selection == tab
         return Button {
-            guard item.tab != selection else { return }
+            guard tab != selection else { return }
             if reduceMotion {
-                selection = item.tab
+                selection = tab
             } else {
                 withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-                    selection = item.tab
+                    selection = tab
                 }
             }
         } label: {
-            Image(systemName: item.systemImage)
-                .font(.system(size: 11, weight: selected ? .semibold : .medium))
-                .foregroundStyle(selected ? Color.primary : Color.primary.opacity(0.58))
+            icon()
+                .foregroundStyle(selected ? GlassChrome.textTabActive : GlassChrome.textTabIdle)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
                 .background {
                     if selected {
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(.background.opacity(0.92))
-                            .shadow(color: .black.opacity(0.12), radius: 1.5, y: 0.5)
+                        RoundedRectangle(cornerRadius: GlassChrome.tabPillCorner, style: .continuous)
+                            .fill(Color.primary.opacity(0.14))
                             .matchedGeometryEffect(id: "tab-pill", in: selectionNS)
                     }
                 }
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(item.title)
-        .accessibilityLabel(item.title)
+        .help(title)
+        .accessibilityLabel(title)
         .accessibilityAddTraits(selected ? .isSelected : [])
-        .keyboardShortcut(shortcut(for: item.tab), modifiers: [])
+        .keyboardShortcut(shortcut(for: tab), modifiers: [])
     }
 
     private func shortcut(for tab: ProviderTab) -> KeyEquivalent {
