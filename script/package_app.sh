@@ -133,9 +133,9 @@ plist = f'''<?xml version="1.0" encoding="UTF-8"?>
 	<key>CFBundleIdentifier</key>
 	<string>com.nawazish.cuprim</string>
 	<key>CFBundleVersion</key>
-	<string>7</string>
+	<string>8</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.6</string>
+	<string>0.1.7</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleExecutable</key>

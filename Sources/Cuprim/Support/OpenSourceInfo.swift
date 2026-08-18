@@ -12,8 +12,8 @@ enum OpenSourceInfo {
 
     static var versionString: String {
         let info = Bundle.main.infoDictionary
-        let v = info?["CFBundleShortVersionString"] as? String ?? "0.1.6"
-        let b = info?["CFBundleVersion"] as? String ?? "7"
+        let v = info?["CFBundleShortVersionString"] as? String ?? "0.1.7"
+        let b = info?["CFBundleVersion"] as? String ?? "8"
         return "Version \(v) (\(b))"
     }
 

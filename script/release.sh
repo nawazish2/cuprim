@@ -20,10 +20,10 @@ find "$ROOT/dist" -mindepth 1 -maxdepth 1 ! -name '.gitkeep' -exec rm -rf {} +
 
 APP_DIR="$ROOT/dist/Cuprim.app"
 VERSION="$(
-  /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "0.1.6"
+  /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "0.1.7"
 )"
 BUILD="$(
-  /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "7"
+  /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_DIR/Contents/Info.plist" 2>/dev/null || echo "8"
 )"
 DMG="$ROOT/dist/Cuprim-${VERSION}.dmg"
 ZIP="$ROOT/dist/Cuprim-${VERSION}.app.zip"
@@ -47,14 +47,16 @@ if [[ "$CODESIGN_IDENTITY" != "-" ]]; then
   codesign --force --sign "$CODESIGN_IDENTITY" "$DMG"
 fi
 
-SIGN_UPDATE="$(find "$ROOT/.build" -name sign_update -type f 2>/dev/null | head -1 || true)"
+SIGN_UPDATE="$(find "$ROOT/.build" -name sign_update -type f ! -path '*old_dsa*' 2>/dev/null | head -1 || true)"
 APPCAST="$ROOT/dist/appcast.xml"
 ENCLOSURE_URL="${ENCLOSURE_URL:-https://github.com/nawazish2/cuprim/releases/download/v${VERSION}/Cuprim.dmg}"
 LENGTH="$(stat -f%z "$DMG")"
 SIGNATURE=""
 if [[ -n "$SIGN_UPDATE" ]]; then
   echo "→ Sparkle-signing $DMG…"
+  set +e
   SIGNATURE="$("$SIGN_UPDATE" "$DMG" | sed -n 's/.*edSignature="\([^"]*\)".*/\1/p')"
+  set -e
 fi
 
 python3 - <<PY

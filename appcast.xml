@@ -3,5 +3,13 @@
   <channel>
     <title>Cuprim</title>
     <language>en</language>
+    <item>
+      <title>Version 0.1.7 (Build 8)</title>
+      <pubDate>Tue, 18 Aug 2026 10:08:01 +0000</pubDate>
+      <sparkle:version>8</sparkle:version>
+      <sparkle:shortVersionString>0.1.7</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <enclosure url="https://github.com/nawazish2/cuprim/releases/download/v0.1.7/Cuprim.dmg" type="application/octet-stream" length="2241567" />
+    </item>
   </channel>
 </rss>
