@@ -120,54 +120,6 @@ final class ShippedLogicTests: XCTestCase {
         XCTAssertEqual(snap.status, .failed(.unavailable))
     }
 
-    func testAntigravityQuotaSummaryMapping() throws {
-        let json = """
-        {
-          "response": {
-            "groups": [
-              {
-                "displayName": "Gemini Models",
-                "buckets": [
-                  {
-                    "bucketId": "gemini-weekly",
-                    "window": "weekly",
-                    "remainingFraction": 0.75,
-                    "resetTime": "2026-08-24T10:33:35Z"
-                  }
-                ]
-              },
-              {
-                "displayName": "Claude and GPT models",
-                "buckets": [
-                  {
-                    "bucketId": "3p-weekly",
-                    "window": "weekly",
-                    "remainingFraction": 1,
-                    "resetTime": "2026-08-24T10:35:28Z"
-                  }
-                ]
-              }
-            ]
-          }
-        }
-        """.data(using: .utf8)!
-
-        let metrics = try AntigravityQuotaMapping.metrics(fromSummaryJSON: json)
-        XCTAssertEqual(metrics.count, 2)
-        XCTAssertEqual(metrics[0].label, "Gemini weekly")
-        XCTAssertEqual(metrics[0].usedFraction ?? -1, 0.25, accuracy: 1e-9)
-        XCTAssertEqual(metrics[1].label, "Claude + GPT weekly")
-        XCTAssertEqual(metrics[1].usedFraction ?? -1, 0, accuracy: 1e-9)
-        XCTAssertNotNil(metrics[0].resetsAt)
-    }
-
-    func testAntigravityPlanNameFromUserStatus() {
-        let json = """
-        {"userStatus":{"planStatus":{"planInfo":{"planName":"Pro"}}}}
-        """.data(using: .utf8)!
-        XCTAssertEqual(AntigravityQuotaMapping.planName(fromStatusJSON: json), "Pro")
-    }
-
     func testCodexWindowClassification() {
         XCTAssertEqual(CodexWindowClassifier.kind(windowSeconds: 5 * 3600), .session)
         XCTAssertEqual(CodexWindowClassifier.kind(windowSeconds: 7 * 86_400), .weekly)
@@ -180,16 +132,16 @@ final class ShippedLogicTests: XCTestCase {
 
     func testLowQuotaAlertEmitsMostUrgentOnly() {
         XCTAssertEqual(
-            LowQuotaAlertPolicy.newlyReachedThreshold(remainingPercent: 4, alreadySent: []),
+            LowQuotaAlertPolicy.newlyReachedThresholds(remainingPercent: 4, alreadySent: []).first,
             5
         )
         XCTAssertEqual(
-            LowQuotaAlertPolicy.newlyReachedThreshold(remainingPercent: 18, alreadySent: []),
+            LowQuotaAlertPolicy.newlyReachedThresholds(remainingPercent: 18, alreadySent: []).first,
             20
         )
-        XCTAssertNil(LowQuotaAlertPolicy.newlyReachedThreshold(remainingPercent: 4, alreadySent: [5, 20]))
+        XCTAssertTrue(LowQuotaAlertPolicy.newlyReachedThresholds(remainingPercent: 4, alreadySent: [5, 20]).isEmpty)
         XCTAssertEqual(
-            LowQuotaAlertPolicy.newlyReachedThreshold(remainingPercent: 4, alreadySent: [20]),
+            LowQuotaAlertPolicy.newlyReachedThresholds(remainingPercent: 4, alreadySent: [20]).first,
             5
         )
     }
@@ -223,6 +175,38 @@ final class ShippedLogicTests: XCTestCase {
         let incoming = ProviderSnapshot.failed(.codex, .signedOut, at: Date(timeIntervalSince1970: 20))
         let merged = RefreshMergePolicy.merge(previous: good, incoming: incoming)
         XCTAssertEqual(merged.status, .failed(.signedOut))
+    }
+
+    func testRefreshMergeKeepsLastGoodWhenIncomingOKHasNoMetrics() {
+        // An `.ok` snapshot with zero metrics is not real data (e.g. a
+        // partially-decoded response) and must not wipe last-good meters.
+        let good = ProviderSnapshot(
+            id: .claude,
+            planName: "Max",
+            metrics: [Metric(id: "session", label: "Session", usedFraction: 0.3)],
+            status: .ok,
+            fetchedAt: Date(timeIntervalSince1970: 10)
+        )
+        let emptyOK = ProviderSnapshot.empty(.claude, status: .ok, at: Date(timeIntervalSince1970: 20))
+        let merged = RefreshMergePolicy.merge(previous: good, incoming: emptyOK)
+        XCTAssertEqual(merged.metrics.first?.usedFraction ?? -1, 0.3, accuracy: 1e-9)
+    }
+
+    func testMenuBarSeverityWarnsOnPartialFailureEvenWhenUsageIsLow() {
+        // One provider failing shouldn't be invisible just because another
+        // provider's usage number happens to be healthy.
+        XCTAssertEqual(
+            MenuBarTooltip.severity(worstUsedFraction: 0.1, hasVisibleError: true, hasVisibleOK: true, isRefreshing: false),
+            .warning
+        )
+        XCTAssertEqual(
+            MenuBarTooltip.severity(worstUsedFraction: nil, hasVisibleError: true, hasVisibleOK: true, isRefreshing: false),
+            .warning
+        )
+        XCTAssertEqual(
+            MenuBarTooltip.severity(worstUsedFraction: nil, hasVisibleError: true, hasVisibleOK: false, isRefreshing: false),
+            .error
+        )
     }
 
     func testMenuBarTooltipDoesNotContradictRemaining() {

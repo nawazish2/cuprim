@@ -80,11 +80,11 @@ public enum ClaudeUsageMapping {
         let usage = last["u"] as? [String: Any] ?? [:]
         let fh = jsonDouble(usage["fh"]) ?? 0
         let sd = jsonDouble(usage["sd"]) ?? 0
-        let ms = jsonDouble(last["t"]) ?? (Date().timeIntervalSince1970 * 1000)
+        guard let rawTimestamp = jsonDouble(last["t"]) else { return nil }
         return DesktopSample(
             fiveHourPercent: fh,
             weeklyPercent: sd,
-            sampledAt: Date(timeIntervalSince1970: ms / 1000)
+            sampledAt: Date(timeIntervalSince1970: ISO8601Parsing.epochSeconds(rawTimestamp))
         )
     }
 
@@ -111,7 +111,9 @@ public enum ClaudeUsageMapping {
         ]
         return ProviderSnapshot(
             id: .claude,
-            planName: "Free",
+            // Desktop history doesn't carry the plan name — showing none is
+            // truer than guessing (a Max subscriber must never see "Free").
+            planName: nil,
             metrics: metrics,
             status: .ok,
             fetchedAt: sample.sampledAt
@@ -119,24 +121,19 @@ public enum ClaudeUsageMapping {
     }
 
     public static func prettyPlan(_ raw: String?) -> String? {
-        guard let raw, !raw.isEmpty else { return nil }
-        let lower = raw.lowercased()
-        if lower.contains("free") { return "Free" }
-        if lower.contains("max") { return "Max" }
-        if lower.contains("pro") { return "Pro" }
-        if lower.contains("team") { return "Team" }
-        return raw.capitalized
+        PlanNameFormatting.prettyPlan(raw)
     }
 
     private static func metric(id: String, label: String, window: LiveWindow) -> Metric {
-        let fraction = Utilization.fraction(fromRaw: window.utilization ?? 0)
-        let usedPct = Int((fraction * 100).rounded())
+        // A field the server omitted is unknown, not "0% used" — defaulting
+        // to 0 would render a confident, alert-suppressing green meter.
+        let fraction = window.utilization.map(Utilization.fraction(fromRaw:))
         return Metric(
             id: id,
             label: label,
             usedFraction: fraction,
             resetsAt: ISO8601Parsing.date(from: window.resetsAt),
-            detail: "\(usedPct)% used",
+            detail: fraction.map { "\(Utilization.usedPercent(usedFraction: $0))% used" },
             showsResetRow: true
         )
     }

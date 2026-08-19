@@ -67,7 +67,7 @@ const faqs = [
   },
   {
     q: "Which AI providers are supported?",
-    a: "Claude, Codex, Cursor, Grok, and Antigravity — using sessions already signed in on your Mac.",
+    a: "Claude, Codex, Cursor, and Grok — using sessions already signed in on your Mac.",
   },
   {
     q: "Does Cuprim read my conversations?",

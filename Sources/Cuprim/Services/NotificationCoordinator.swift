@@ -76,10 +76,11 @@ final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate 
             let resetKey = metric.resetsAt.map { String(Int($0.timeIntervalSince1970)) } ?? "none"
             let key = LowQuotaAlertLedger.key(provider: snapshot.id, metricID: metric.id, resetKey: resetKey)
             let already = ledger.sentThresholds(for: key)
-            guard let threshold = LowQuotaAlertPolicy.newlyReachedThreshold(
+            let newlyReached = LowQuotaAlertPolicy.newlyReachedThresholds(
                 remainingPercent: remaining,
                 alreadySent: already
-            ) else { continue }
+            )
+            guard let threshold = newlyReached.first else { continue }
 
             let content = UNMutableNotificationContent()
             content.title = "\(snapshot.id.displayName) · \(remaining)% left on \(metric.displayLabel)"
@@ -101,7 +102,9 @@ final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate 
                 Task { @MainActor in
                     guard let self else { return }
                     var next = self.loadLedger()
-                    next.record(key: key, threshold: threshold, expiresAt: metric.resetsAt)
+                    for reached in newlyReached {
+                        next.record(key: key, threshold: reached, expiresAt: metric.resetsAt)
+                    }
                     next.prune()
                     self.saveLedger(next)
                 }

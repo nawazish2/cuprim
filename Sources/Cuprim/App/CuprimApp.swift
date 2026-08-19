@@ -55,6 +55,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         installAppMenuItems()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        container.usage.stop()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }

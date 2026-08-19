@@ -12,10 +12,6 @@ public struct CursorProvider: ProviderRuntime {
         self.http = http
     }
 
-    public func hasLocalCredentials() async -> Bool {
-        (try? loadAccessToken()) != nil
-    }
-
     public func refresh() async throws -> ProviderSnapshot {
         let token: String
         do {

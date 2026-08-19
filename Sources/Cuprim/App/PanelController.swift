@@ -50,6 +50,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     func show(relativeTo statusButton: NSStatusBarButton) {
         self.statusButton = statusButton
         let panel = ensurePanel()
+        uiState.scrollResetToken += 1
 
         let root = DashboardView(
             usage: usage,

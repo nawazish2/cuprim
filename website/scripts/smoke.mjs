@@ -31,7 +31,7 @@ const html = readFileSync(htmlPath, "utf8")
 const needles = [
   "Know which AI tool",
   "Download Cuprim",
-  "Antigravity",
+  "Grok",
   "Skip to content",
   "Click the gauge",
   "Credentials stay on your Mac",

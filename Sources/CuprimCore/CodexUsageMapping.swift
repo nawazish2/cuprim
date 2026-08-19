@@ -69,7 +69,7 @@ public enum CodexUsageMapping {
 
         return ProviderSnapshot(
             id: .codex,
-            planName: decoded.planType?.capitalized,
+            planName: PlanNameFormatting.prettyPlan(decoded.planType),
             metrics: metrics,
             status: .ok,
             fetchedAt: date
@@ -83,23 +83,23 @@ public enum CodexUsageMapping {
     }
 
     private static func metric(id: String, label: String, window: Response.Window, now: Date) -> Metric {
-        let percent = window.usedPercent ?? 0
-        let fraction = Utilization.fraction(fromPercent: percent)
+        // A field the server omitted is unknown, not "0% used" — defaulting
+        // to 0 would render a confident, alert-suppressing green meter.
+        let fraction = window.usedPercent.map(Utilization.fraction(fromPercent:))
         let resetsAt: Date?
         if let resetAt = window.resetAt {
-            resetsAt = Date(timeIntervalSince1970: resetAt)
+            resetsAt = Date(timeIntervalSince1970: ISO8601Parsing.epochSeconds(resetAt))
         } else if let after = window.resetAfterSeconds {
             resetsAt = now.addingTimeInterval(after)
         } else {
             resetsAt = nil
         }
-        let usedPct = Utilization.usedPercent(usedFraction: fraction)
         return Metric(
             id: id,
             label: label,
             usedFraction: fraction,
             resetsAt: resetsAt,
-            detail: "\(usedPct)% of limit used",
+            detail: fraction.map { "\(Utilization.usedPercent(usedFraction: $0))% of limit used" },
             showsResetRow: true
         )
     }

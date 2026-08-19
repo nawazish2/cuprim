@@ -5,7 +5,6 @@ public enum ProviderID: String, CaseIterable, Identifiable, Codable, Sendable {
     case codex
     case cursor
     case grok
-    case antigravity
 
     public var id: String { rawValue }
 
@@ -15,7 +14,6 @@ public enum ProviderID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .codex: "Codex"
         case .cursor: "Cursor"
         case .grok: "Grok"
-        case .antigravity: "Antigravity"
         }
     }
 
@@ -25,7 +23,6 @@ public enum ProviderID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .codex: "chevron.left.forwardslash.chevron.right"
         case .cursor: "cursorarrow.click.2"
         case .grok: "sparkles"
-        case .antigravity: "point.3.filled.connected.trianglepath"
         }
     }
 }
@@ -36,7 +33,7 @@ public struct Metric: Identifiable, Codable, Hashable, Sendable {
     /// Fraction used in 0...1. Nil when unknown.
     public var usedFraction: Double?
     public var resetsAt: Date?
-    /// Optional trailing value text (e.g. "$12 left").
+    /// Optional trailing value text (e.g. "42% used").
     public var detail: String?
     /// Force showing the reset row even when `resetsAt` is nil.
     public var showsResetRow: Bool
@@ -160,7 +157,6 @@ public struct ProviderSnapshot: Identifiable, Codable, Hashable, Sendable {
 
 public protocol ProviderRuntime: Sendable {
     var id: ProviderID { get }
-    func hasLocalCredentials() async -> Bool
     func refresh() async throws -> ProviderSnapshot
 }
 
@@ -172,7 +168,6 @@ public enum ProviderError: Error, LocalizedError, Sendable {
     case timedOut
     case rateLimited
     case unavailable
-    case message(String)
 
     public var failureKind: ProviderFailureKind {
         switch self {
@@ -183,7 +178,6 @@ public enum ProviderError: Error, LocalizedError, Sendable {
         case .timedOut: .timedOut
         case .rateLimited: .rateLimited
         case .unavailable: .unavailable
-        case .message: .unavailable
         }
     }
 
@@ -203,8 +197,6 @@ public enum ProviderError: Error, LocalizedError, Sendable {
             return ProviderFailureKind.rateLimited.userMessage
         case .unavailable:
             return ProviderFailureKind.unavailable.userMessage
-        case .message(let text):
-            return text
         }
     }
 }

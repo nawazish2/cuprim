@@ -46,10 +46,14 @@ public enum MenuBarTooltip {
         if let worst = worstUsedFraction {
             if worst >= 0.95 { return .critical }
             if worst >= 0.80 { return .warning }
+            // A healthy worst-case usage number can still be hiding a
+            // provider that's failing entirely — surface that instead of
+            // going quiet just because at least one other provider is fine.
+            if hasVisibleError { return .warning }
             return .idle
         }
-        if hasVisibleError, !hasVisibleOK {
-            return .error
+        if hasVisibleError {
+            return hasVisibleOK ? .warning : .error
         }
         return .idle
     }

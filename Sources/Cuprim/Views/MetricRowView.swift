@@ -37,9 +37,11 @@ struct MetricRowView: View {
                         .foregroundStyle(GlassChrome.textSecondary)
                         .lineLimit(1)
                     if isHighUsage {
-                        Image(systemName: "exclamationmark.square.fill")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(QuotaFormatting.meterColor(usedFraction: metric.usedFraction))
+                        // A small dot, not the card-level triangle — this
+                        // flags one metric row, not the whole provider.
+                        Circle()
+                            .fill(QuotaFormatting.meterColor(usedFraction: metric.usedFraction))
+                            .frame(width: 5, height: 5)
                             .accessibilityHidden(true)
                     }
                 }

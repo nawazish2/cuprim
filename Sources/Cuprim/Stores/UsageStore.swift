@@ -9,7 +9,6 @@ final class UsageStore {
     private(set) var snapshots: [ProviderID: ProviderSnapshot] = [:]
     private(set) var lastFailures: [ProviderID: ProviderFailureKind] = [:]
     private(set) var lastSuccessAt: [ProviderID: Date] = [:]
-    private(set) var lastAttemptAt: Date?
     private(set) var lastSuccessfulRefresh: Date?
     private(set) var isRefreshing = false
     private(set) var isOffline = false
@@ -29,8 +28,7 @@ final class UsageStore {
             ClaudeProvider(),
             CodexProvider(),
             CursorProvider(),
-            GrokProvider(),
-            AntigravityProvider()
+            GrokProvider()
         ],
         cache: SnapshotCache = SnapshotCache(),
         notifications: NotificationCoordinator = NotificationCoordinator(),
@@ -72,10 +70,6 @@ final class UsageStore {
         }
     }
 
-    var hasAnyData: Bool {
-        !visibleSnapshots.isEmpty
-    }
-
     var worstUsedFraction: Double? {
         let fractions = visibleSnapshots
             .filter { if case .ok = $0.status { return true }; return false }
@@ -91,10 +85,6 @@ final class UsageStore {
 
     var isStale: Bool {
         StalePolicy.isStale(lastSuccessfulRefresh, refreshMinutes: preferences.refreshMinutes)
-    }
-
-    func isSnapshotStale(_ snapshot: ProviderSnapshot) -> Bool {
-        StalePolicy.isStale(snapshot.fetchedAt, refreshMinutes: preferences.refreshMinutes)
     }
 
     func presentation(for id: ProviderID) -> ProviderPresentation {
@@ -200,7 +190,6 @@ final class UsageStore {
         snapshots = next
         lastFailures = nextFailures
         lastSuccessAt = nextSuccess
-        lastAttemptAt = .now
         isOffline = sawOffline
         lastSuccessfulRefresh = nextSuccess.values.max()
         try? cache.save(next)

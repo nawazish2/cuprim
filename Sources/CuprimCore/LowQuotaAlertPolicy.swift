@@ -5,14 +5,13 @@ import Foundation
 public enum LowQuotaAlertPolicy {
     public static let thresholds = [20, 5]
 
-    /// Smallest remaining threshold that has been newly crossed.
-    public static func newlyReachedThreshold(
+    /// Every remaining threshold that has been newly crossed, most urgent first.
+    public static func newlyReachedThresholds(
         remainingPercent: Int,
         alreadySent: Set<Int>
-    ) -> Int? {
+    ) -> [Int] {
         let reached = Set(thresholds.filter { remainingPercent <= $0 })
-        let newly = reached.subtracting(alreadySent)
-        return newly.min()
+        return reached.subtracting(alreadySent).sorted()
     }
 
     public static func remainingPercent(usedFraction: Double) -> Int {

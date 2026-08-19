@@ -7,7 +7,6 @@ struct ProviderCardView: View {
     var snapshot: ProviderSnapshot?
     var showUsedPercent: Bool = true
     var absoluteResets: Bool = false
-    var isStale: Bool = false
     var copiedCommand: String?
     var onCopy: (String) -> Void = { _ in }
     var onRefresh: () -> Void = {}
@@ -16,15 +15,23 @@ struct ProviderCardView: View {
         presentation.snapshot ?? snapshot
     }
 
+    /// Non-nil only when every metric's reset date renders the same label —
+    /// otherwise a single combined row would misrepresent metrics that
+    /// actually reset at different times, so callers fall back to a
+    /// per-metric reset row instead (see `showsSharedReset`).
     private var sharedResetDate: Date? {
         guard let snapshot = displaySnapshot else { return nil }
         let dates = snapshot.metrics.compactMap(\.resetsAt)
         guard !dates.isEmpty else { return nil }
         let labels = dates.map { QuotaFormatting.smartResetLabel(for: $0) }
-        if let first = labels.first, labels.allSatisfy({ $0 == first }) {
-            return dates.min()
-        }
+        guard let first = labels.first, labels.allSatisfy({ $0 == first }) else { return nil }
         return dates.min()
+    }
+
+    private var showsPerMetricReset: Bool {
+        guard let snapshot = displaySnapshot else { return false }
+        let dates = snapshot.metrics.compactMap(\.resetsAt)
+        return dates.count > 1 && sharedResetDate == nil
     }
 
     var body: some View {
@@ -89,13 +96,16 @@ struct ProviderCardView: View {
     @ViewBuilder
     private func meters(_ snapshot: ProviderSnapshot, staleCaption: String?) -> some View {
         if snapshot.isExhausted {
+            // Distinct glyph (triangle) from the per-metric dot badge below,
+            // so "whole provider capped" reads differently from "this one
+            // row is high" at a glance.
             HStack(spacing: 4) {
-                Image(systemName: "exclamationmark.square.fill")
+                Image(systemName: "exclamationmark.triangle.fill")
                     .font(.caption2)
                 Text("Limit reached")
                     .font(.caption2.weight(.medium))
             }
-            .foregroundStyle(Color.red)
+            .foregroundStyle(GlassChrome.usageRed)
         }
 
         if snapshot.metrics.isEmpty {
@@ -109,7 +119,7 @@ struct ProviderCardView: View {
                         metric: metric,
                         showUsedPercent: showUsedPercent,
                         absoluteResets: absoluteResets,
-                        showReset: false
+                        showReset: showsPerMetricReset
                     )
                 }
             }

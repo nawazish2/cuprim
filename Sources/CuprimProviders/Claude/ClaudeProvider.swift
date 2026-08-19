@@ -12,10 +12,6 @@ public struct ClaudeProvider: ProviderRuntime {
         self.http = http
     }
 
-    public func hasLocalCredentials() async -> Bool {
-        loadOAuth() != nil || loadDesktopUsageSample() != nil
-    }
-
     public func refresh() async throws -> ProviderSnapshot {
         if let oauth = loadOAuth() {
             if isExpired(oauth) {
@@ -27,12 +23,12 @@ public struct ClaudeProvider: ProviderRuntime {
             if let accessToken = oauth.accessToken, !accessToken.isEmpty {
                 do {
                     return try await fetchLiveUsage(accessToken: accessToken, oauth: oauth)
-                } catch ProviderError.signedOut, ProviderError.sessionExpired {
-                    if let desktop = loadDesktopUsageSample() {
-                        return ClaudeUsageMapping.snapshot(fromDesktop: desktop)
-                    }
-                    throw ProviderError.sessionExpired
-                } catch {
+                } catch let error as ProviderError where Self.allowsDesktopFallback(error) {
+                    // Only fall back to the (possibly stale, possibly wrong-plan)
+                    // Desktop sample when we know *why* the live call failed and
+                    // it's one of these three reasons. A decode/unavailable/
+                    // network error is a real failure and must surface as one,
+                    // not be silently repainted as a fresh "ok" snapshot.
                     if let desktop = loadDesktopUsageSample() {
                         return ClaudeUsageMapping.snapshot(fromDesktop: desktop)
                     }
@@ -80,6 +76,13 @@ public struct ClaudeProvider: ProviderRuntime {
 
     private struct ClaudeCredentialsFile: Codable {
         var claudeAiOauth: ClaudeOAuth?
+    }
+
+    private static func allowsDesktopFallback(_ error: ProviderError) -> Bool {
+        switch error {
+        case .signedOut, .sessionExpired, .rateLimited: true
+        case .http, .decode, .timedOut, .unavailable: false
+        }
     }
 
     private func isExpired(_ oauth: ClaudeOAuth) -> Bool {

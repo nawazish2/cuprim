@@ -9,7 +9,7 @@
       <ol class="flow mt-10" aria-label="Where credentials go">
         <li>
           <strong>On this Mac</strong>
-          <span>Claude, Codex, Cursor, Grok, and Antigravity keep their own sign-in.</span>
+          <span>Claude, Codex, Cursor, and Grok keep their own sign-in.</span>
         </li>
         <li>
           <strong>Cuprim</strong>

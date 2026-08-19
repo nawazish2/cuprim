@@ -38,7 +38,10 @@ public enum CursorUsageMapping {
                 Metric(
                     id: "total",
                     label: "Total",
-                    usedFraction: 0,
+                    // Unlimited is "no data", not a real 0% used — a literal
+                    // 0 would feed a fabricated data point into aggregates
+                    // like worst-remaining-fraction.
+                    usedFraction: nil,
                     resetsAt: cycleReset,
                     detail: "Unlimited",
                     showsResetRow: cycleReset != nil
@@ -50,7 +53,7 @@ public enum CursorUsageMapping {
             let api = normalizedPercent(plan?.apiPercentUsed)
                 ?? percent(fromDisplay: decoded.namedModelSelectedDisplayMessage)
             let total = normalizedPercent(plan?.totalPercentUsed)
-                ?? combinedAverage(auto: auto, api: api)
+                ?? worstOf(auto: auto, api: api)
 
             if let auto {
                 metrics.append(metric(id: "auto", label: "Auto", fraction: auto, reset: cycleReset))
@@ -69,7 +72,7 @@ public enum CursorUsageMapping {
 
         return ProviderSnapshot(
             id: .cursor,
-            planName: decoded.membershipType?.capitalized,
+            planName: PlanNameFormatting.prettyPlan(decoded.membershipType),
             metrics: metrics,
             status: .ok,
             fetchedAt: date
@@ -82,14 +85,17 @@ public enum CursorUsageMapping {
             label: label,
             usedFraction: fraction,
             resetsAt: reset,
-            detail: "\(Int((fraction * 100).rounded()))% used",
+            detail: "\(Utilization.usedPercent(usedFraction: fraction))% used",
             showsResetRow: true
         )
     }
 
-    private static func combinedAverage(auto: Double?, api: Double?) -> Double? {
+    /// Cursor's combined "Total" when the API doesn't supply one directly.
+    /// The worst of the two buckets is the correct fallback — averaging
+    /// would mask a fully exhausted bucket behind a healthy-looking number.
+    private static func worstOf(auto: Double?, api: Double?) -> Double? {
         switch (auto, api) {
-        case let (a?, b?): return (a + b) / 2
+        case let (a?, b?): return max(a, b)
         case let (a?, nil): return a
         case let (nil, b?): return b
         default: return nil

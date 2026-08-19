@@ -24,10 +24,6 @@ actor GrokCredentialStore {
     func persist(_ auth: LoadedAuth) throws {
         let url = URL(fileURLWithPath: authPath())
         let fm = FileManager.default
-        var permissions: NSNumber?
-        if fm.fileExists(atPath: url.path) {
-            permissions = (try? fm.attributesOfItem(atPath: url.path)[.posixPermissions] as? NSNumber)
-        }
 
         var root: [String: Any] = [:]
         if let data = try? Data(contentsOf: url),
@@ -53,16 +49,17 @@ actor GrokCredentialStore {
         let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
         let temp = url.appendingPathExtension("tmp")
         try data.write(to: temp, options: .atomic)
+        // Tighten permissions on the temp file *before* it's moved into
+        // place, so the cleartext access/refresh tokens are never briefly
+        // world-readable under the process umask. Tokens should never be
+        // laxer than 0600 regardless of what the file's prior mode was.
+        try? fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: temp.path)
         if fm.fileExists(atPath: url.path) {
             _ = try fm.replaceItemAt(url, withItemAt: temp)
         } else {
             try fm.moveItem(at: temp, to: url)
         }
-        if let permissions {
-            try? fm.setAttributes([.posixPermissions: permissions], ofItemAtPath: url.path)
-        } else {
-            try? fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
-        }
+        try? fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
     }
 
     private func parse(_ root: [String: Any]) -> LoadedAuth? {
@@ -110,10 +107,6 @@ public struct GrokProvider: ProviderRuntime {
 
     public init(http: HTTPClient = HTTPClient()) {
         self.http = http
-    }
-
-    public func hasLocalCredentials() async -> Bool {
-        await credentials.load() != nil
     }
 
     public func refresh() async throws -> ProviderSnapshot {

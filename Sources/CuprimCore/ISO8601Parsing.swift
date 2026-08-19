@@ -29,7 +29,8 @@ public enum ISO8601Parsing {
         return Date(timeIntervalSince1970: epochSeconds(value))
     }
 
-    private static func epochSeconds(_ value: Double) -> TimeInterval {
+    /// Disambiguates a Unix timestamp that may be given in seconds or milliseconds.
+    public static func epochSeconds(_ value: Double) -> TimeInterval {
         value > 1_000_000_000_000 ? value / 1000 : value
     }
 }

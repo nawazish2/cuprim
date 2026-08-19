@@ -17,12 +17,12 @@ export default defineNuxtConfig({
         {
           name: "description",
           content:
-            "Free open-source macOS menu-bar app for Claude, Codex, Cursor, Grok, and Antigravity quota — local only, no telemetry.",
+            "Free open-source macOS menu-bar app for Claude, Codex, Cursor, and Grok quota — local only, no telemetry.",
         },
         { property: "og:title", content: "Cuprim — Know which AI tool runs out next" },
         {
           property: "og:description",
-          content: "Menu-bar AI quota for Claude, Codex, Cursor, Grok, and Antigravity. Local only.",
+          content: "Menu-bar AI quota for Claude, Codex, Cursor, and Grok. Local only.",
         },
         { property: "og:image", content: ogImage },
         { property: "og:type", content: "website" },
@@ -31,7 +31,7 @@ export default defineNuxtConfig({
         { name: "twitter:title", content: "Cuprim" },
         {
           name: "twitter:description",
-          content: "Menu-bar AI quota for Claude, Codex, Cursor, Grok, and Antigravity. Local only.",
+          content: "Menu-bar AI quota for Claude, Codex, Cursor, and Grok. Local only.",
         },
         { name: "twitter:image", content: ogImage },
         { name: "theme-color", content: "#f4f6f3" },

@@ -11,10 +11,6 @@ public struct CodexProvider: ProviderRuntime {
         self.http = http
     }
 
-    public func hasLocalCredentials() async -> Bool {
-        loadAuth() != nil
-    }
-
     public func refresh() async throws -> ProviderSnapshot {
         guard let auth = loadAuth() else {
             throw ProviderError.signedOut

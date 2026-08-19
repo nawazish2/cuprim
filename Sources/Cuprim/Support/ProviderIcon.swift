@@ -6,6 +6,7 @@ import CuprimCore
 struct ProviderIconView: View {
     let id: ProviderID
     var size: CGFloat = 15
+    var opticalScale: CGFloat = 1
     var foreground: Color = Color.primary.opacity(0.92)
 
     var body: some View {
@@ -23,6 +24,7 @@ struct ProviderIconView: View {
                     .foregroundStyle(foreground)
             }
         }
+        .frame(width: size * opticalScale, height: size * opticalScale)
         .frame(width: size, height: size)
         .accessibilityHidden(true)
     }

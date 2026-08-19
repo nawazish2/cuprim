@@ -20,4 +20,4 @@ Asymmetric hero with one Download CTA. Product proof is a layered MacBook with a
 
 Core copy is visible without JavaScript. Reveal and FAQ collapse are progressive enhancement.
 
-Product facts: Claude / Codex / Cursor / Grok / Antigravity · macOS 26+ · Apple Silicon · ad-hoc Gatekeeper path · Sparkle update integrity.
+Product facts: Claude / Codex / Cursor / Grok · macOS 26+ · Apple Silicon · ad-hoc Gatekeeper path · Sparkle update integrity.

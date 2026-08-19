@@ -28,8 +28,6 @@ enum ProviderLoginAction {
             return .openApp(bundleIdentifier: "com.todesktop.230313mzl4w4u92")
         case .grok:
             return .copyCommand("grok login")
-        case .antigravity:
-            return .copyCommand("agy")
         }
     }
 
@@ -39,7 +37,6 @@ enum ProviderLoginAction {
         case .codex: return "Sign in with the Codex CLI."
         case .cursor: return "Open Cursor and sign in."
         case .grok: return "Sign in with Grok Build."
-        case .antigravity: return "Open Antigravity or run agy."
         }
     }
 

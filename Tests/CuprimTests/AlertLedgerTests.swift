@@ -30,9 +30,52 @@ final class AlertLedgerTests: XCTestCase {
     func testDisabledProviderDoesNotCreateAlertFromPolicyAlone() {
         // Crossing policy is pure; callers must skip disabled providers.
         XCTAssertEqual(
-            LowQuotaAlertPolicy.newlyReachedThreshold(remainingPercent: 4, alreadySent: []),
+            LowQuotaAlertPolicy.newlyReachedThresholds(remainingPercent: 4, alreadySent: []).first,
             5
         )
+    }
+
+    func testNewlyReachedThresholdsReturnsAllCrossedNotJustMostUrgent() {
+        // Regression: dropping straight to 4% with an empty ledger crosses
+        // both the 20% and 5% thresholds in one refresh — both must be
+        // reported (and recorded), or the un-recorded one re-fires next time.
+        XCTAssertEqual(
+            LowQuotaAlertPolicy.newlyReachedThresholds(remainingPercent: 4, alreadySent: []),
+            [5, 20]
+        )
+    }
+
+    func testNewlyReachedThresholdsDoesNotRefireAnAlreadySentThreshold() {
+        // The exact failing input from the double-fire bug: 5% was already
+        // sent, remaining is still <= 20%, so 20% alone must be newly reached.
+        XCTAssertEqual(
+            LowQuotaAlertPolicy.newlyReachedThresholds(remainingPercent: 4, alreadySent: [5]),
+            [20]
+        )
+    }
+
+    func testNewlyReachedThresholdsEmptyWhenAllAlreadySent() {
+        XCTAssertEqual(
+            LowQuotaAlertPolicy.newlyReachedThresholds(remainingPercent: 4, alreadySent: [5, 20]),
+            []
+        )
+    }
+
+    func testLedgerRetainsNilExpiryWindowsUntilTTL() {
+        // Reset-less metrics (e.g. Claude's Desktop fallback) record a nil
+        // expiresAt. Without a TTL fallback, a 5% alert would be muted
+        // forever, even across a real quota reset the app never observes.
+        var ledger = LowQuotaAlertLedger()
+        let recordedAt = Date(timeIntervalSince1970: 1_000)
+        ledger.record(key: "reset-less", threshold: 5, expiresAt: nil, now: recordedAt)
+
+        let justUnderTTL = recordedAt.addingTimeInterval(LowQuotaAlertLedger.noExpiryTTL - 1)
+        ledger.prune(now: justUnderTTL)
+        XCTAssertEqual(ledger.sentThresholds(for: "reset-less"), [5])
+
+        let pastTTL = recordedAt.addingTimeInterval(LowQuotaAlertLedger.noExpiryTTL + 1)
+        ledger.prune(now: pastTTL)
+        XCTAssertNil(ledger.windows["reset-less"])
     }
 
     func testHorizonPreferenceMigratesOnce() {

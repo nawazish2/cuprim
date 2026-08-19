@@ -2,7 +2,7 @@
   <section id="providers" class="section">
     <div class="wrap">
       <div class="section-eyebrow">Providers</div>
-      <h2 class="section-title">Five tools. One glance.</h2>
+      <h2 class="section-title">Four tools. One glance.</h2>
       <p class="section-lead mt-3">
         Cuprim reads the sign-in already on this Mac. It never creates an account with us.
       </p>

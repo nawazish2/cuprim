@@ -1,6 +1,6 @@
 # Cuprim
 
-Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, **Grok**, and **Antigravity** quota usage.
+Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, and **Grok** quota usage.
 
 **Local only** · no accounts · no telemetry · no cloud sync · light on RAM  
 **Apple Silicon** · **macOS 26+** · MIT
@@ -29,7 +29,6 @@ This build is ad-hoc signed (not notarized yet). If macOS blocks it:
   - Codex CLI (`~/.codex/auth.json`)
   - Cursor
   - Grok Build (`grok login`)
-  - Antigravity / `agy`
 
 ## Updates
 

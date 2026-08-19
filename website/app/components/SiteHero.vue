@@ -18,7 +18,7 @@
             runs out next
           </h1>
           <p class="hero-lead">
-            Claude, Codex, Cursor, Grok, and Antigravity — live in the Mac menu bar. Local only. No telemetry.
+            Claude, Codex, Cursor, and Grok — live in the Mac menu bar. Local only. No telemetry.
           </p>
           <div class="hero-actions">
             <a :href="SITE.releasesLatest" class="btn btn-lg" target="_blank" rel="noopener noreferrer">

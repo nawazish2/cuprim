@@ -34,6 +34,33 @@ final class SnapshotCacheTests: XCTestCase {
         XCTAssertEqual(dirMode?.intValue, 0o700)
     }
 
+    func testLoadSkipsUnknownProviderKeys() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("cuprim-cache-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let cache = SnapshotCache(directory: directory)
+        let good = ProviderSnapshot(
+            id: .claude,
+            planName: "Pro",
+            metrics: [Metric(id: "weekly", label: "Weekly", usedFraction: 0.2)],
+            status: .ok,
+            fetchedAt: Date(timeIntervalSince1970: 50)
+        )
+        try cache.save([.claude: good])
+        let existing = String(decoding: try Data(contentsOf: cache.fileURL), as: UTF8.self)
+        guard existing.hasPrefix("["), existing.hasSuffix("]") else {
+            XCTFail("expected unkeyed JSON, got \(existing)")
+            return
+        }
+        var json = String(existing.dropLast())
+        json += #","antigravity",{"id":"antigravity","planName":"Pro","metrics":[],"status":{"ok":{}},"fetchedAt":50}]"#
+        try Data(json.utf8).write(to: cache.fileURL)
+
+        let loaded = cache.load()
+        XCTAssertEqual(loaded.count, 1)
+        XCTAssertEqual(loaded[.claude]?.planName, "Pro")
+    }
+
     func testRefreshGateCoalescesConcurrentWork() async {
         let gate = RefreshGate()
         let counter = Counter()

@@ -2,7 +2,7 @@
 
 ## What this is
 
-**Cuprim** is a free macOS **menu-bar** app that shows quota usage for **Claude**, **Codex**, **Cursor**, **Grok**, and **Antigravity**.
+**Cuprim** is a free macOS **menu-bar** app that shows quota usage for **Claude**, **Codex**, **Cursor**, and **Grok**.
 
 - Local only: no accounts with us, no telemetry, no cloud sync, no backend
 - Credentials stay on the machine; Cuprim only talks to each provider’s own usage API
@@ -12,7 +12,7 @@
 
 - **Apple Silicon** (arm64) only
 - **macOS 26+** (Liquid Glass)
-- Providers the user cares about already signed in locally (Claude Code/Desktop, Codex CLI `~/.codex/auth.json`, Cursor, Grok Build / `grok login`, Antigravity / `agy`)
+- Providers the user cares about already signed in locally (Claude Code/Desktop, Codex CLI `~/.codex/auth.json`, Cursor, Grok Build / `grok login`)
 
 Cloud/Linux agents **cannot** compile or run the app. Treat build/package/UI verification as **manual on an Apple Silicon Mac**, or skip with that precondition stated.
 

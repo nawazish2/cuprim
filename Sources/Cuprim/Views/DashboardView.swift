@@ -70,7 +70,6 @@ struct DashboardView: View {
                                 snapshot: usage.snapshots[id],
                                 showUsedPercent: preferences.showUsedPercent,
                                 absoluteResets: preferences.absoluteResetTimes,
-                                isStale: usage.snapshots[id].map(usage.isSnapshotStale) ?? false,
                                 copiedCommand: copiedCommand,
                                 onCopy: copy(_:),
                                 onRefresh: { Task { await usage.refresh() } }
@@ -83,6 +82,7 @@ struct DashboardView: View {
                 .padding(.top, 2)
                 .padding(.bottom, GlassChrome.scrollBottomPad)
             }
+            .id(uiState.scrollResetToken)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .layoutPriority(-1)
             .clipped()
@@ -226,7 +226,7 @@ struct DashboardView: View {
                 .foregroundStyle(GlassChrome.textPrimary)
             Text(
                 uiState.selectedTab == .overview
-                    ? "Sign in to Claude, Codex, Cursor, Grok, or Antigravity on this Mac."
+                    ? "Sign in to Claude, Codex, Cursor, or Grok on this Mac."
                     : emptyProviderHint
             )
             .font(.caption)

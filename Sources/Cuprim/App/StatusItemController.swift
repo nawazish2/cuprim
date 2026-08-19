@@ -54,6 +54,12 @@ final class StatusItemController: NSObject {
         statusItem.menu = nil
     }
 
+    isolated deinit {
+        if let appearanceObserver {
+            DistributedNotificationCenter.default.removeObserver(appearanceObserver)
+        }
+    }
+
     private func observeAppearance() {
         appearanceObserver = DistributedNotificationCenter.default.addObserver(
             forName: Notification.Name("AppleInterfaceThemeChangedNotification"),
@@ -113,7 +119,11 @@ final class StatusItemController: NSObject {
             hasVisibleOK: usage.visibleSnapshots.contains { if case .ok = $0.status { return true }; return false },
             isRefreshing: kind == .refreshing
         )
-        button.toolTip = MenuBarTooltip.text(remainingPercent: remaining, severity: severity)
+        var toolTip = MenuBarTooltip.text(remainingPercent: remaining, severity: severity)
+        if kind != .refreshing, usage.isStale {
+            toolTip += " · Stale"
+        }
+        button.toolTip = toolTip
     }
 
     private func syncRefreshAnimation(isRefreshing: Bool) {

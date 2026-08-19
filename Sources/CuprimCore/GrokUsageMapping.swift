@@ -36,12 +36,14 @@ public enum GrokUsageMapping {
         let periodEnd = ISO8601Parsing.date(from: config.billingPeriodEnd)
             ?? ISO8601Parsing.date(from: config.currentPeriod?.end)
 
-        if let weekly = config.creditUsagePercent {
-            let fraction = Utilization.fraction(fromPercent: weekly)
+        if let credits = config.creditUsagePercent {
+            let fraction = Utilization.fraction(fromPercent: credits)
+            // Labeled "period", not "weekly" — the reset date comes from the
+            // billing period end, which isn't necessarily a weekly cadence.
             metrics.append(
                 Metric(
-                    id: "weekly",
-                    label: "Weekly limit",
+                    id: "period",
+                    label: "Billing period",
                     usedFraction: fraction,
                     resetsAt: periodEnd,
                     detail: "\(Utilization.usedPercent(usedFraction: fraction))% used",

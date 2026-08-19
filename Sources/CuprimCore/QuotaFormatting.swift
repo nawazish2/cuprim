@@ -71,14 +71,6 @@ public enum QuotaFormatting {
         return "Resets soon"
     }
 
-    public static func isStale(
-        _ date: Date?,
-        refreshMinutes: Int,
-        relativeTo now: Date = .now
-    ) -> Bool {
-        StalePolicy.isStale(date, refreshMinutes: refreshMinutes, relativeTo: now)
-    }
-
     /// Short age for last *successful* fetch (e.g. "just now").
     public static func updatedLabel(for date: Date?, relativeTo now: Date = .now) -> String? {
         guard let date else { return nil }

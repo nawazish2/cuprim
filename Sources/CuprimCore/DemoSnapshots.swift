@@ -45,17 +45,7 @@ public enum DemoSnapshots {
                 id: .grok,
                 planName: "SuperGrok",
                 metrics: [
-                    Metric(id: "weekly", label: "Weekly limit", usedFraction: 0.54, resetsAt: resetWeek, detail: "54% used")
-                ],
-                status: .ok,
-                fetchedAt: date
-            ),
-            .antigravity: ProviderSnapshot(
-                id: .antigravity,
-                planName: "Pro",
-                metrics: [
-                    Metric(id: "gemini.weekly", label: "Gemini weekly", usedFraction: 0.22, resetsAt: resetWeek),
-                    Metric(id: "claude.weekly", label: "Claude + GPT weekly", usedFraction: 0.11, resetsAt: resetWeek)
+                    Metric(id: "period", label: "Billing period", usedFraction: 0.54, resetsAt: resetWeek, detail: "54% used")
                 ],
                 status: .ok,
                 fetchedAt: date
