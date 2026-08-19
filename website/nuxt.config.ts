@@ -37,9 +37,9 @@ export default defineNuxtConfig({
         { name: "theme-color", content: "#f4f6f3" },
       ],
       link: [
-        ...(siteUrl ? [{ rel: "canonical", href: `${siteUrl}/` }] : []),
-        { rel: "icon", type: "image/png", href: "/favicon.png" },
-        { rel: "apple-touch-icon", href: "/icon-192.png" },
+        ...(siteUrl ? [{ rel: "canonical" as const, href: `${siteUrl}/` }] : []),
+        { rel: "icon" as const, type: "image/png", href: "/favicon.png" },
+        { rel: "apple-touch-icon" as const, href: "/icon-192.png" },
       ],
     },
   },
