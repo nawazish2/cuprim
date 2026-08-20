@@ -6,11 +6,11 @@
           <CupLogo :size="26" class="rounded-[6px]" />
           Cuprim
         </a>
-        <nav class="flex flex-wrap justify-center gap-5" aria-label="Footer">
-          <a :href="SITE.github" class="text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <a :href="SITE.releases" class="text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]" target="_blank" rel="noopener noreferrer">Releases</a>
-          <a :href="SITE.license" class="text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]" target="_blank" rel="noopener noreferrer">License (MIT)</a>
-          <a href="#privacy" class="text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]">Privacy</a>
+        <nav class="flex flex-wrap justify-center gap-1" aria-label="Footer">
+          <a :href="SITE.github" class="inline-flex items-center px-2 py-3 text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a :href="SITE.releases" class="inline-flex items-center px-2 py-3 text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]" target="_blank" rel="noopener noreferrer">Releases</a>
+          <a :href="SITE.license" class="inline-flex items-center px-2 py-3 text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]" target="_blank" rel="noopener noreferrer">License (MIT)</a>
+          <a href="#privacy" class="inline-flex items-center px-2 py-3 text-[0.9rem] text-[var(--muted)] no-underline transition hover:text-[var(--ink)]">Privacy</a>
         </nav>
       </div>
       <p class="text-[0.78rem] font-medium tracking-[-0.01em] text-[var(--muted)]">

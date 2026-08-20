@@ -243,6 +243,21 @@
     color: var(--muted);
   }
 
+  /* Pair with .section--product (text-align: left on the section) so a
+     heading/lead don't stay centered as a box — via margin: 0 auto — while
+     the body content below them (a statement list, steps, an image) is
+     naturally left-aligned. Without this override the two halves of a
+     section visibly disagree on alignment. */
+  .section--product {
+    text-align: left;
+  }
+
+  .section-title--left,
+  .section-lead--left {
+    margin-left: 0;
+    text-align: left;
+  }
+
   /* Sparse statement rows */
   .statement-list {
     margin: 32px auto 0;
@@ -292,8 +307,11 @@
   }
 
   html.js-enhance .reveal {
-    opacity: 0;
-    transform: translateY(12px);
+    /* Never fully invisible — a slow or missed IntersectionObserver
+       trigger (fast scroll, slow JS) fades content in rather than
+       hiding it outright. */
+    opacity: 0.35;
+    transform: translateY(10px);
     transition:
       opacity 0.65s cubic-bezier(0.22, 0.8, 0.28, 1),
       transform 0.65s cubic-bezier(0.22, 0.8, 0.28, 1);

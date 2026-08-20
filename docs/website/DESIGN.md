@@ -16,7 +16,7 @@
 | Display font | SF / system UI |
 | Mono | Geist Mono |
 
-Asymmetric hero with one Download CTA. Product proof is a layered MacBook with a single menu-to-dashboard transition (IntersectionObserver / CSS). Static poster on mobile and reduced motion. No fake Finder chrome, fake Dock, version chips, or equal feature grids.
+Asymmetric hero with one Download CTA. Product proof is a layered MacBook: wallpaper, a persistent menu-bar gauge, and the dashboard panel fading in from the gauge's corner on scroll (IntersectionObserver / CSS). Static poster on mobile and reduced motion. No fake Finder chrome, fake Dock, version chips, or equal feature grids.
 
 Core copy is visible without JavaScript. Reveal and FAQ collapse are progressive enhancement.
 

@@ -5,7 +5,7 @@
     <main id="main">
       <SiteHero />
       <GlanceSection />
-      <FeatureScroll />
+      <ProvidersSection />
       <TrustSection />
       <InstallSection />
       <FaqSection />
@@ -37,6 +37,10 @@ useHead({
 })
 
 onMounted(() => {
+  // Owns js-enhance for the whole page (the FAQ accordion's no-JS fallback
+  // and the .reveal scroll-in system both key off this).
+  document.documentElement.classList.add("js-enhance")
+
   const nodes = document.querySelectorAll(".reveal")
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
   if (reduce) {
@@ -53,7 +57,10 @@ onMounted(() => {
         }
       }
     },
-    { threshold: 0.08, rootMargin: "0px 0px -4% 0px" },
+    // Trigger while a section is still below the fold (positive bottom
+    // margin expands the root downward) so normal scrolling never shows a
+    // blank flash waiting for the fade-in to catch up.
+    { threshold: 0, rootMargin: "0px 0px 20% 0px" },
   )
   nodes.forEach((el) => {
     if (!el.classList.contains("in")) io.observe(el)

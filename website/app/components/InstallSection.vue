@@ -1,9 +1,9 @@
 <template>
-  <section id="install" class="section">
-    <div class="wrap">
+  <section id="install" class="section section--product">
+    <div class="wrap reveal">
       <div class="section-eyebrow">Install</div>
-      <h2 class="section-title">Download, then open once.</h2>
-      <p class="section-lead mt-3">
+      <h2 class="section-title section-title--left">Download, then open once.</h2>
+      <p class="section-lead section-lead--left mt-3">
         Current builds are ad-hoc signed. Sparkle verifies later updates. Developer ID notarization is optional.
       </p>
       <ol class="steps mt-10">

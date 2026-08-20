@@ -8,8 +8,8 @@
       class="demo-poster"
       src="/macbook-demo-poster.webp"
       width="1700"
-      height="1281"
-      alt="Cuprim dashboard on a Mac desktop, opened from the menu bar"
+      height="1260"
+      alt="Cuprim dashboard open on a Mac desktop, opened from the menu bar gauge"
       fetchpriority="high"
     >
 
@@ -26,19 +26,19 @@
             loading="lazy"
           >
           <img
-            class="cuprim-surface cuprim-surface--menu"
-            src="/cuprim-menu.webp"
-            width="298"
-            height="852"
+            class="gauge"
+            src="/cuprim-gauge.webp"
+            width="160"
+            height="160"
             alt=""
             decoding="async"
             loading="lazy"
           >
           <img
-            class="cuprim-surface cuprim-surface--dashboard"
+            class="panel"
             src="/cuprim-dashboard.webp"
-            width="720"
-            height="930"
+            width="600"
+            height="840"
             alt=""
             decoding="async"
             loading="lazy"
@@ -123,12 +123,13 @@ onMounted(() => {
     pointer-events: none;
   }
 
+  /* Measured against macbook-frame.webp's transparent screen cutout. */
   .macbook-screen {
     position: absolute;
     z-index: 1;
-    top: 12.9%;
+    top: 12.86%;
     left: 12.35%;
-    width: 75.3%;
+    width: 75.29%;
     height: 74.2%;
     overflow: hidden;
     background: #101318;
@@ -141,40 +142,33 @@ onMounted(() => {
     object-fit: cover;
   }
 
-  .cuprim-surface {
+  /* Always visible — the status item stays put whether the panel is open or not. */
+  .gauge {
     position: absolute;
     z-index: 2;
-    display: block;
+    top: 4%;
+    right: 8%;
+    width: 5%;
     height: auto;
+  }
+
+  .panel {
+    position: absolute;
+    z-index: 2;
+    top: 10%;
+    right: 5%;
+    width: 34%;
+    height: auto;
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) scale(0.96);
+    transform-origin: top right;
     filter: drop-shadow(0 18px 22px rgb(0 0 0 / 32%));
-  }
-
-  .cuprim-surface--menu {
-    top: 8%;
-    right: 3.7%;
-    width: 16.2%;
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
     transition: opacity 0.7s ease, transform 0.7s ease;
   }
 
-  .cuprim-surface--dashboard {
-    top: 13%;
-    right: 11%;
-    width: 31%;
-    opacity: 0;
-    transform: translate3d(0, 14px, 0);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-
-  .is-open .cuprim-surface--menu {
-    opacity: 0;
-    transform: translate3d(0, -8px, 0);
-  }
-
-  .is-open .cuprim-surface--dashboard {
+  .is-open .panel {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 

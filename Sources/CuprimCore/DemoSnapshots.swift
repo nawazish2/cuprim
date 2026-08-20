@@ -6,7 +6,7 @@ public enum DemoSnapshots {
         ProcessInfo.processInfo.environment["CUPRIM_DEMO"] == "1"
     }
 
-    public static func all(at date: Date = Date(timeIntervalSince1970: 1_777_000_000)) -> [ProviderID: ProviderSnapshot] {
+    public static func all(at date: Date = .now) -> [ProviderID: ProviderSnapshot] {
         let resetSoon = date.addingTimeInterval(2 * 3600)
         let resetWeek = date.addingTimeInterval(5 * 86_400)
         return [

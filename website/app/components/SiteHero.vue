@@ -5,13 +5,13 @@
       aria-hidden="true"
       style="
         background:
-          radial-gradient(580px 300px at 78% 0%, #0073eb12, transparent 68%),
-          radial-gradient(480px 280px at 8% 10%, #181b1708, transparent 65%);
+          radial-gradient(580px 300px at 78% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 68%),
+          radial-gradient(480px 280px at 8% 10%, color-mix(in srgb, var(--ink) 3%, transparent), transparent 65%);
       "
     />
     <div class="wrap relative z-[1]">
       <div class="hero-grid">
-        <div class="hero-copy">
+        <div class="hero-copy reveal">
           <CupLogo :size="56" class="mb-5 rounded-[14px] shadow-[0_14px_40px_-22px_rgba(24,27,23,0.5)]" />
           <h1 class="hero-title">
             Know which AI tool<br />

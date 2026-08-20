@@ -1,6 +1,6 @@
 <template>
   <section id="faq" class="section section--compact-top">
-    <div class="wrap">
+    <div class="wrap reveal">
       <h2 class="section-title !max-w-none">Questions</h2>
       <p class="section-lead mt-3">
         Straight answers. No marketing stack.
@@ -51,10 +51,6 @@
 
 <script setup lang="ts">
 const open = ref<number | null>(null)
-
-onMounted(() => {
-  document.documentElement.classList.add("js-enhance")
-})
 
 const faqs = [
   {

@@ -1,5 +1,11 @@
 # Design review — Cuprim launch site package
 
+> **Stale.** Reviewed against the original launch-site plan (2026-08-07),
+> before the four-provider dashboard and the 2026-08-20 product-led
+> redesign. Accent `#388CFF` and the "void + cyan/blue" dark direction
+> below do not match the current site (`#0073eb`, light paper — see
+> `docs/website/DESIGN.md`). Kept for history, not as current guidance.
+
 Reviewed against plan criteria (2026-08-07).
 
 | Criterion | Result |
