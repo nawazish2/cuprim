@@ -8,10 +8,20 @@ struct ProviderIconView: View {
     var size: CGFloat = 15
     var opticalScale: CGFloat = 1
     var foreground: Color = Color.primary.opacity(0.92)
+    /// Force a specific SF Symbol instead of the brand asset. Grok's
+    /// ring-and-diagonal mark reads as a "no entry" glyph at very small
+    /// monochrome sizes (the tab bar) no matter how it's scaled — there's
+    /// more context (name label, larger size) everywhere else it's used,
+    /// so this only needs to be set at the tab bar's compact scale.
+    var overrideSystemSymbol: String?
 
     var body: some View {
         Group {
-            if let image = Self.templateImage(for: id) {
+            if let symbol = overrideSystemSymbol {
+                Image(systemName: symbol)
+                    .font(.system(size: size * 0.85, weight: .semibold))
+                    .foregroundStyle(foreground)
+            } else if let image = Self.templateImage(for: id) {
                 Image(nsImage: image)
                     .resizable()
                     .interpolation(.high)

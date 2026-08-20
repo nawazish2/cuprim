@@ -38,7 +38,12 @@ struct ProviderTabBar: View {
                         opticalScale: id.tabMarkScale,
                         foreground: selection == .provider(id)
                             ? GlassChrome.textTabActive
-                            : GlassChrome.textTabIdle
+                            : GlassChrome.textTabIdle,
+                        // Distinct from Claude's actual mark, which is
+                        // itself a sparkle/asterisk burst — reusing
+                        // ProviderID.systemImage ("sparkles") here would
+                        // trade one collision for another.
+                        overrideSystemSymbol: id == .grok ? "bolt.fill" : nil
                     )
                 }
             }
@@ -143,10 +148,10 @@ private extension ProviderID {
         case .claude: 0.92
         case .codex: 0.84
         case .cursor: 1.02
-        // Grok's ring-with-diagonal mark reads as a "no entry" glyph when
-        // it's rendered too small — sized up so the open gap in the ring
-        // stays legible as the actual logo rather than a closed slash.
-        case .grok: 1.22
+        // Grok uses an SF Symbol override in the tab bar (see
+        // `overrideSystemSymbol` above), rendered at a slightly smaller
+        // scale to match the other glyphs' optical weight.
+        case .grok: 0.95
         }
     }
 }
