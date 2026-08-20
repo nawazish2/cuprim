@@ -7,6 +7,8 @@ Free macOS menu-bar app that shows **Claude**, **Codex**, **Cursor**, and **Grok
 
 **Website:** [cuprim.knawazish153.workers.dev](https://cuprim.knawazish153.workers.dev) · **Download:** [Releases](https://github.com/nawazish2/cuprim/releases/latest)
 
+More by me: [nawazish.site](https://nawazish.site)
+
 ## Install
 
 1. Download the latest **`.dmg`** from [Releases](https://github.com/nawazish2/cuprim/releases/latest)
