@@ -15,7 +15,7 @@ final class UsageStore {
 
     private let providers: [any ProviderRuntime]
     private let cache: SnapshotCache
-    private let notifications: NotificationCoordinator
+    private let notifications: any QuotaAlerting
     private let preferences: PreferencesStore
     private let gate = RefreshGate()
     private var loopTask: Task<Void, Never>?
@@ -30,8 +30,8 @@ final class UsageStore {
             CursorProvider(),
             GrokProvider()
         ],
-        cache: SnapshotCache = SnapshotCache(),
-        notifications: NotificationCoordinator = NotificationCoordinator(),
+        cache: SnapshotCache,
+        notifications: any QuotaAlerting,
         preferences: PreferencesStore
     ) {
         self.providers = providers

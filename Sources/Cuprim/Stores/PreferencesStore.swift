@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import ServiceManagement
 import CuprimCore
 
@@ -9,53 +10,87 @@ enum LaunchAtLoginState {
     case unavailable
 }
 
+/// Seam over `SMAppService`. The real implementation reads
+/// `SMAppService.mainApp`, which is meaningless in a process that isn't the
+/// bundled app — so tests substitute a stub instead of touching login items.
+@MainActor
+protocol LaunchAtLoginControlling {
+    var state: LaunchAtLoginState { get }
+    func setEnabled(_ enabled: Bool) throws
+}
+
+@MainActor
+struct SMAppServiceLaunchAtLogin: LaunchAtLoginControlling {
+    init() {}
+
+    var state: LaunchAtLoginState {
+        switch SMAppService.mainApp.status {
+        case .notRegistered: .disabled
+        case .enabled: .enabled
+        case .requiresApproval: .requiresApproval
+        case .notFound: .unavailable
+        @unknown default: .unavailable
+        }
+    }
+
+    func setEnabled(_ enabled: Bool) throws {
+        if enabled {
+            if SMAppService.mainApp.status == .notRegistered {
+                try SMAppService.mainApp.register()
+            }
+        } else if SMAppService.mainApp.status != .notRegistered {
+            try SMAppService.mainApp.unregister()
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class PreferencesStore {
     var claudeEnabled: Bool {
-        didSet { UserDefaults.standard.set(claudeEnabled, forKey: Keys.claude) }
+        didSet { defaults.set(claudeEnabled, forKey: Keys.claude) }
     }
 
     var codexEnabled: Bool {
-        didSet { UserDefaults.standard.set(codexEnabled, forKey: Keys.codex) }
+        didSet { defaults.set(codexEnabled, forKey: Keys.codex) }
     }
 
     var cursorEnabled: Bool {
-        didSet { UserDefaults.standard.set(cursorEnabled, forKey: Keys.cursor) }
+        didSet { defaults.set(cursorEnabled, forKey: Keys.cursor) }
     }
 
     var grokEnabled: Bool {
-        didSet { UserDefaults.standard.set(grokEnabled, forKey: Keys.grok) }
+        didSet { defaults.set(grokEnabled, forKey: Keys.grok) }
     }
 
     /// Auto-refresh interval in minutes (wired to UsageStore loop).
     var refreshMinutes: Int {
-        didSet { UserDefaults.standard.set(max(1, refreshMinutes), forKey: Keys.refreshMinutes) }
+        didSet { defaults.set(max(1, refreshMinutes), forKey: Keys.refreshMinutes) }
     }
 
     /// Show used % as the primary meter value (click toggles remaining).
     var showUsedPercent: Bool {
-        didSet { UserDefaults.standard.set(showUsedPercent, forKey: Keys.showUsedPercent) }
+        didSet { defaults.set(showUsedPercent, forKey: Keys.showUsedPercent) }
     }
 
     /// CodexBar-style absolute reset times ("Resets 1 Sep at 5:30 AM").
     var absoluteResetTimes: Bool {
-        didSet { UserDefaults.standard.set(absoluteResetTimes, forKey: Keys.absoluteResets) }
+        didSet { defaults.set(absoluteResetTimes, forKey: Keys.absoluteResets) }
     }
 
     /// Hide providers that are not logged in (less noise, CodexBar-like focus).
     var hideLoggedOutProviders: Bool {
-        didSet { UserDefaults.standard.set(hideLoggedOutProviders, forKey: Keys.hideLoggedOut) }
+        didSet { defaults.set(hideLoggedOutProviders, forKey: Keys.hideLoggedOut) }
     }
 
     /// Opt-in local notifications when remaining quota crosses 20% or 5%.
     var lowQuotaAlertsEnabled: Bool {
-        didSet { UserDefaults.standard.set(lowQuotaAlertsEnabled, forKey: Keys.lowQuotaAlerts) }
+        didSet { defaults.set(lowQuotaAlertsEnabled, forKey: Keys.lowQuotaAlerts) }
     }
 
     /// First-launch dashboard shows every provider with a live connection state.
     var hasCompletedFirstLaunch: Bool {
-        didSet { UserDefaults.standard.set(hasCompletedFirstLaunch, forKey: Keys.firstLaunch) }
+        didSet { defaults.set(hasCompletedFirstLaunch, forKey: Keys.firstLaunch) }
     }
 
     var showsFirstLaunchSetup: Bool { !hasCompletedFirstLaunch }
@@ -64,15 +99,22 @@ final class PreferencesStore {
     var providerOrder: [ProviderID] {
         didSet {
             let raw = providerOrder.map(\.rawValue)
-            UserDefaults.standard.set(raw, forKey: Keys.providerOrder)
+            defaults.set(raw, forKey: Keys.providerOrder)
         }
     }
 
     private(set) var launchAtLoginState: LaunchAtLoginState
     private(set) var launchAtLoginError: String?
 
-    init() {
-        let defaults = UserDefaults.standard
+    @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let launchAtLoginController: any LaunchAtLoginControlling
+
+    init(
+        defaults: UserDefaults = .standard,
+        launchAtLogin: any LaunchAtLoginControlling = SMAppServiceLaunchAtLogin()
+    ) {
+        self.defaults = defaults
+        self.launchAtLoginController = launchAtLogin
         claudeEnabled = defaults.object(forKey: Keys.claude) as? Bool ?? true
         codexEnabled = defaults.object(forKey: Keys.codex) as? Bool ?? true
         cursorEnabled = defaults.object(forKey: Keys.cursor) as? Bool ?? true
@@ -104,7 +146,7 @@ final class PreferencesStore {
             providerOrder = Array(ProviderID.allCases)
         }
 
-        launchAtLoginState = Self.currentLaunchAtLoginState()
+        launchAtLoginState = launchAtLogin.state
         launchAtLoginError = nil
 
         // Antigravity was removed as a provider; drop its orphaned toggle.
@@ -184,38 +226,17 @@ final class PreferencesStore {
     }
 
     func refreshLaunchAtLoginState() {
-        launchAtLoginState = Self.currentLaunchAtLoginState()
+        launchAtLoginState = launchAtLoginController.state
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) {
         launchAtLoginError = nil
         do {
-            if enabled {
-                if SMAppService.mainApp.status == .notRegistered {
-                    try SMAppService.mainApp.register()
-                }
-            } else if SMAppService.mainApp.status != .notRegistered {
-                try SMAppService.mainApp.unregister()
-            }
+            try launchAtLoginController.setEnabled(enabled)
         } catch {
             launchAtLoginError = error.localizedDescription
         }
         refreshLaunchAtLoginState()
-    }
-
-    private static func currentLaunchAtLoginState() -> LaunchAtLoginState {
-        switch SMAppService.mainApp.status {
-        case .notRegistered:
-            return .disabled
-        case .enabled:
-            return .enabled
-        case .requiresApproval:
-            return .requiresApproval
-        case .notFound:
-            return .unavailable
-        @unknown default:
-            return .unavailable
-        }
     }
 
     private enum Keys {

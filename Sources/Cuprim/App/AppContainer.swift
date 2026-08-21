@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import CuprimCore
+import CuprimProviders
 
 @MainActor
 final class AppContainer {
@@ -13,7 +14,15 @@ final class AppContainer {
 
     init() {
         notifications = NotificationCoordinator()
-        usage = UsageStore(notifications: notifications, preferences: preferences)
+        // `cache` is passed explicitly rather than defaulted: `UsageStore.init`
+        // calls `deleteLegacyHistory()` on it, so a defaulted cache would let a
+        // test delete files under the developer's real Application Support
+        // directory just by constructing a store.
+        usage = UsageStore(
+            cache: SnapshotCache(),
+            notifications: notifications,
+            preferences: preferences
+        )
     }
 
     func start() {
