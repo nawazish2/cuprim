@@ -132,6 +132,12 @@ public struct MetricSeries: Codable, Equatable, Sendable {
         Date(timeIntervalSince1970: Double(firstBucket + index) * Double(bucketSeconds))
     }
 
+    /// The newest `limit` buckets, oldest first, gaps preserved as nil.
+    public func recentValues(limit: Int) -> [Double?] {
+        guard limit > 0 else { return [] }
+        return values.suffix(limit).map(Self.decode)
+    }
+
     /// Samples belonging to the most recent window, ready for `BurnRate`.
     public func currentWindow() -> (samples: [BurnSample], resetsAt: Date?) {
         guard let run = windows.last, run.startIndex < values.count else {

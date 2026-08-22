@@ -7,6 +7,8 @@ struct MetricRowView: View {
     var showUsedPercent: Bool = true
     var absoluteResets: Bool = false
     var showReset: Bool = false
+    /// Recent readings, oldest first. Empty renders nothing.
+    var samples: [Double?] = []
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
@@ -69,6 +71,11 @@ struct MetricRowView: View {
             }
 
             meter
+
+            SparklineView(
+                values: samples,
+                tint: QuotaFormatting.meterColor(usedFraction: metric.usedFraction)
+            )
 
             if showReset, let reset = resetText {
                 Text(reset)

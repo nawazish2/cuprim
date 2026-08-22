@@ -52,6 +52,7 @@ final class UsageStore {
         cache.deleteLegacyHistory()
         if DemoSnapshots.isEnabled {
             snapshots = DemoSnapshots.all()
+            historyCache = DemoSnapshots.history()
             lastSuccessfulRefresh = .now
             for (id, snapshot) in snapshots {
                 lastSuccessAt[id] = snapshot.fetchedAt
@@ -140,6 +141,7 @@ final class UsageStore {
     }
 
     private func loadHistory() async {
+        guard !DemoSnapshots.isEnabled else { return }
         historyCache = await history.load()
     }
 
@@ -152,12 +154,18 @@ final class UsageStore {
         return BurnRate.project(samples: window.samples, resetsAt: window.resetsAt, now: now)
     }
 
+    /// Recent readings for one metric, oldest first. Default covers four hours
+    /// at the five-minute bucket size.
+    func recentSamples(for id: ProviderID, metricID: String, limit: Int = 48) -> [Double?] {
+        historyCache.series(provider: id, metricID: metricID)?.recentValues(limit: limit) ?? []
+    }
+
     /// Writing on every refresh would mean a disk write every two minutes for
     /// data nobody reads until the panel opens, so flushes are debounced.
     /// Losing at most one window on a hard quit is an acceptable trade against
     /// a synchronous write at termination.
     private func flushHistory(force: Bool = false) {
-        guard pendingHistoryAppends > 0 else { return }
+        guard !DemoSnapshots.isEnabled, pendingHistoryAppends > 0 else { return }
         let now = Date.now
         let due = force
             || pendingHistoryAppends >= historyFlushAppendCount

@@ -185,3 +185,57 @@ final class BurnRateTests: XCTestCase {
         XCTAssertEqual(result, .unknown(.usageDecreased))
     }
 }
+
+final class BurnProjectionFormattingTests: XCTestCase {
+    private let anyDate = Date(timeIntervalSince1970: 1_000_800)
+
+    /// Every refusal renders as nothing. A visible "not enough data yet" line
+    /// would be permanent clutter on a 300pt panel.
+    func testUnknownRendersNothing() {
+        for reason: BurnUnknownReason in [
+            .tooFewSamples, .spanTooShort, .noResetTime, .stale, .usageDecreased, .alreadyExhausted
+        ] {
+            XCTAssertNil(BurnProjectionFormatting.caption(for: .unknown(reason)), "\(reason)")
+        }
+    }
+
+    func testComfortableProjectionIsNotWorthSaying() {
+        XCTAssertNil(BurnProjectionFormatting.caption(for: .withinLimit(projectedUsedAtReset: 0.30)))
+    }
+
+    func testHighButSafeProjectionIsReported() {
+        XCTAssertEqual(
+            BurnProjectionFormatting.caption(for: .withinLimit(projectedUsedAtReset: 0.72)),
+            "On track for ~72% by reset"
+        )
+    }
+
+    func testExhaustionReportsHoursAndMinutes() {
+        XCTAssertEqual(
+            BurnProjectionFormatting.caption(
+                for: .exhausts(at: anyDate, beforeReset: 2 * 3_600 + 15 * 60)
+            ),
+            "At this rate, out 2h 15m before reset"
+        )
+    }
+
+    func testExhaustionUsesWholeHoursAndBareMinutes() {
+        XCTAssertEqual(
+            BurnProjectionFormatting.caption(for: .exhausts(at: anyDate, beforeReset: 2 * 3_600)),
+            "At this rate, out 2h before reset"
+        )
+        XCTAssertEqual(
+            BurnProjectionFormatting.caption(for: .exhausts(at: anyDate, beforeReset: 45 * 60)),
+            "At this rate, out 45m before reset"
+        )
+    }
+
+    /// Below the ETA's own 15-minute rounding, a number would imply precision
+    /// the projection does not have.
+    func testVerySmallLeadTimeAvoidsAFalselyPreciseNumber() {
+        XCTAssertEqual(
+            BurnProjectionFormatting.caption(for: .exhausts(at: anyDate, beforeReset: 5 * 60)),
+            "At this rate, out right before reset"
+        )
+    }
+}

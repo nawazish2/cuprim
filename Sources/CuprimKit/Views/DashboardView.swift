@@ -67,7 +67,9 @@ struct DashboardView: View {
                                 absoluteResets: preferences.absoluteResetTimes,
                                 copiedCommand: copiedCommand,
                                 onCopy: copy(_:),
-                                onRefresh: { Task { await usage.refresh() } }
+                                onRefresh: { Task { await usage.refresh() } },
+                                samples: { usage.recentSamples(for: id, metricID: $0) },
+                                projection: { usage.burnProjection(for: id, metricID: $0) }
                             )
                             .id(id)
                         }

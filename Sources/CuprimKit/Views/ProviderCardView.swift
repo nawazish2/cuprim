@@ -10,6 +10,10 @@ struct ProviderCardView: View {
     var copiedCommand: String?
     var onCopy: (String) -> Void = { _ in }
     var onRefresh: () -> Void = {}
+    /// Recent readings for a metric id, oldest first.
+    var samples: (String) -> [Double?] = { _ in [] }
+    /// Burn-rate forecast for a metric id.
+    var projection: (String) -> BurnProjection = { _ in .unknown(.tooFewSamples) }
 
     private var displaySnapshot: ProviderSnapshot? {
         presentation.snapshot ?? snapshot
@@ -108,9 +112,20 @@ struct ProviderCardView: View {
                         metric: metric,
                         showUsedPercent: showUsedPercent,
                         absoluteResets: absoluteResets,
-                        showReset: showsPerMetricReset
+                        showReset: showsPerMetricReset,
+                        samples: samples(metric.id)
                     )
                 }
+            }
+
+            // At most one projection line per card — the worst metric's. The
+            // formatter returns nil whenever there is nothing honest to say,
+            // so an uncertain forecast renders nothing rather than a hedge.
+            if let caption = projectionCaption(snapshot) {
+                Label(caption, systemImage: "chart.line.uptrend.xyaxis")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(GlassChrome.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             if let date = sharedResetDate {
@@ -127,6 +142,19 @@ struct ProviderCardView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+    }
+
+    /// The metric closest to its cap is the one worth commenting on.
+    private func projectionCaption(_ snapshot: ProviderSnapshot) -> String? {
+        let ranked = snapshot.metrics.sorted {
+            ($0.usedFraction ?? -1) > ($1.usedFraction ?? -1)
+        }
+        for metric in ranked {
+            if let caption = BurnProjectionFormatting.caption(for: projection(metric.id)) {
+                return caption
+            }
+        }
+        return nil
     }
 
     private func signedOut(_ kind: ProviderFailureKind) -> some View {
