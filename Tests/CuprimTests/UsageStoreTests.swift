@@ -26,15 +26,13 @@ private final class ScriptedProvider: ProviderRuntime, @unchecked Sendable {
     }
 
     func refresh() async throws -> ProviderSnapshot {
-        lock.lock()
-        calls += 1
-        let result: Result<ProviderSnapshot, Error>
-        if remaining.count > 1 {
-            result = remaining.removeFirst()
-        } else {
-            result = remaining.first ?? .failure(ProviderError.unavailable)
+        let result: Result<ProviderSnapshot, Error> = lock.withLock {
+            calls += 1
+            if remaining.count > 1 {
+                return remaining.removeFirst()
+            }
+            return remaining.first ?? .failure(ProviderError.unavailable)
         }
-        lock.unlock()
         return try result.get()
     }
 }

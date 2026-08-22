@@ -47,7 +47,13 @@ let package = Package(
         .testTarget(
             name: "CuprimTests",
             dependencies: ["CuprimCore", "CuprimProviders", "CuprimKit"],
-            path: "Tests/CuprimTests"
+            path: "Tests/CuprimTests",
+            linkerSettings: [
+                // CuprimKit links Sparkle, but SwiftPM does not give the test
+                // bundle an rpath to the build products directory where
+                // Sparkle.framework lands, so the bundle fails to dlopen.
+                .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@loader_path/../../.."])
+            ]
         )
     ]
 )

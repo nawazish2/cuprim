@@ -64,10 +64,16 @@ final class SnapshotCacheTests: XCTestCase {
     func testRefreshGateCoalescesConcurrentWork() async {
         let gate = RefreshGate()
         let counter = Counter()
+        // The gate only coalesces a caller that arrives while another is
+        // inside it. Two bare `async let`s do not guarantee that order, so
+        // wait for the first to actually be running before racing the second.
+        let entered = Signal()
         async let first: Void = gate.run {
+            await entered.signal()
             try? await Task.sleep(for: .milliseconds(80))
             await counter.increment()
         }
+        await entered.wait()
         async let second: Void = gate.run {
             await counter.increment()
         }
@@ -92,4 +98,21 @@ final class SnapshotCacheTests: XCTestCase {
 private actor Counter {
     var value = 0
     func increment() { value += 1 }
+}
+
+/// One-shot "it has started" flag the test can await.
+private actor Signal {
+    private var signaled = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func signal() {
+        signaled = true
+        for waiter in waiters { waiter.resume() }
+        waiters = []
+    }
+
+    func wait() async {
+        guard !signaled else { return }
+        await withCheckedContinuation { waiters.append($0) }
+    }
 }
