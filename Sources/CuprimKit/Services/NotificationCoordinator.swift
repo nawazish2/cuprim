@@ -3,9 +3,21 @@ import Foundation
 import UserNotifications
 import CuprimCore
 
+/// What `UsageStore` needs from the alert layer.
+///
+/// `NotificationCoordinator` reaches `UNUserNotificationCenter.current()` in its
+/// initializer, which traps in a process with no bundle identity (the test
+/// runner). Depending on this protocol instead keeps the store constructible in
+/// tests without standing up UserNotifications at all.
+@MainActor
+protocol QuotaAlerting: AnyObject {
+    func requestAuthorizationIfNeeded()
+    func scheduleIfNeeded(snapshot: ProviderSnapshot)
+}
+
 /// Delivers opt-in local threshold alerts and deduplicates them per reset window.
 @MainActor
-final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate {
+final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate, QuotaAlerting {
     private let center = UNUserNotificationCenter.current()
     private var authorizationRequested = false
     private let defaults: UserDefaults
@@ -82,6 +94,16 @@ final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate 
             )
             guard let threshold = newlyReached.first else { continue }
 
+            // Record before enqueueing. Recording inside `center.add`'s
+            // completion raced with the single `saveLedger` below: the
+            // completion wrote the thresholds, then the outer save clobbered
+            // them with its stale copy, and the same alert fired again on the
+            // next refresh. A dropped alert (if `add` fails) is the better
+            // failure mode than one that repeats every two minutes.
+            for reached in newlyReached {
+                ledger.record(key: key, threshold: reached, expiresAt: metric.resetsAt)
+            }
+
             let content = UNMutableNotificationContent()
             content.title = "\(snapshot.id.displayName) · \(remaining)% left on \(metric.displayLabel)"
             let reset = QuotaFormatting.resetLabel(for: metric.resetsAt, absolute: false)
@@ -94,22 +116,13 @@ final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate 
                 content: content,
                 trigger: nil
             )
-            center.add(request) { [weak self] error in
+            center.add(request) { error in
                 if let error {
                     NSLog("[Cuprim] notification failed: %@", error.localizedDescription)
-                    return
-                }
-                Task { @MainActor in
-                    guard let self else { return }
-                    var next = self.loadLedger()
-                    for reached in newlyReached {
-                        next.record(key: key, threshold: reached, expiresAt: metric.resetsAt)
-                    }
-                    next.prune()
-                    self.saveLedger(next)
                 }
             }
         }
+        ledger.prune()
         saveLedger(ledger)
     }
 

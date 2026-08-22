@@ -25,21 +25,35 @@ let package = Package(
             dependencies: ["CuprimCore"],
             path: "Sources/CuprimProviders"
         ),
-        .executableTarget(
-            name: "Cuprim",
+        // All app code (stores, services, views, controllers) lives here rather
+        // than in the executable, so `CuprimTests` can reach it with
+        // `@testable import CuprimKit`. An executable target cannot be tested.
+        .target(
+            name: "CuprimKit",
             dependencies: [
                 "CuprimCore",
                 "CuprimProviders",
                 .product(name: "Sparkle", package: "Sparkle")
             ],
+            path: "Sources/CuprimKit"
+        ),
+        .executableTarget(
+            name: "Cuprim",
+            dependencies: ["CuprimKit"],
             path: "Sources/Cuprim",
             // Resources are copied into the .app by script/package_app.sh (Bundle.main).
             exclude: ["Resources"]
         ),
         .testTarget(
             name: "CuprimTests",
-            dependencies: ["CuprimCore", "CuprimProviders"],
-            path: "Tests/CuprimTests"
+            dependencies: ["CuprimCore", "CuprimProviders", "CuprimKit"],
+            path: "Tests/CuprimTests",
+            linkerSettings: [
+                // CuprimKit links Sparkle, but SwiftPM does not give the test
+                // bundle an rpath to the build products directory where
+                // Sparkle.framework lands, so the bundle fails to dlopen.
+                .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@loader_path/../../.."])
+            ]
         )
     ]
 )

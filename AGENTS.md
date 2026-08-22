@@ -41,17 +41,18 @@ First open may be blocked. User workarounds: right-click → Open, or `xattr -cr
 ## Source layout
 
 ```
-Package.swift                 # SPM: CuprimCore + Cuprim executable, macOS 26+
-Sources/CuprimCore/         # Pure models / formatting / utilization (unit-tested)
-Sources/Cuprim/
+Package.swift                 # SPM: Core + Providers + Kit + Cuprim executable, macOS 26+
+Sources/CuprimCore/           # Pure models / formatting / utilization (unit-tested)
+Sources/CuprimProviders/      # {Claude,Codex,Cursor,Grok}/, HTTP, snapshot cache
+Sources/CuprimKit/            # All app code. A library, not the executable, so it is testable.
   App/                        # Lifecycle, status item, panel, settings/about windows
-  Providers/{Claude,Codex,Cursor,Grok}/
   Stores/                     # Usage, preferences, dashboard UI state
-  Services/                   # HTTP, snapshot cache
-  Views/                      # Dashboard, settings, share card, about, …
-  Support/                    # Icons, updater, share, platform checks, …
+  Services/                   # Notifications
+  Views/                      # Dashboard, settings, about, …
+  Support/                    # Icons, updater, platform checks, …
+Sources/Cuprim/               # Executable: main.swift only
   Resources/                  # Icons (copied into .app by package_app.sh; excluded from SPM target)
-Tests/CuprimTests/          # Shipped-logic tests against CuprimCore
+Tests/CuprimTests/            # Tests against CuprimCore, CuprimProviders, and CuprimKit
 script/                       # build_and_run, package_app, release, create_dmg, icon helpers
 Design/                       # App icon layers, DMG background
 docs/                         # Notarization / distribution

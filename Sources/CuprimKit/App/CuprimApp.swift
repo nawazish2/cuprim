@@ -2,11 +2,15 @@ import AppKit
 import SwiftUI
 import CuprimCore
 
-@main
-struct CuprimApp: App {
+/// Entry point. The executable target is a single `main.swift` that calls
+/// `CuprimApp.main()`; everything else lives in this module so it stays
+/// reachable from tests via `@testable import CuprimKit`.
+public struct CuprimApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
-    var body: some Scene {
+    public init() {}
+
+    public var body: some Scene {
         // Status item is AppKit-owned. This scene only hosts app-menu commands.
         MenuBarExtra("Cuprim", isInserted: .constant(false)) {
             EmptyView()
@@ -26,14 +30,9 @@ struct CuprimApp: App {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    /// Available without casting `NSApp.delegate` (SwiftUI wraps the adaptor).
-    static private(set) var shared: AppDelegate?
-
     let container = AppContainer()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        AppDelegate.shared = self
-
         // Apple Silicon + macOS 26 only (true Liquid Glass).
         guard PlatformRequirements.enforceOrQuit() else { return }
 

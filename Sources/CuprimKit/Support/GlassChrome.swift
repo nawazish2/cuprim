@@ -4,17 +4,17 @@ import CuprimCore
 /// Compact dashboard tokens — one native Liquid Glass shell, quiet grouped rows.
 enum GlassChrome {
     // 4pt-based spacing/radius scale shared across the panel.
-    static let panelCorner: CGFloat = 16
+    static let panelCorner: CGFloat = 14
     static let cardCorner: CGFloat = 12
-    static let panelWidth: CGFloat = 300
-    static let panelHeight: CGFloat = 420
+    static let panelWidth: CGFloat = 288
+    static let panelHeight: CGFloat = 380
     static let outerPad: CGFloat = 0
-    static let inset: CGFloat = 12
-    static let cardPad: CGFloat = 12
-    static let cardGap: CGFloat = 8
-    static let scrollBottomPad: CGFloat = 12
-    static let meterHeight: CGFloat = 8
-    static let providerIconSize: CGFloat = 18
+    static let inset: CGFloat = 10
+    static let cardPad: CGFloat = 10
+    static let cardGap: CGFloat = 6
+    static let scrollBottomPad: CGFloat = 10
+    static let meterHeight: CGFloat = 6
+    static let providerIconSize: CGFloat = 16
 
     /// Meter severity colors, keyed to the same thresholds as
     /// `Formatting.meterColor`. Single source of truth for usage-state color.

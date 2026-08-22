@@ -7,6 +7,8 @@ struct MetricRowView: View {
     var showUsedPercent: Bool = true
     var absoluteResets: Bool = false
     var showReset: Bool = false
+    /// Recent readings, oldest first. Empty renders nothing.
+    var samples: [Double?] = []
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
@@ -14,9 +16,7 @@ struct MetricRowView: View {
     @State private var animatedUsed: CGFloat = 0
 
     private var meterHeight: CGFloat { GlassChrome.meterHeight }
-    private var isTotal: Bool {
-        metric.id.lowercased().contains("total") || metric.label.lowercased() == "total"
-    }
+    private var isTotal: Bool { metric.kind == .total }
 
     private var targetUsed: CGFloat {
         guard let f = metric.usedFraction else { return 0 }
@@ -29,8 +29,8 @@ struct MetricRowView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
                 HStack(spacing: 4) {
                     Text(metric.displayLabel)
                         .font(isTotal ? .caption.weight(.semibold) : .caption2.weight(.medium))
@@ -56,7 +56,7 @@ struct MetricRowView: View {
                 } label: {
                     Text(primaryPercentText)
                         .font(
-                            .system(isTotal ? .subheadline : .callout, design: .rounded)
+                            .system(isTotal ? .callout : .subheadline, design: .rounded)
                                 .monospacedDigit()
                                 .weight(.bold)
                         )
@@ -71,6 +71,11 @@ struct MetricRowView: View {
             }
 
             meter
+
+            SparklineView(
+                values: samples,
+                tint: QuotaFormatting.meterColor(usedFraction: metric.usedFraction)
+            )
 
             if showReset, let reset = resetText {
                 Text(reset)

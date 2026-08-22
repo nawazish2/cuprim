@@ -16,6 +16,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     private let usage: UsageStore
     private let preferences: PreferencesStore
     private let uiState: DashboardUIState
+    private let onOpenSettings: () -> Void
     private let onQuit: () -> Void
     private var localMonitor: Any?
     private var globalMonitor: Any?
@@ -30,11 +31,13 @@ final class PanelController: NSObject, NSWindowDelegate {
         usage: UsageStore,
         preferences: PreferencesStore,
         uiState: DashboardUIState,
+        onOpenSettings: @escaping () -> Void,
         onQuit: @escaping () -> Void
     ) {
         self.usage = usage
         self.preferences = preferences
         self.uiState = uiState
+        self.onOpenSettings = onOpenSettings
         self.onQuit = onQuit
         super.init()
     }
@@ -59,7 +62,7 @@ final class PanelController: NSObject, NSWindowDelegate {
             onOpenSettings: { [weak self] in
                 // Defer after panel hide so key-window handoff is clean.
                 self?.hide()
-                SettingsOpener.open()
+                self?.onOpenSettings()
             },
             onQuit: onQuit
         )

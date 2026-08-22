@@ -10,32 +10,25 @@ struct ProviderCardView: View {
     var copiedCommand: String?
     var onCopy: (String) -> Void = { _ in }
     var onRefresh: () -> Void = {}
+    /// Recent readings for a metric id, oldest first.
+    var samples: (String) -> [Double?] = { _ in [] }
+    /// Burn-rate forecast for a metric id.
+    var projection: (String) -> BurnProjection = { _ in .unknown(.tooFewSamples) }
 
     private var displaySnapshot: ProviderSnapshot? {
         presentation.snapshot ?? snapshot
     }
 
-    /// Non-nil only when every metric's reset date renders the same label —
-    /// otherwise a single combined row would misrepresent metrics that
-    /// actually reset at different times, so callers fall back to a
-    /// per-metric reset row instead (see `showsSharedReset`).
-    private var sharedResetDate: Date? {
-        guard let snapshot = displaySnapshot else { return nil }
-        let dates = snapshot.metrics.compactMap(\.resetsAt)
-        guard !dates.isEmpty else { return nil }
-        let labels = dates.map { QuotaFormatting.smartResetLabel(for: $0) }
-        guard let first = labels.first, labels.allSatisfy({ $0 == first }) else { return nil }
-        return dates.min()
+    private var resetPresentation: ResetPresentation {
+        displaySnapshot?.resetPresentation() ?? ResetPresentation(shared: nil, perMetric: false)
     }
 
-    private var showsPerMetricReset: Bool {
-        guard let snapshot = displaySnapshot else { return false }
-        let dates = snapshot.metrics.compactMap(\.resetsAt)
-        return dates.count > 1 && sharedResetDate == nil
-    }
+    private var sharedResetDate: Date? { resetPresentation.shared }
+
+    private var showsPerMetricReset: Bool { resetPresentation.perMetric }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: 7) {
             header
             content
         }
@@ -48,7 +41,7 @@ struct ProviderCardView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             ProviderIconWell(id: id, size: GlassChrome.providerIconSize)
 
             Text(id.displayName)
@@ -113,15 +106,26 @@ struct ProviderCardView: View {
                 .font(.caption)
                 .foregroundStyle(GlassChrome.textTertiary)
         } else {
-            VStack(alignment: .leading, spacing: 7) {
+            VStack(alignment: .leading, spacing: 6) {
                 ForEach(snapshot.metrics) { metric in
                     MetricRowView(
                         metric: metric,
                         showUsedPercent: showUsedPercent,
                         absoluteResets: absoluteResets,
-                        showReset: showsPerMetricReset
+                        showReset: showsPerMetricReset,
+                        samples: samples(metric.id)
                     )
                 }
+            }
+
+            // At most one projection line per card — the worst metric's. The
+            // formatter returns nil whenever there is nothing honest to say,
+            // so an uncertain forecast renders nothing rather than a hedge.
+            if let caption = projectionCaption(snapshot) {
+                Label(caption, systemImage: "chart.line.uptrend.xyaxis")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(GlassChrome.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             if let date = sharedResetDate {
@@ -138,6 +142,19 @@ struct ProviderCardView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+    }
+
+    /// The metric closest to its cap is the one worth commenting on.
+    private func projectionCaption(_ snapshot: ProviderSnapshot) -> String? {
+        let ranked = snapshot.metrics.sorted {
+            ($0.usedFraction ?? -1) > ($1.usedFraction ?? -1)
+        }
+        for metric in ranked {
+            if let caption = BurnProjectionFormatting.caption(for: projection(metric.id)) {
+                return caption
+            }
+        }
+        return nil
     }
 
     private func signedOut(_ kind: ProviderFailureKind) -> some View {

@@ -1,5 +1,20 @@
 import Foundation
 
+/// Whether a metric stands alone or aggregates the others in its card.
+public enum MetricKind: String, Hashable, Sendable {
+    case window
+    case total
+}
+
+public extension Metric {
+    /// Derived from the stable `id`, never from display copy. Views used to
+    /// decide this by string-matching `label`, which silently changes meaning
+    /// whenever the label wording does.
+    var kind: MetricKind {
+        id.lowercased().contains("total") ? .total : .window
+    }
+}
+
 public extension Metric {
     /// Standardized dashboard / menu-facing label from stable metric `id`.
     var displayLabel: String {
@@ -57,5 +72,34 @@ public extension ProviderSnapshot {
     /// Soonest reset across metrics, if any.
     var nextResetAt: Date? {
         metrics.compactMap(\.resetsAt).sorted().first
+    }
+
+    /// How a card should render reset times: one shared row when every metric
+    /// resets at effectively the same moment, otherwise a row per metric.
+    ///
+    /// Compares instants with a tolerance rather than comparing *formatted
+    /// labels*, which is what the dashboard used to do — that made the layout
+    /// depend on the wording of `QuotaFormatting.smartResetLabel`.
+    func resetPresentation(tolerance: TimeInterval = 60) -> ResetPresentation {
+        let dates = metrics.compactMap(\.resetsAt)
+        guard let earliest = dates.min(), let latest = dates.max() else {
+            return ResetPresentation(shared: nil, perMetric: false)
+        }
+        if latest.timeIntervalSince(earliest) <= tolerance {
+            return ResetPresentation(shared: earliest, perMetric: false)
+        }
+        return ResetPresentation(shared: nil, perMetric: dates.count > 1)
+    }
+}
+
+public struct ResetPresentation: Equatable, Sendable {
+    /// Non-nil when a single combined reset row is honest for every metric.
+    public let shared: Date?
+    /// True when metrics reset at genuinely different times.
+    public let perMetric: Bool
+
+    public init(shared: Date?, perMetric: Bool) {
+        self.shared = shared
+        self.perMetric = perMetric
     }
 }

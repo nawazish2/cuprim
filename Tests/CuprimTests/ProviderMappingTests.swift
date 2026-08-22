@@ -178,4 +178,14 @@ final class ProviderMappingTests: XCTestCase {
         XCTAssertThrowsError(try CursorUsageMapping.snapshot(fromJSON: Data("{}".utf8)))
         XCTAssertThrowsError(try GrokUsageMapping.snapshot(fromJSON: Data("{}".utf8), planName: nil))
     }
+
+    func testPlanNamePreservesCompoundNames() {
+        // A compound plan id must not collapse to the substring it happens
+        // to contain — "pro_plus" is its own tier, distinct from "pro".
+        XCTAssertEqual(PlanNameFormatting.prettyPlan("pro_plus"), "Pro Plus")
+        XCTAssertEqual(PlanNameFormatting.prettyPlan("free_trial"), "Free Trial")
+        XCTAssertEqual(PlanNameFormatting.prettyPlan("team_pro"), "Team Pro")
+        XCTAssertEqual(PlanNameFormatting.prettyPlan("pro"), "Pro")
+        XCTAssertEqual(PlanNameFormatting.prettyPlan("FREE"), "Free")
+    }
 }

@@ -55,7 +55,7 @@ struct ProviderIconWell: View {
     let id: ProviderID
     var size: CGFloat = 22
 
-    private var well: CGFloat { max(30, size + 10) }
+    private var well: CGFloat { max(26, size + 8) }
 
     var body: some View {
         ProviderIconView(id: id, size: size, foreground: GlassChrome.textPrimary)
@@ -75,8 +75,8 @@ struct PlanBadgeView: View {
             .font(.system(size: 10, weight: .medium))
             .foregroundStyle(GlassChrome.textTertiary.opacity(0.95))
             .lineLimit(1)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 2)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 1.5)
             .background {
                 Capsule(style: .continuous)
                     .fill(Color.primary.opacity(0.08))
