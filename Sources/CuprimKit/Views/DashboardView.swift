@@ -23,12 +23,7 @@ struct DashboardView: View {
     private var filteredIDs: [ProviderID] {
         switch uiState.selectedTab {
         case .overview:
-            return tabProviders.filter { id in
-                if preferences.hideLoggedOutProviders, !preferences.showsFirstLaunchSetup {
-                    if case .signedOut = usage.presentation(for: id) { return false }
-                }
-                return true
-            }
+            return usage.visibleProviderIDs
         case .provider(let id):
             return preferences.isEnabled(id) ? [id] : []
         }

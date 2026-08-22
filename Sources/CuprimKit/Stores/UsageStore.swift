@@ -56,17 +56,21 @@ final class UsageStore {
         }
     }
 
-    var visibleSnapshots: [ProviderSnapshot] {
-        preferences.orderedProviders.compactMap { id in
-            guard preferences.isEnabled(id) else { return nil }
-            let presentation = presentation(for: id)
+    /// Providers the dashboard should show, in the user's order. One
+    /// definition so the card list and `visibleSnapshots` cannot drift apart.
+    var visibleProviderIDs: [ProviderID] {
+        preferences.orderedProviders.filter { id in
+            guard preferences.isEnabled(id) else { return false }
             if preferences.hideLoggedOutProviders, !preferences.showsFirstLaunchSetup {
-                if case .signedOut = presentation { return nil }
+                if case .signedOut = presentation(for: id) { return false }
             }
-            if let snapshot = presentation.snapshot {
-                return snapshot
-            }
-            return snapshots[id]
+            return true
+        }
+    }
+
+    var visibleSnapshots: [ProviderSnapshot] {
+        visibleProviderIDs.compactMap { id in
+            presentation(for: id).snapshot ?? snapshots[id]
         }
     }
 

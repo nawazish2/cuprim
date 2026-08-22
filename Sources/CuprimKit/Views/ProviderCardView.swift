@@ -15,24 +15,13 @@ struct ProviderCardView: View {
         presentation.snapshot ?? snapshot
     }
 
-    /// Non-nil only when every metric's reset date renders the same label —
-    /// otherwise a single combined row would misrepresent metrics that
-    /// actually reset at different times, so callers fall back to a
-    /// per-metric reset row instead (see `showsSharedReset`).
-    private var sharedResetDate: Date? {
-        guard let snapshot = displaySnapshot else { return nil }
-        let dates = snapshot.metrics.compactMap(\.resetsAt)
-        guard !dates.isEmpty else { return nil }
-        let labels = dates.map { QuotaFormatting.smartResetLabel(for: $0) }
-        guard let first = labels.first, labels.allSatisfy({ $0 == first }) else { return nil }
-        return dates.min()
+    private var resetPresentation: ResetPresentation {
+        displaySnapshot?.resetPresentation() ?? ResetPresentation(shared: nil, perMetric: false)
     }
 
-    private var showsPerMetricReset: Bool {
-        guard let snapshot = displaySnapshot else { return false }
-        let dates = snapshot.metrics.compactMap(\.resetsAt)
-        return dates.count > 1 && sharedResetDate == nil
-    }
+    private var sharedResetDate: Date? { resetPresentation.shared }
+
+    private var showsPerMetricReset: Bool { resetPresentation.perMetric }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {

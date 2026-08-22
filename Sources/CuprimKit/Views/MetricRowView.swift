@@ -14,9 +14,7 @@ struct MetricRowView: View {
     @State private var animatedUsed: CGFloat = 0
 
     private var meterHeight: CGFloat { GlassChrome.meterHeight }
-    private var isTotal: Bool {
-        metric.id.lowercased().contains("total") || metric.label.lowercased() == "total"
-    }
+    private var isTotal: Bool { metric.kind == .total }
 
     private var targetUsed: CGFloat {
         guard let f = metric.usedFraction else { return 0 }
