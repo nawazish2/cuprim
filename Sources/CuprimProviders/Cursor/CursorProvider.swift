@@ -15,7 +15,7 @@ public struct CursorProvider: ProviderRuntime {
     public func refresh() async throws -> ProviderSnapshot {
         let token: String
         do {
-            guard let loaded = try loadAccessToken() else {
+            guard let loaded = try await loadAccessToken() else {
                 throw ProviderError.signedOut
             }
             token = loaded
@@ -40,12 +40,12 @@ public struct CursorProvider: ProviderRuntime {
         return snapshot
     }
 
-    private func loadAccessToken() throws -> String? {
+    private func loadAccessToken() async throws -> String? {
         let path = NSString(
             string: "~/Library/Application Support/Cursor/User/globalStorage/state.vscdb"
         ).expandingTildeInPath
         guard FileManager.default.fileExists(atPath: path) else { return nil }
-        return try SQLiteReader.string(
+        return try await SQLiteReader.string(
             path: path,
             sql: "SELECT value FROM ItemTable WHERE key = ? LIMIT 1;",
             bind: "cursorAuth/accessToken"
