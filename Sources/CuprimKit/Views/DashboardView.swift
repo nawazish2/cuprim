@@ -33,8 +33,8 @@ struct DashboardView: View {
         VStack(spacing: 0) {
             header
                 .padding(.horizontal, GlassChrome.inset)
-                .padding(.top, 10)
-                .padding(.bottom, 8)
+                .padding(.top, 8)
+                .padding(.bottom, 6)
 
             if !tabProviders.isEmpty {
                 ProviderTabBar(
@@ -42,7 +42,7 @@ struct DashboardView: View {
                     available: tabProviders
                 )
                 .padding(.horizontal, GlassChrome.inset)
-                .padding(.bottom, 8)
+                .padding(.bottom, 6)
             }
 
             ScrollView(.vertical, showsIndicators: false) {
@@ -76,7 +76,6 @@ struct DashboardView: View {
                     }
                 }
                 .padding(.horizontal, GlassChrome.inset)
-                .padding(.top, 2)
                 .padding(.bottom, GlassChrome.scrollBottomPad)
             }
             .id(uiState.scrollResetToken)
@@ -109,8 +108,8 @@ struct DashboardView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 8) {
-            CupBrandMark(size: 18, foreground: GlassChrome.textSecondary)
+        HStack(alignment: .center, spacing: 7) {
+            CupBrandMark(size: 16, foreground: GlassChrome.textSecondary)
 
             VStack(alignment: .leading, spacing: 0) {
                 Text("Cuprim")
@@ -129,10 +128,10 @@ struct DashboardView: View {
                 Task { await usage.refresh() }
             } label: {
                 Image(systemName: AppSymbols.refresh)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(GlassChrome.textSecondary)
                     .symbolEffect(.rotate, isActive: usage.isRefreshing && !reduceMotion)
-                    .frame(width: 28, height: 28)
+                    .frame(width: 24, height: 24)
                     .background {
                         Circle().fill(Color.primary.opacity(0.08))
                             .overlay {
@@ -210,7 +209,7 @@ struct DashboardView: View {
             }
             .padding(.horizontal, 5)
             .padding(.top, 2)
-            .padding(.bottom, 5)
+            .padding(.bottom, 4)
         }
         .background { FooterScrim() }
         .fixedSize(horizontal: false, vertical: true)
@@ -283,7 +282,7 @@ private struct NativeMenuRowButton: View {
         Button(action: action) {
             HStack {
                 Text(title)
-                    .font(.callout.weight(.medium))
+                    .font(.subheadline.weight(.medium))
                 Spacer(minLength: 12)
                 Text(shortcut)
                     .font(.caption2.weight(.medium))
@@ -292,7 +291,7 @@ private struct NativeMenuRowButton: View {
             }
             .foregroundStyle(isHovered ? Color.white : GlassChrome.textPrimary)
             .padding(.horizontal, 10)
-            .padding(.vertical, 4)
+            .padding(.vertical, 3)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)

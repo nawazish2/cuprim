@@ -28,7 +28,7 @@ struct ProviderCardView: View {
     private var showsPerMetricReset: Bool { resetPresentation.perMetric }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: 7) {
             header
             content
         }
@@ -41,7 +41,7 @@ struct ProviderCardView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             ProviderIconWell(id: id, size: GlassChrome.providerIconSize)
 
             Text(id.displayName)
@@ -106,7 +106,7 @@ struct ProviderCardView: View {
                 .font(.caption)
                 .foregroundStyle(GlassChrome.textTertiary)
         } else {
-            VStack(alignment: .leading, spacing: 7) {
+            VStack(alignment: .leading, spacing: 6) {
                 ForEach(snapshot.metrics) { metric in
                     MetricRowView(
                         metric: metric,

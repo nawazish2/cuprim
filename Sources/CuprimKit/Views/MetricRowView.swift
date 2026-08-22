@@ -29,8 +29,8 @@ struct MetricRowView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
                 HStack(spacing: 4) {
                     Text(metric.displayLabel)
                         .font(isTotal ? .caption.weight(.semibold) : .caption2.weight(.medium))
@@ -56,7 +56,7 @@ struct MetricRowView: View {
                 } label: {
                     Text(primaryPercentText)
                         .font(
-                            .system(isTotal ? .subheadline : .callout, design: .rounded)
+                            .system(isTotal ? .callout : .subheadline, design: .rounded)
                                 .monospacedDigit()
                                 .weight(.bold)
                         )

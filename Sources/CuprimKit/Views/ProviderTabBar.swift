@@ -26,15 +26,15 @@ struct ProviderTabBar: View {
         HStack(spacing: 0) {
             tabButton(tab: .overview, title: "All") {
                 Image(systemName: AppSymbols.app)
-                    .font(.system(size: 13, weight: selection == .overview ? .semibold : .regular))
+                    .font(.system(size: 12, weight: selection == .overview ? .semibold : .regular))
                     .symbolRenderingMode(.hierarchical)
-                    .frame(width: 16, height: 16)
+                    .frame(width: 15, height: 15)
             }
             ForEach(available, id: \.self) { id in
                 tabButton(tab: .provider(id), title: id.displayName) {
                     ProviderIconView(
                         id: id,
-                        size: 16,
+                        size: 15,
                         opticalScale: id.tabMarkScale,
                         foreground: selection == .provider(id)
                             ? GlassChrome.textTabActive
@@ -48,7 +48,7 @@ struct ProviderTabBar: View {
                 }
             }
         }
-        .padding(3)
+        .padding(2)
         .background {
             ZStack {
                 Capsule(style: .continuous)
@@ -118,7 +118,7 @@ private struct TabSegment<Icon: View>: View {
             icon
                 .foregroundStyle(selected ? GlassChrome.textTabActive : GlassChrome.textTabIdle)
                 .frame(maxWidth: .infinity)
-                .frame(height: 26)
+                .frame(height: 22)
                 .background {
                     if selected {
                         Capsule(style: .continuous)
