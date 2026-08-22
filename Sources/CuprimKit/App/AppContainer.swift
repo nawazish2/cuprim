@@ -20,6 +20,7 @@ final class AppContainer {
         // directory just by constructing a store.
         usage = UsageStore(
             cache: SnapshotCache(),
+            history: UsageHistoryStore(),
             notifications: notifications,
             preferences: preferences
         )

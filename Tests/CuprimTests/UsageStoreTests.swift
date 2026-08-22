@@ -60,11 +60,13 @@ private struct StubLaunchAtLogin: LaunchAtLoginControlling {
 
 @MainActor
 final class UsageStoreTests: XCTestCase {
+    private func makeTempDirectory() -> URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent("cuprim-store-\(UUID().uuidString)", isDirectory: true)
+    }
+
     private func makeCache() -> SnapshotCache {
-        SnapshotCache(
-            directory: FileManager.default.temporaryDirectory
-                .appendingPathComponent("cuprim-store-\(UUID().uuidString)", isDirectory: true)
-        )
+        SnapshotCache(directory: makeTempDirectory())
     }
 
     /// A per-test defaults suite so these never touch the runner's own domain
@@ -100,6 +102,7 @@ final class UsageStoreTests: XCTestCase {
         UsageStore(
             providers: providers,
             cache: makeCache(),
+            history: UsageHistoryStore(directory: makeTempDirectory()),
             notifications: alerter,
             preferences: preferences
         )
