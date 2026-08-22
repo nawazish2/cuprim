@@ -50,9 +50,27 @@ public actor UsageHistoryStore {
     }
 
     public func save(_ history: UsageHistory, now: Date = .now) throws {
+        try Self.write(history, directory: directory, fileName: fileName, now: now)
+    }
+
+    /// For the termination path. `applicationWillTerminate` does not outlive a
+    /// detached task, so the last flush has to happen inline — and at ~120 KB
+    /// it costs about as much as the `SnapshotCache.save` already done inline
+    /// on every refresh.
+    public nonisolated func saveSynchronously(_ history: UsageHistory, now: Date = .now) throws {
+        try Self.write(history, directory: directory, fileName: fileName, now: now)
+    }
+
+    private static func write(
+        _ history: UsageHistory,
+        directory: URL,
+        fileName: String,
+        now: Date
+    ) throws {
         var trimmed = history
         trimmed.trim(now: now)
 
+        let fileURL = directory.appendingPathComponent(fileName)
         let fm = FileManager.default
         try fm.createDirectory(at: directory, withIntermediateDirectories: true)
         try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)

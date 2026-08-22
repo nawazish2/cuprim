@@ -24,7 +24,7 @@ enum SQLiteReader {
         var sawBusy = false
         for attempt in 0..<retries {
             let outcome = try await Task.detached(priority: .utility) {
-                try readOnce(path: path, sql: sql, bind: bind, busyTimeoutMS: busyTimeoutMS)
+                try Self.readOnce(path: path, sql: sql, bind: bind, busyTimeoutMS: busyTimeoutMS)
             }.value
 
             switch outcome {

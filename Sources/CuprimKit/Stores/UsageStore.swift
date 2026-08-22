@@ -137,7 +137,7 @@ final class UsageStore {
     func stop() {
         loopTask?.cancel()
         loopTask = nil
-        flushHistory(force: true)
+        flushHistoryNow()
     }
 
     private func loadHistory() async {
@@ -164,11 +164,10 @@ final class UsageStore {
     /// data nobody reads until the panel opens, so flushes are debounced.
     /// Losing at most one window on a hard quit is an acceptable trade against
     /// a synchronous write at termination.
-    private func flushHistory(force: Bool = false) {
+    private func flushHistory() {
         guard !DemoSnapshots.isEnabled, pendingHistoryAppends > 0 else { return }
         let now = Date.now
-        let due = force
-            || pendingHistoryAppends >= historyFlushAppendCount
+        let due = pendingHistoryAppends >= historyFlushAppendCount
             || now.timeIntervalSince(lastHistoryFlush) >= historyFlushInterval
         guard due else { return }
 
@@ -183,6 +182,16 @@ final class UsageStore {
                 NSLog("[Cuprim] history flush failed: %@", error.localizedDescription)
             }
         }
+    }
+
+    /// Termination flush. Must be synchronous: `stop()` runs from
+    /// `applicationWillTerminate`, and a detached task would be killed with the
+    /// process before it ever ran, silently dropping the last samples.
+    private func flushHistoryNow() {
+        guard !DemoSnapshots.isEnabled, pendingHistoryAppends > 0 else { return }
+        pendingHistoryAppends = 0
+        lastHistoryFlush = .now
+        try? history.saveSynchronously(historyCache)
     }
 
     func refresh() async {

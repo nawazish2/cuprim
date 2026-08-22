@@ -18,10 +18,16 @@ struct SparklineView: View {
 
     var body: some View {
         if drawableCount >= 2 {
+            // Copied into locals so the renderer closure captures only Sendable
+            // values. `Canvas` can render asynchronously, so its closure is
+            // `@Sendable` and must not capture `self` out of the view's
+            // MainActor isolation.
+            let points = values
+            let stroke = tint.opacity(0.75)
             Canvas { context, size in
                 context.stroke(
-                    path(in: size),
-                    with: .color(tint.opacity(0.75)),
+                    Self.path(for: points, in: size),
+                    with: .color(stroke),
                     style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round)
                 )
             }
@@ -33,7 +39,7 @@ struct SparklineView: View {
     /// Plotted against a fixed 0–100% scale, matching the meter above it. An
     /// auto-scaled band would magnify two points of jitter into a dramatic
     /// climb, which is the opposite of what this is for.
-    private func path(in size: CGSize) -> Path {
+    private static func path(for values: [Double?], in size: CGSize) -> Path {
         var path = Path()
         guard values.count > 1 else { return path }
         let stepX = size.width / CGFloat(values.count - 1)
